@@ -7,10 +7,11 @@ create or replace function public.trigger_amplify_rebuild()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, extensions
+set search_path = public, net, vault
 as $$
 declare
   hook_url text;
+  req_id bigint;
 begin
   select decrypted_secret into hook_url
     from vault.decrypted_secrets
@@ -21,7 +22,7 @@ begin
     return null;
   end if;
 
-  perform extensions.net.http_post(
+  select net.http_post(
     url := hook_url,
     headers := jsonb_build_object('content-type', 'application/json'),
     body := jsonb_build_object(
@@ -30,11 +31,11 @@ begin
       'op', tg_op,
       'at', now()
     )
-  );
+  ) into req_id;
 
   return null;
 exception when others then
-  raise warning 'amplify rebuild trigger failed: %', sqlerrm;
+  raise warning 'amplify rebuild trigger failed: % (sqlstate=%)', sqlerrm, sqlstate;
   return null;
 end;
 $$;

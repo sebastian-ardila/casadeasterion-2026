@@ -1,0 +1,23 @@
+---
+import "~/styles/global.css";
+interface Props {
+  title?: string;
+}
+const { title = "CMS" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>{title} · Casa de Asterión</title>
+    <link rel="icon" href="/favicon.svg" />
+  </head>
+  <body class="min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-md px-6">
+      <slot />
+    </div>
+  </body>
+</html>

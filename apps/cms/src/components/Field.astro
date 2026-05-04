@@ -1,0 +1,37 @@
+---
+interface Props {
+  label: string;
+  name: string;
+  type?: string;
+  value?: string | number | null;
+  required?: boolean;
+  placeholder?: string;
+  hint?: string;
+  rows?: number;
+}
+const { label, name, type = "text", value, required, placeholder, hint, rows } = Astro.props;
+---
+
+<label class="block">
+  <span class="label">{label}{required && " *"}</span>
+  {type === "textarea" ? (
+    <textarea
+      name={name}
+      class="input"
+      rows={rows ?? 4}
+      required={required}
+      placeholder={placeholder}
+      set:html={value ?? ""}
+    />
+  ) : (
+    <input
+      type={type}
+      name={name}
+      class="input"
+      value={value ?? ""}
+      required={required}
+      placeholder={placeholder}
+    />
+  )}
+  {hint && <p class="text-xs text-stone-500 mt-1">{hint}</p>}
+</label>

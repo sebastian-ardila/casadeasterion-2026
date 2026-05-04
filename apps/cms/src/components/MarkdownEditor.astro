@@ -1,0 +1,46 @@
+---
+interface Props {
+  name: string;
+  value?: string | null;
+  label?: string;
+  rows?: number;
+  required?: boolean;
+}
+const { name, value, label = "Contenido", rows = 18, required } = Astro.props;
+const id = `md-${name}-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  <label class="block">
+    <span class="label">{label}{required && " *"} (Markdown)</span>
+    <textarea
+      id={id}
+      name={name}
+      class="input min-h-[400px]"
+      rows={rows}
+      required={required}
+      data-md-editor={id}
+      set:html={value ?? ""}
+    />
+  </label>
+  <div>
+    <span class="label">Vista previa</span>
+    <div
+      id={`${id}-preview`}
+      class="input min-h-[400px] bg-stone-50 prose prose-stone max-w-none [&_p]:mb-3 [&_h1]:font-serif [&_h2]:font-serif overflow-auto"
+    ></div>
+  </div>
+</div>
+
+<script type="module" define:vars={{ id }}>
+  import { marked } from "https://esm.sh/marked@15.0.7";
+  const ta = document.getElementById(id);
+  const preview = document.getElementById(`${id}-preview`);
+  if (ta && preview) {
+    const render = () => {
+      preview.innerHTML = marked.parse(ta.value || "", { async: false });
+    };
+    render();
+    ta.addEventListener("input", render);
+  }
+</script>

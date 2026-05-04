@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+}
+
+@layer base {
+  html, body {
+    background: oklch(99% 0.003 70);
+    color: oklch(15% 0.01 70);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  input, textarea, select {
+    font-family: inherit;
+  }
+
+  textarea {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+  }
+}
+
+@layer components {
+  .input {
+    @apply w-full px-3 py-2 border border-stone-300 bg-white text-sm focus:outline-none focus:border-stone-900 focus:ring-1 focus:ring-stone-900;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium border border-stone-300 bg-white hover:bg-stone-50 transition;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium bg-stone-900 text-white hover:bg-stone-700 transition disabled:opacity-50;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium border border-red-300 text-red-700 bg-white hover:bg-red-50 transition;
+  }
+
+  .label {
+    @apply block text-xs uppercase tracking-[0.12em] font-semibold text-stone-700 mb-1.5;
+  }
+
+  .nav-link {
+    @apply block px-4 py-2 text-sm text-stone-600 hover:bg-stone-100 hover:text-stone-900 transition;
+  }
+  .nav-link-active {
+    @apply bg-stone-900 text-white hover:bg-stone-900 hover:text-white;
+  }
+}

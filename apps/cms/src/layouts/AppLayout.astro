@@ -1,0 +1,26 @@
+---
+import "~/styles/global.css";
+import Sidebar from "~/components/Sidebar.astro";
+const user = Astro.locals.user;
+interface Props {
+  title?: string;
+}
+const { title = "CMS" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>{title} · Casa de Asterión CMS</title>
+    <link rel="icon" href="/favicon.svg" />
+  </head>
+  <body class="min-h-screen flex">
+    <Sidebar user={user} />
+    <main class="flex-1 min-w-0 px-10 py-10 max-w-[1100px]">
+      <slot />
+    </main>
+  </body>
+</html>

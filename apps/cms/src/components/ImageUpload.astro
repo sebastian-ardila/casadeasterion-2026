@@ -1,0 +1,95 @@
+---
+interface Props {
+  name: string;
+  value?: string | null;
+  label?: string;
+  bucket?: "covers" | "content" | "authors";
+  hint?: string;
+}
+const {
+  name,
+  value,
+  label = "Imagen",
+  bucket = "covers",
+  hint = "JPG, PNG, WebP o AVIF. Máx 10 MB.",
+} = Astro.props;
+const id = `up-${name}-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<div class="block" data-image-upload={id} data-bucket={bucket}>
+  <span class="label">{label}</span>
+
+  <div class="flex items-start gap-4">
+    {value && (
+      <img
+        id={`${id}-preview`}
+        src={value}
+        alt=""
+        class="w-32 h-32 object-cover bg-stone-100 border border-stone-200"
+      />
+    )}
+    {!value && (
+      <div
+        id={`${id}-preview`}
+        class="w-32 h-32 bg-stone-100 border border-stone-200 hidden"
+      ></div>
+    )}
+
+    <div class="flex-1">
+      <input
+        type="hidden"
+        name={name}
+        id={`${id}-url`}
+        value={value ?? ""}
+      />
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+        id={`${id}-file`}
+        class="text-sm"
+      />
+      <p class="text-xs text-stone-500 mt-1">{hint}</p>
+      <p id={`${id}-status`} class="text-xs mt-2 min-h-[1rem]"></p>
+    </div>
+  </div>
+</div>
+
+<script type="module" define:vars={{ id, bucket }}>
+  const fileInput = document.getElementById(`${id}-file`);
+  const urlInput = document.getElementById(`${id}-url`);
+  const preview = document.getElementById(`${id}-preview`);
+  const status = document.getElementById(`${id}-status`);
+
+  if (fileInput) {
+    fileInput.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      status.textContent = "Subiendo...";
+      status.style.color = "#57534e";
+
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("bucket", bucket);
+
+      try {
+        const res = await fetch("/api/upload", { method: "POST", body: fd });
+        const json = await res.json();
+        if (!res.ok) {
+          status.textContent = json.error ?? "Error al subir.";
+          status.style.color = "#b91c1c";
+          return;
+        }
+        urlInput.value = json.url;
+        if (preview.tagName === "IMG") preview.src = json.url;
+        else {
+          preview.outerHTML = `<img id="${id}-preview" src="${json.url}" alt="" class="w-32 h-32 object-cover bg-stone-100 border border-stone-200"/>`;
+        }
+        status.textContent = "Listo.";
+        status.style.color = "#166534";
+      } catch (err) {
+        status.textContent = "Error de red.";
+        status.style.color = "#b91c1c";
+      }
+    });
+  }
+</script>
