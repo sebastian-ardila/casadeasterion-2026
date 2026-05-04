@@ -1,0 +1,70 @@
+---
+import type { Book, Author } from "~/lib/supabase";
+import { buildWhatsappUrl, type SiteConfigMap } from "~/lib/site-config";
+
+interface Props {
+  book: Book;
+  author?: Author | null;
+  config: SiteConfigMap;
+}
+
+const { book, author, config } = Astro.props;
+
+const whatsappText =
+  book.whatsapp_message_override ?? config.whatsapp_message_template;
+
+const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
+  title: book.title,
+  author: author?.name ?? "",
+  isbn: book.isbn ?? "",
+  slug: book.slug,
+});
+---
+
+<article class="group flex flex-col">
+  {
+    book.cover_image_url ? (
+      <a href={`/catalogo/${book.slug}`} class="block aspect-[3/4] overflow-hidden bg-[color:var(--bg-alt)]">
+        <img
+          src={book.cover_image_url}
+          alt={`Portada de ${book.title}`}
+          loading="lazy"
+          decoding="async"
+          class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+        />
+      </a>
+    ) : (
+      <div class="aspect-[3/4] bg-[color:var(--bg-alt)] flex items-center justify-center text-[color:var(--fg-muted)]">
+        Sin portada
+      </div>
+    )
+  }
+
+  <div class="pt-5 flex flex-col flex-1">
+    <h3 class="font-serif text-xl leading-tight">
+      <a href={`/catalogo/${book.slug}`} class="hover:opacity-70">{book.title}</a>
+    </h3>
+    {author && (
+      <p class="mt-1 text-sm uppercase tracking-[0.12em] text-[color:var(--fg-muted)]">
+        {author.name}
+      </p>
+    )}
+    {book.price_amount != null && (
+      <p class="mt-3 text-sm">
+        {new Intl.NumberFormat("es-CO", {
+          style: "currency",
+          currency: book.price_currency,
+          maximumFractionDigits: 0,
+        }).format(Number(book.price_amount))}
+      </p>
+    )}
+    <a
+      href={whatsappUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="btn-outline mt-5 self-start"
+    >
+      Comprar por WhatsApp
+    </a>
+  </div>
+</article>

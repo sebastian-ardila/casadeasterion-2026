@@ -1,0 +1,74 @@
+---
+const navItems = [
+  { href: "/catalogo", label: "Catálogo" },
+  { href: "/filosofia", label: "Filosofía" },
+  { href: "/poesia", label: "Poesía" },
+  { href: "/autores", label: "Autores" },
+  { href: "/contacto", label: "Contacto" },
+];
+const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+---
+
+<header
+  class="sticky top-0 z-30 backdrop-blur bg-[color:var(--bg)]/85 border-b border-[color:var(--border)]"
+>
+  <div class="mx-auto max-w-[1400px] px-6 lg:px-12 h-20 flex items-center justify-between gap-8">
+    <a
+      href="/"
+      class="font-serif tracking-[0.18em] uppercase text-sm font-medium hover:opacity-70 transition"
+    >
+      Casa de Asterión
+    </a>
+
+    <nav class="hidden md:flex items-center gap-10">
+      {
+        navItems.map((item) => (
+          <a
+            href={item.href}
+            class:list={[
+              "nav-link",
+              path.startsWith(item.href) && "text-[color:var(--fg)]",
+            ]}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="flex items-center gap-4">
+      <button
+        type="button"
+        id="theme-toggle"
+        aria-label="Cambiar tema"
+        class="w-12 h-6 rounded-full border border-[color:var(--border)] bg-[color:var(--bg-alt)] relative cursor-pointer hover:bg-[color:var(--border)] transition"
+      >
+        <span
+          id="theme-toggle-dot"
+          class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-[color:var(--fg)] transition-transform"
+        ></span>
+      </button>
+      <a href="/#suscribirse" class="btn-outline hidden sm:inline-block">Suscribirse</a>
+    </div>
+  </div>
+</header>
+
+<script is:inline>
+  (() => {
+    const btn = document.getElementById("theme-toggle");
+    const dot = document.getElementById("theme-toggle-dot");
+    if (!btn || !dot) return;
+    const sync = () => {
+      const t = document.documentElement.dataset.theme;
+      dot.style.transform = t === "dark" ? "translateX(24px)" : "translateX(0)";
+    };
+    sync();
+    btn.addEventListener("click", () => {
+      const cur = document.documentElement.dataset.theme;
+      const next = cur === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem("theme", next);
+      sync();
+    });
+  })();
+</script>

@@ -1,0 +1,65 @@
+---
+import Layout from "~/layouts/Layout.astro";
+import BookCard from "~/components/BookCard.astro";
+import { supabase } from "~/lib/supabase";
+import { loadSiteConfig } from "~/lib/site-config";
+import { renderMarkdown } from "~/lib/markdown";
+
+export async function getStaticPaths() {
+  const { data } = await supabase.from("authors").select("slug");
+  return (data ?? []).map((a) => ({ params: { slug: a.slug } }));
+}
+
+const { slug } = Astro.params;
+const config = await loadSiteConfig();
+
+const { data: author } = await supabase
+  .from("authors")
+  .select("*")
+  .eq("slug", slug!)
+  .maybeSingle();
+
+if (!author) {
+  return Astro.redirect("/autores");
+}
+
+const { data: books } = await supabase
+  .from("books")
+  .select("*")
+  .eq("status", "published")
+  .eq("author_id", author.id)
+  .order("published_at", { ascending: false });
+
+const bio = renderMarkdown(author.bio_md);
+---
+
+<Layout title={author.name}>
+  <section class="mx-auto max-w-[1100px] px-6 lg:px-12 pt-20 pb-12 grid md:grid-cols-[260px_1fr] gap-12 items-start">
+    {author.photo_url ? (
+      <img
+        src={author.photo_url}
+        alt={author.name}
+        class="w-full aspect-square object-cover grayscale"
+      />
+    ) : (
+      <div class="w-full aspect-square bg-[color:var(--bg-alt)]"></div>
+    )}
+    <div>
+      <h1 class="font-serif text-4xl md:text-5xl mb-6">{author.name}</h1>
+      <div class="prose max-w-none [&_p]:mb-4 leading-relaxed" set:html={bio}></div>
+    </div>
+  </section>
+
+  {books && books.length > 0 && (
+    <section class="mx-auto max-w-[1400px] px-6 lg:px-12 pb-24">
+      <h2 class="font-serif text-2xl md:text-3xl mb-10 border-b border-[color:var(--border)] pb-4">
+        Obras
+      </h2>
+      <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        {books.map((book) => (
+          <BookCard book={book} author={author} config={config} />
+        ))}
+      </div>
+    </section>
+  )}
+</Layout>

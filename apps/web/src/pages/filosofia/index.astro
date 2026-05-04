@@ -1,0 +1,46 @@
+---
+import Layout from "~/layouts/Layout.astro";
+import PostCard from "~/components/PostCard.astro";
+import { supabase } from "~/lib/supabase";
+
+const { data: filoCat } = await supabase
+  .from("categories")
+  .select("*")
+  .eq("slug", "filosofia")
+  .maybeSingle();
+
+const [{ data: posts }, { data: authors }] = await Promise.all([
+  filoCat
+    ? supabase
+        .from("posts")
+        .select("*")
+        .eq("status", "published")
+        .eq("category_id", filoCat.id)
+        .order("published_at", { ascending: false })
+    : { data: [] },
+  supabase.from("authors").select("*"),
+]);
+
+const authorMap = new Map((authors ?? []).map((a) => [a.id, a]));
+---
+
+<Layout title="Filosofía" description="Ensayos y artículos de filosofía publicados por Casa de Asterión.">
+  <section class="mx-auto max-w-[1400px] px-6 lg:px-12 pt-20 pb-12">
+    <h1 class="font-serif text-4xl md:text-6xl mb-4">Filosofía</h1>
+    <p class="text-[color:var(--fg-muted)] max-w-prose">
+      {filoCat?.description ?? "Ensayos, artículos y reflexiones filosóficas."}
+    </p>
+  </section>
+
+  <section class="mx-auto max-w-[900px] px-6 lg:px-12 pb-24">
+    {posts && posts.length > 0 ? (
+      <div class="space-y-12">
+        {posts.map((post) => (
+          <PostCard post={post} author={authorMap.get(post.author_id ?? "")} category={filoCat} />
+        ))}
+      </div>
+    ) : (
+      <p class="text-[color:var(--fg-muted)]">Aún no hay artículos publicados en esta categoría.</p>
+    )}
+  </section>
+</Layout>

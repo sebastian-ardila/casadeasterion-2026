@@ -1,0 +1,109 @@
+---
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+const endpoint = `${supabaseUrl}/functions/v1/subscribe`;
+---
+
+<section
+  id="suscribirse"
+  class="bg-[color:var(--bg-alt)] border-y border-[color:var(--border)]"
+>
+  <div class="mx-auto max-w-2xl px-6 py-20 text-center">
+    <h2 class="font-serif text-3xl md:text-4xl mb-3">Suscríbete</h2>
+    <p class="text-[color:var(--fg-muted)] mb-8">
+      Recibe nuevas publicaciones, ensayos y novedades editoriales en tu correo.
+    </p>
+
+    <form
+      id="subscribe-form"
+      class="flex flex-col sm:flex-row gap-3 items-stretch"
+      data-endpoint={endpoint}
+    >
+      <input
+        type="email"
+        name="email"
+        required
+        autocomplete="email"
+        placeholder="tu@email.com"
+        class="flex-1 px-4 py-3 bg-[color:var(--bg)] border border-[color:var(--border)] focus:outline-none focus:border-[color:var(--fg)]"
+      />
+      <input
+        type="hidden"
+        name="source"
+        value="home_subscribe"
+      />
+      {/* honeypot — bots fill it, humans don't see it */}
+      <div class="hp-field" aria-hidden="true">
+        <label>
+          Sitio web
+          <input type="text" name="website" tabindex="-1" autocomplete="off" />
+        </label>
+      </div>
+      <div class="cf-turnstile" data-sitekey={siteKey} data-size="invisible"></div>
+      <button type="submit" class="btn-solid">Suscribirme</button>
+    </form>
+
+    <p
+      id="subscribe-msg"
+      class="mt-4 text-sm min-h-[1.25rem] text-[color:var(--fg-muted)]"
+      role="status"
+      aria-live="polite"
+    ></p>
+  </div>
+</section>
+
+<script
+  is:inline
+  src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+  async
+  defer></script>
+
+<script>
+  const form = document.getElementById("subscribe-form") as HTMLFormElement | null;
+  const msg = document.getElementById("subscribe-msg");
+  if (form && msg) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.textContent = "Enviando...";
+      msg.style.color = "var(--fg-muted)";
+
+      const fd = new FormData(form);
+      const widget = form.querySelector(".cf-turnstile");
+      // @ts-ignore — turnstile is global
+      const token =
+        widget && window.turnstile
+          ? // @ts-ignore
+            window.turnstile.getResponse(widget)
+          : "";
+
+      const body = {
+        email: String(fd.get("email") ?? ""),
+        source: String(fd.get("source") ?? ""),
+        website: String(fd.get("website") ?? ""),
+        turnstile_token: token,
+      };
+
+      try {
+        const res = await fetch(form.dataset.endpoint!, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (res.ok) {
+          msg.textContent = "Listo. Revisa tu email para confirmar la suscripción.";
+          msg.style.color = "var(--fg)";
+          form.reset();
+          // @ts-ignore
+          window.turnstile?.reset();
+        } else {
+          const j = await res.json().catch(() => ({}));
+          msg.textContent = j.error ?? "No pudimos completar la suscripción.";
+          msg.style.color = "#b91c1c";
+        }
+      } catch (err) {
+        msg.textContent = "Error de red. Intenta de nuevo.";
+        msg.style.color = "#b91c1c";
+      }
+    });
+  }
+</script>

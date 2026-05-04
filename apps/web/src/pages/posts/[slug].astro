@@ -1,0 +1,80 @@
+---
+import Layout from "~/layouts/Layout.astro";
+import { supabase } from "~/lib/supabase";
+import { renderMarkdown } from "~/lib/markdown";
+
+export async function getStaticPaths() {
+  const { data } = await supabase
+    .from("posts")
+    .select("slug")
+    .eq("status", "published");
+  return (data ?? []).map((p) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+
+const { data: post } = await supabase
+  .from("posts")
+  .select("*")
+  .eq("slug", slug!)
+  .eq("status", "published")
+  .maybeSingle();
+
+if (!post) {
+  return Astro.redirect("/");
+}
+
+const [{ data: author }, { data: category }] = await Promise.all([
+  post.author_id
+    ? supabase.from("authors").select("*").eq("id", post.author_id).maybeSingle()
+    : { data: null },
+  post.category_id
+    ? supabase.from("categories").select("*").eq("id", post.category_id).maybeSingle()
+    : { data: null },
+]);
+
+const html = renderMarkdown(post.content_md);
+
+const formatted = post.published_at
+  ? new Intl.DateTimeFormat("es-CO", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(new Date(post.published_at))
+  : "";
+---
+
+<Layout title={post.title} description={post.meta_description ?? post.excerpt ?? undefined}>
+  <article class="mx-auto max-w-[760px] px-6 lg:px-12 py-20">
+    {post.cover_image_url && (
+      <img
+        src={post.cover_image_url}
+        alt=""
+        class="w-full aspect-[16/9] object-cover mb-12"
+      />
+    )}
+
+    {category && (
+      <p class="uppercase text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-4">
+        {category.name}
+      </p>
+    )}
+
+    <h1 class="font-serif text-4xl md:text-5xl leading-[1.1] mb-6">{post.title}</h1>
+
+    {post.subtitle && (
+      <p class="text-xl text-[color:var(--fg-muted)] italic mb-8">{post.subtitle}</p>
+    )}
+
+    <div class="flex items-center gap-4 text-xs uppercase tracking-[0.12em] text-[color:var(--fg-muted)] mb-12 border-y border-[color:var(--border)] py-4">
+      {author && <span>{author.name}</span>}
+      {formatted && <span>{formatted}</span>}
+      {post.reading_time_minutes && <span>{post.reading_time_minutes} min</span>}
+    </div>
+
+    <div
+      class="prose prose-stone max-w-none [&_p]:mb-5 [&_p]:leading-relaxed [&_h2]:mt-12 [&_h2]:mb-4 [&_h2]:font-serif [&_h2]:text-2xl [&_blockquote]:italic [&_blockquote]:border-l-2 [&_blockquote]:border-[color:var(--fg-muted)] [&_blockquote]:pl-4 [&_img]:my-8"
+      set:html={html}
+    ></div>
+  </article>
+</Layout>

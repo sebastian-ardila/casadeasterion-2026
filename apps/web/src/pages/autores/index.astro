@@ -1,0 +1,41 @@
+---
+import Layout from "~/layouts/Layout.astro";
+import { supabase } from "~/lib/supabase";
+
+const { data: authors } = await supabase
+  .from("authors")
+  .select("*")
+  .order("name");
+---
+
+<Layout title="Autores">
+  <section class="mx-auto max-w-[1400px] px-6 lg:px-12 pt-20 pb-12">
+    <h1 class="font-serif text-4xl md:text-6xl mb-4">Autores</h1>
+    <p class="text-[color:var(--fg-muted)] max-w-prose">
+      Voces que publican y colaboran con la editorial.
+    </p>
+  </section>
+
+  <section class="mx-auto max-w-[1400px] px-6 lg:px-12 pb-24">
+    {authors && authors.length > 0 ? (
+      <div class="grid gap-12 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {authors.map((a) => (
+          <a href={`/autores/${a.slug}`} class="group">
+            {a.photo_url ? (
+              <img
+                src={a.photo_url}
+                alt={a.name}
+                class="w-full aspect-square object-cover bg-[color:var(--bg-alt)] grayscale group-hover:grayscale-0 transition"
+              />
+            ) : (
+              <div class="aspect-square bg-[color:var(--bg-alt)]"></div>
+            )}
+            <h3 class="font-serif text-lg mt-4">{a.name}</h3>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <p class="text-[color:var(--fg-muted)]">Pronto.</p>
+    )}
+  </section>
+</Layout>

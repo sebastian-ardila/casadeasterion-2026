@@ -1,0 +1,69 @@
+---
+import { loadSiteConfig } from "~/lib/site-config";
+const config = await loadSiteConfig();
+---
+
+<footer class="bg-[color:var(--card)] text-[color:var(--card-fg)] mt-24">
+  <div class="mx-auto max-w-[1400px] px-6 lg:px-12 py-20 grid gap-12 md:grid-cols-4">
+    <div class="md:col-span-1">
+      <h3 class="font-serif uppercase tracking-[0.18em] text-sm mb-6">
+        Casa de Asterión
+      </h3>
+      <p class="text-sm leading-relaxed opacity-75">
+        {config.editorial_description}
+      </p>
+    </div>
+
+    <div>
+      <h4 class="uppercase tracking-[0.18em] text-xs font-semibold mb-5 opacity-90">
+        Editorial
+      </h4>
+      <ul class="space-y-3 text-sm opacity-75">
+        <li><a href="/sobre-nosotros" class="hover:opacity-100">Sobre Nosotros</a></li>
+        <li><a href="/equipo" class="hover:opacity-100">Equipo</a></li>
+        <li><a href="/filosofia" class="hover:opacity-100">Filosofía</a></li>
+        <li><a href="/contacto" class="hover:opacity-100">Contacto</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4 class="uppercase tracking-[0.18em] text-xs font-semibold mb-5 opacity-90">
+        Contenido
+      </h4>
+      <ul class="space-y-3 text-sm opacity-75">
+        <li><a href="/filosofia" class="hover:opacity-100">Artículos</a></li>
+        <li><a href="/autores" class="hover:opacity-100">Autores</a></li>
+        <li><a href="/archivo" class="hover:opacity-100">Archivo</a></li>
+        <li><a href="/temas" class="hover:opacity-100">Temas</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4 class="uppercase tracking-[0.18em] text-xs font-semibold mb-5 opacity-90">
+        Legal
+      </h4>
+      <ul class="space-y-3 text-sm opacity-75">
+        <li><a href="/privacidad" class="hover:opacity-100">Privacidad</a></li>
+        <li><a href="/terminos" class="hover:opacity-100">Términos</a></li>
+        <li><a href="/copyright" class="hover:opacity-100">Copyright</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div
+    class="border-t border-[color:var(--card-fg)]/15 mx-auto max-w-[1400px] px-6 lg:px-12 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs opacity-65"
+  >
+    <p>{config.footer_legal}</p>
+    <div class="flex items-center gap-6 uppercase tracking-[0.18em]">
+      {config.social_links.facebook && (
+        <a href={config.social_links.facebook} target="_blank" rel="noopener noreferrer">Facebook</a>
+      )}
+      {config.social_links.instagram && (
+        <a href={config.social_links.instagram} target="_blank" rel="noopener noreferrer">Instagram</a>
+      )}
+      {config.social_links.twitter && (
+        <a href={config.social_links.twitter} target="_blank" rel="noopener noreferrer">Twitter</a>
+      )}
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,118 @@
+---
+import Layout from "~/layouts/Layout.astro";
+import { supabase } from "~/lib/supabase";
+import { loadSiteConfig, buildWhatsappUrl } from "~/lib/site-config";
+import { renderMarkdown } from "~/lib/markdown";
+
+export async function getStaticPaths() {
+  const { data } = await supabase
+    .from("books")
+    .select("slug")
+    .eq("status", "published");
+  return (data ?? []).map((b) => ({ params: { slug: b.slug } }));
+}
+
+const { slug } = Astro.params;
+const config = await loadSiteConfig();
+
+const { data: book } = await supabase
+  .from("books")
+  .select("*")
+  .eq("slug", slug!)
+  .eq("status", "published")
+  .maybeSingle();
+
+if (!book) {
+  return Astro.redirect("/catalogo");
+}
+
+const { data: author } = book.author_id
+  ? await supabase.from("authors").select("*").eq("id", book.author_id).maybeSingle()
+  : { data: null };
+
+const description = renderMarkdown(book.description_md);
+
+const whatsappText = book.whatsapp_message_override ?? config.whatsapp_message_template;
+const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
+  title: book.title,
+  author: author?.name ?? "",
+  isbn: book.isbn ?? "",
+  slug: book.slug,
+});
+---
+
+<Layout title={book.title} description={book.subtitle ?? undefined}>
+  <article class="mx-auto max-w-[1100px] px-6 lg:px-12 py-20 grid lg:grid-cols-[1fr_1.4fr] gap-12">
+    <div>
+      {book.cover_image_url ? (
+        <img
+          src={book.cover_image_url}
+          alt={`Portada de ${book.title}`}
+          class="w-full aspect-[3/4] object-cover bg-[color:var(--bg-alt)]"
+        />
+      ) : (
+        <div class="aspect-[3/4] bg-[color:var(--bg-alt)]"></div>
+      )}
+    </div>
+
+    <div>
+      {author && (
+        <p class="uppercase text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-4">
+          {author.name}
+        </p>
+      )}
+      <h1 class="font-serif text-4xl md:text-5xl leading-[1.1] mb-3">{book.title}</h1>
+      {book.subtitle && (
+        <p class="text-xl text-[color:var(--fg-muted)] italic mb-8">{book.subtitle}</p>
+      )}
+
+      <div
+        class="prose prose-stone max-w-none text-[color:var(--fg)] leading-relaxed mb-10 [&_p]:mb-4"
+        set:html={description}
+      ></div>
+
+      <dl class="grid grid-cols-2 gap-y-3 text-sm border-t border-[color:var(--border)] pt-6 mb-10">
+        {book.isbn && (
+          <>
+            <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-xs">ISBN</dt>
+            <dd>{book.isbn}</dd>
+          </>
+        )}
+        {book.pages && (
+          <>
+            <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-xs">Páginas</dt>
+            <dd>{book.pages}</dd>
+          </>
+        )}
+        {book.format && (
+          <>
+            <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-xs">Formato</dt>
+            <dd class="capitalize">{book.format}</dd>
+          </>
+        )}
+        {book.publication_date && (
+          <>
+            <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-xs">Publicación</dt>
+            <dd>{new Date(book.publication_date).getFullYear()}</dd>
+          </>
+        )}
+        {book.price_amount != null && (
+          <>
+            <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-xs">Precio</dt>
+            <dd class="font-medium">
+              {new Intl.NumberFormat("es-CO", {
+                style: "currency",
+                currency: book.price_currency,
+                maximumFractionDigits: 0,
+              }).format(Number(book.price_amount))}
+            </dd>
+          </>
+        )}
+      </dl>
+
+      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="btn-solid inline-block">
+        Comprar por WhatsApp
+      </a>
+    </div>
+  </article>
+</Layout>
