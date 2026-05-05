@@ -1,21 +1,47 @@
 version: 1
 applications:
-  - appRoot: .
+  # Public site (Astro SSG) → casadeasterionediciones.com
+  - appRoot: apps/web
     frontend:
       phases:
         preBuild:
           commands:
+            - cd ../..
             - corepack enable
             - corepack prepare pnpm@10.28.1 --activate
             - pnpm install --frozen-lockfile
         build:
           commands:
+            - cd ../..
             - pnpm --filter web build
       artifacts:
-        baseDirectory: apps/web/dist
+        baseDirectory: dist
         files:
-          - '**/*'
+          - "**/*"
       cache:
         paths:
-          - node_modules/**/*
-          - apps/web/node_modules/**/*
+          - "../../node_modules/**/*"
+          - "node_modules/**/*"
+
+  # Admin CMS (Astro SSR) → cms.casadeasterionediciones.com
+  - appRoot: apps/cms
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - cd ../..
+            - corepack enable
+            - corepack prepare pnpm@10.28.1 --activate
+            - pnpm install --frozen-lockfile
+        build:
+          commands:
+            - cd ../..
+            - pnpm --filter cms build
+      artifacts:
+        baseDirectory: dist
+        files:
+          - "**/*"
+      cache:
+        paths:
+          - "../../node_modules/**/*"
+          - "node_modules/**/*"
