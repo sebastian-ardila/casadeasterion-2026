@@ -43,6 +43,35 @@ export type Database = {
           },
         ]
       }
+      admin_permissions: {
+        Row: {
+          level: string
+          profile_id: string
+          resource: string
+          updated_at: string
+        }
+        Insert: {
+          level?: string
+          profile_id: string
+          resource: string
+          updated_at?: string
+        }
+        Update: {
+          level?: string
+          profile_id?: string
+          resource?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_permissions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       authors: {
         Row: {
           bio_md: string | null
@@ -384,7 +413,12 @@ export type Database = {
         Args: { p_key: string; p_max: number; p_window_seconds: number }
         Returns: boolean
       }
+      has_permission: {
+        Args: { lvl: string; res: string; uid: string }
+        Returns: boolean
+      }
       is_admin: { Args: { uid: string }; Returns: boolean }
+      is_owner: { Args: { uid: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
