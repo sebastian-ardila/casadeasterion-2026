@@ -16,7 +16,7 @@ const desc = description ?? config.editorial_description;
 ---
 
 <!doctype html>
-<html lang="es" data-theme="light">
+<html lang="es" data-theme="light" data-theme-locked="true">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -44,10 +44,8 @@ const desc = description ?? config.editorial_description;
     />
     <title>{fullTitle}</title>
     <script is:inline>
-      const stored = localStorage.getItem("theme");
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const theme = stored ?? (prefersDark ? "dark" : "light");
-      document.documentElement.dataset.theme = theme;
+      // Dark mode disabled for now (data-theme-locked). Force light.
+      document.documentElement.dataset.theme = "light";
     </script>
   </head>
   <body class="min-h-screen flex flex-col">

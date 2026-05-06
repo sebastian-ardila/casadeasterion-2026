@@ -1,6 +1,7 @@
 ---
 const navItems = [
   { href: "/catalogo", label: "Catálogo" },
+  { href: "/articulos", label: "Artículos" },
   { href: "/filosofia", label: "Filosofía" },
   { href: "/poesia", label: "Poesía" },
   { href: "/autores", label: "Autores" },
@@ -37,11 +38,12 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
     </nav>
 
     <div class="flex items-center gap-4">
+      {/* Theme toggle disabled for now — keeping markup so we can re-enable later */}
       <button
         type="button"
         id="theme-toggle"
         aria-label="Cambiar tema"
-        class="w-12 h-6 rounded-full border border-[color:var(--border)] bg-[color:var(--bg-alt)] relative cursor-pointer hover:bg-[color:var(--border)] transition"
+        class="hidden w-12 h-6 rounded-full border border-[color:var(--border)] bg-[color:var(--bg-alt)] relative cursor-pointer hover:bg-[color:var(--border)] transition"
       >
         <span
           id="theme-toggle-dot"
@@ -52,23 +54,3 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
     </div>
   </div>
 </header>
-
-<script is:inline>
-  (() => {
-    const btn = document.getElementById("theme-toggle");
-    const dot = document.getElementById("theme-toggle-dot");
-    if (!btn || !dot) return;
-    const sync = () => {
-      const t = document.documentElement.dataset.theme;
-      dot.style.transform = t === "dark" ? "translateX(24px)" : "translateX(0)";
-    };
-    sync();
-    btn.addEventListener("click", () => {
-      const cur = document.documentElement.dataset.theme;
-      const next = cur === "dark" ? "light" : "dark";
-      document.documentElement.dataset.theme = next;
-      localStorage.setItem("theme", next);
-      sync();
-    });
-  })();
-</script>
