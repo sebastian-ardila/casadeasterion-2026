@@ -35,7 +35,7 @@ const rest = (featuredPosts ?? []).slice(1);
 <Layout>
   {/* Hero — tall section so the sticky image has scroll range; card centered
       vertically by flex; image goes from top to bottom of the section */}
-  <section class="hero-section relative bg-[color:var(--bg-alt)] overflow-hidden md:h-[150vh] md:min-h-[1000px] flex md:items-center">
+  <section class="hero-section relative bg-[color:var(--bg-alt)] overflow-x-clip md:h-[150vh] md:min-h-[1000px] flex md:items-center">
     {/* Right-half sticky image (desktop only). h-screen on the inner sticky
         keeps it pinned to the viewport while the parent scrolls past it. */}
     <div class="hidden md:block absolute inset-y-0 right-0 w-1/2 pointer-events-none">
