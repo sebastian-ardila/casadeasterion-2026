@@ -9,7 +9,7 @@ interface Props {
 }
 
 const { post, author, category, href } = Astro.props;
-const link = href ?? `/posts/${post.slug}`;
+const link = href ?? `/articulos/${post.slug}`;
 
 const formatted = post.published_at
   ? new Intl.DateTimeFormat("es-CO", {
