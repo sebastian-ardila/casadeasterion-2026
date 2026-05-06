@@ -33,18 +33,18 @@ const rest = (featuredPosts ?? []).slice(1);
 ---
 
 <Layout>
-  {/* Hero — tall section so the sticky image has scroll range; card centered
-      vertically by flex; image goes from top to bottom of the section */}
-  <section class="hero-section relative bg-[color:var(--bg-alt)] overflow-x-clip md:h-[150vh] md:min-h-[1000px] flex md:items-center">
-    {/* Right-half sticky image (desktop only). h-screen on the inner sticky
-        keeps it pinned to the viewport while the parent scrolls past it. */}
-    <div class="hidden md:block absolute inset-y-0 right-0 w-1/2 pointer-events-none">
-      <div
-        id="hero-image"
-        class="sticky top-0 h-screen bg-cover bg-center will-change-[opacity] transition-opacity duration-200"
-        style="background-image: url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=2400&q=80')"
-      >
-      </div>
+  {/* Hero — exactly one viewport tall on desktop. The right-half image is
+      fixed-positioned so it visually stays in place while the page scrolls
+      past it; JS fades it to 0 by ~0.6vh of scroll, after which the (now
+      invisible) image doesn't interfere with later sections. */}
+  <section class="hero-section relative bg-[color:var(--bg-alt)] overflow-x-clip md:h-screen flex md:items-center">
+    {/* Right-half fixed image (desktop only). z-0 so it sits below the
+        sticky header (z-30) but above the body bg. */}
+    <div
+      id="hero-image"
+      class="hidden md:block fixed top-0 right-0 h-screen w-1/2 bg-cover bg-center pointer-events-none will-change-[opacity] transition-opacity duration-200 z-0"
+      style="background-image: url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=2400&q=80')"
+    >
     </div>
 
     {/* Mobile-only image (no sticky on small screens) */}
@@ -96,15 +96,14 @@ const rest = (featuredPosts ?? []).slice(1);
     (() => {
       const img = document.getElementById("hero-image");
       if (!img) return;
-      // Hero is md:h-[150vh] so the inner sticky image stays pinned for
-      // ~50vh of scroll. Fade must complete inside that window so the
-      // user sees the image hold still while it disappears, *not* get
-      // dragged off-screen with the parent.
+      // Image is position:fixed so it never moves with the scroll. JS just
+      // ramps opacity from 1 → 0 between scrollY = 0.2vh and 0.7vh. After
+      // that, the image is fully transparent (still in DOM, but invisible).
       const onScroll = () => {
         const y = window.scrollY;
         const vh = window.innerHeight;
         const startFade = vh * 0.2;
-        const fadeOver = vh * 0.3; // ends at 0.5vh, ≈ end of sticky range
+        const fadeOver = vh * 0.5;
         const t = Math.max(0, Math.min(1, (y - startFade) / fadeOver));
         img.style.opacity = String(1 - t);
       };
