@@ -1,0 +1,68 @@
+---
+interface Props {
+  // Override the last crumb's label (used by dynamic pages like
+  // /articulos/[slug] to show the post title instead of the slug).
+  currentLabel?: string;
+}
+const { currentLabel } = Astro.props;
+
+const segmentLabels: Record<string, string> = {
+  articulos: "Artículos",
+  filosofia: "Filosofía",
+  poesia: "Poesía",
+  autores: "Autores",
+  catalogo: "Catálogo",
+  contacto: "Contacto",
+};
+
+const path = Astro.url.pathname.replace(/\/$/, "");
+const segments = path.split("/").filter(Boolean);
+
+// Don't render on the homepage — there's nowhere meaningful to crumb to.
+const showCrumbs = segments.length > 0;
+
+type Crumb = { label: string; href: string | null };
+const crumbs: Crumb[] = showCrumbs
+  ? [
+      { label: "Inicio", href: "/" },
+      ...segments.map((seg, idx) => {
+        const isLast = idx === segments.length - 1;
+        const href = isLast ? null : "/" + segments.slice(0, idx + 1).join("/");
+        // Last segment may be a dynamic slug — prefer currentLabel if given.
+        const label = isLast && currentLabel
+          ? currentLabel
+          : segmentLabels[seg] ?? decodeURIComponent(seg).replace(/-/g, " ");
+        return { label, href };
+      }),
+    ]
+  : [];
+---
+
+{showCrumbs && (
+  <nav
+    aria-label="Breadcrumb"
+    class="sticky top-20 z-20 bg-[color:var(--bg)]/90 backdrop-blur border-b border-[color:var(--border)]"
+  >
+    <ol class="mx-auto max-w-[1400px] px-6 lg:px-12 py-3 flex items-center gap-2 text-xs uppercase tracking-[0.16em] overflow-x-auto whitespace-nowrap">
+      {crumbs.map((crumb, idx) => {
+        const last = idx === crumbs.length - 1;
+        return (
+          <li class="flex items-center gap-2">
+            {crumb.href ? (
+              <a href={crumb.href} class="text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition">
+                {crumb.label}
+              </a>
+            ) : (
+              <span class:list={[last ? "text-[color:var(--fg)]" : "text-[color:var(--fg-muted)]", "first-letter:capitalize"]}>
+                {crumb.label}
+              </span>
+            )}
+            {!last && (
+              <span aria-hidden="true" class="text-[color:var(--fg-muted)]/60">›</span>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  </nav>
+)}

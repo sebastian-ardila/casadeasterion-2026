@@ -44,7 +44,7 @@ const formatted = post.published_at
   : "";
 ---
 
-<Layout title={post.title} description={post.meta_description ?? post.excerpt ?? undefined}>
+<Layout title={post.title} description={post.meta_description ?? post.excerpt ?? undefined} breadcrumbLabel={post.title}>
   <article class="mx-auto max-w-[760px] px-6 lg:px-12 py-20">
     {post.cover_image_url && (
       <img
