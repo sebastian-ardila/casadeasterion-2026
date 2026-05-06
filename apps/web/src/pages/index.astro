@@ -96,11 +96,15 @@ const rest = (featuredPosts ?? []).slice(1);
     (() => {
       const img = document.getElementById("hero-image");
       if (!img) return;
+      // Hero is md:h-[150vh] so the inner sticky image stays pinned for
+      // ~50vh of scroll. Fade must complete inside that window so the
+      // user sees the image hold still while it disappears, *not* get
+      // dragged off-screen with the parent.
       const onScroll = () => {
         const y = window.scrollY;
         const vh = window.innerHeight;
-        const startFade = vh * 0.6;
-        const fadeOver = vh * 0.6;
+        const startFade = vh * 0.2;
+        const fadeOver = vh * 0.3; // ends at 0.5vh, ≈ end of sticky range
         const t = Math.max(0, Math.min(1, (y - startFade) / fadeOver));
         img.style.opacity = String(1 - t);
       };
