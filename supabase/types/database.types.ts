@@ -113,6 +113,7 @@ export type Database = {
           created_at: string
           description_md: string | null
           format: string | null
+          gallery_urls: string[]
           id: string
           isbn: string | null
           pages: number | null
@@ -135,6 +136,7 @@ export type Database = {
           created_at?: string
           description_md?: string | null
           format?: string | null
+          gallery_urls?: string[]
           id?: string
           isbn?: string | null
           pages?: number | null
@@ -157,6 +159,7 @@ export type Database = {
           created_at?: string
           description_md?: string | null
           format?: string | null
+          gallery_urls?: string[]
           id?: string
           isbn?: string | null
           pages?: number | null
@@ -230,6 +233,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string
           excerpt: string | null
+          gallery_urls: string[]
           id: string
           meta_description: string | null
           published_at: string | null
@@ -248,6 +252,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           excerpt?: string | null
+          gallery_urls?: string[]
           id?: string
           meta_description?: string | null
           published_at?: string | null
@@ -266,6 +271,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           excerpt?: string | null
+          gallery_urls?: string[]
           id?: string
           meta_description?: string | null
           published_at?: string | null
