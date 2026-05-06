@@ -16,9 +16,16 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
   <div class="mx-auto max-w-[1400px] px-6 lg:px-12 h-20 flex items-center justify-between gap-8">
     <a
       href="/"
-      class="font-serif tracking-[0.18em] uppercase text-sm font-medium hover:opacity-70 transition"
+      class="flex items-center gap-3 font-serif tracking-[0.18em] uppercase text-sm font-medium hover:opacity-70 transition"
     >
-      Casa de Asterión
+      <img
+        src="/casadeasterion.webp"
+        alt=""
+        width="48"
+        height="48"
+        class="h-12 w-12 object-contain"
+      />
+      <span>Casa de Asterión</span>
     </a>
 
     <nav class="hidden md:flex items-center gap-10">
