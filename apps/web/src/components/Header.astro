@@ -1,4 +1,8 @@
 ---
+import { loadSiteConfig } from "~/lib/site-config";
+const config = await loadSiteConfig();
+const showSubscribe = config.subscribe_enabled !== false;
+
 const navItems = [
   { href: "/catalogo", label: "Catálogo" },
   { href: "/articulos", label: "Artículos" },
@@ -43,7 +47,9 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
     </nav>
 
     <div class="flex items-center gap-3">
-      <a href="/#suscribirse" class="btn-outline hidden sm:inline-block">Suscribirse</a>
+      {showSubscribe && (
+        <a href="/#suscribirse" class="btn-outline hidden sm:inline-block">Suscribirse</a>
+      )}
 
       {/* Mobile hamburger */}
       <button
@@ -88,9 +94,11 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
           </a>
         </li>
       ))}
-      <li class="pt-3 mt-2 border-t border-[color:var(--border)]">
-        <a href="/#suscribirse" class="btn-outline inline-block">Suscribirse</a>
-      </li>
+      {showSubscribe && (
+        <li class="pt-3 mt-2 border-t border-[color:var(--border)]">
+          <a href="/#suscribirse" class="btn-outline inline-block">Suscribirse</a>
+        </li>
+      )}
     </ul>
   </nav>
 </header>

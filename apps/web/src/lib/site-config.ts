@@ -9,6 +9,8 @@ export type SiteConfigMap = {
   whatsapp_phone: string;
   whatsapp_message_template: string;
   robots_block_ai: string[];
+  /** Master switch for the newsletter subscription form + links. */
+  subscribe_enabled: boolean;
   [key: string]: unknown;
 };
 
@@ -24,6 +26,7 @@ const DEFAULTS: SiteConfigMap = {
   whatsapp_message_template:
     'Hola, me interesa el libro "{{title}}" de {{author}}. ¿Está disponible?',
   robots_block_ai: [],
+  subscribe_enabled: true,
 };
 
 let cache: SiteConfigMap | null = null;

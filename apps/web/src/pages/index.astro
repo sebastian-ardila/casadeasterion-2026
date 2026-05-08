@@ -150,5 +150,5 @@ const rest = (featuredPosts ?? []).slice(1);
     </section>
   )}
 
-  <SubscribeForm />
+  {config.subscribe_enabled !== false && <SubscribeForm />}
 </Layout>
