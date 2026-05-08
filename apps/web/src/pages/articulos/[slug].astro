@@ -44,7 +44,27 @@ const formatted = post.published_at
   : "";
 ---
 
-<Layout title={post.title} description={post.meta_description ?? post.excerpt ?? undefined} breadcrumbLabel={post.title}>
+<Layout
+  title={post.title}
+  description={post.meta_description ?? post.excerpt ?? undefined}
+  breadcrumbLabel={post.title}
+  seoType="article"
+  image={post.cover_image_url}
+  imageAlt={post.cover_image_alt ?? post.title}
+  keywords={post.keywords}
+  canonical={post.canonical_url}
+  publishedAt={post.published_at}
+  updatedAt={post.updated_at}
+  authorName={author?.name}
+  authorUrl={author ? new URL(`/autores/${author.slug}`, Astro.site).href : null}
+  section={category?.name}
+  tags={post.tags}
+  breadcrumbItems={[
+    { name: "Inicio", url: new URL("/", Astro.site).href },
+    { name: "Artículos", url: new URL("/articulos", Astro.site).href },
+    { name: post.title, url: Astro.url.href },
+  ]}
+>
   <article class="mx-auto max-w-[760px] px-6 lg:px-12 py-20">
     {post.cover_image_url && (
       <img

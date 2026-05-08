@@ -77,6 +77,7 @@ export type Database = {
           bio_md: string | null
           created_at: string
           id: string
+          keywords: string[] | null
           links: Json
           name: string
           photo_url: string | null
@@ -87,6 +88,7 @@ export type Database = {
           bio_md?: string | null
           created_at?: string
           id?: string
+          keywords?: string[] | null
           links?: Json
           name: string
           photo_url?: string | null
@@ -97,6 +99,7 @@ export type Database = {
           bio_md?: string | null
           created_at?: string
           id?: string
+          keywords?: string[] | null
           links?: Json
           name?: string
           photo_url?: string | null
@@ -108,7 +111,9 @@ export type Database = {
       books: {
         Row: {
           author_id: string | null
+          canonical_url: string | null
           category_id: string | null
+          cover_image_alt: string | null
           cover_image_url: string | null
           created_at: string
           description_md: string | null
@@ -116,6 +121,7 @@ export type Database = {
           gallery_urls: string[]
           id: string
           isbn: string | null
+          keywords: string[] | null
           pages: number | null
           price_amount: number | null
           price_currency: string
@@ -131,7 +137,9 @@ export type Database = {
         }
         Insert: {
           author_id?: string | null
+          canonical_url?: string | null
           category_id?: string | null
+          cover_image_alt?: string | null
           cover_image_url?: string | null
           created_at?: string
           description_md?: string | null
@@ -139,6 +147,7 @@ export type Database = {
           gallery_urls?: string[]
           id?: string
           isbn?: string | null
+          keywords?: string[] | null
           pages?: number | null
           price_amount?: number | null
           price_currency?: string
@@ -154,7 +163,9 @@ export type Database = {
         }
         Update: {
           author_id?: string | null
+          canonical_url?: string | null
           category_id?: string | null
+          cover_image_alt?: string | null
           cover_image_url?: string | null
           created_at?: string
           description_md?: string | null
@@ -162,6 +173,7 @@ export type Database = {
           gallery_urls?: string[]
           id?: string
           isbn?: string | null
+          keywords?: string[] | null
           pages?: number | null
           price_amount?: number | null
           price_currency?: string
@@ -225,16 +237,37 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_rebuild: {
+        Row: {
+          id: number
+          last_dispatched_at: string | null
+          requested_at: string
+        }
+        Insert: {
+          id: number
+          last_dispatched_at?: string | null
+          requested_at?: string
+        }
+        Update: {
+          id?: number
+          last_dispatched_at?: string | null
+          requested_at?: string
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           author_id: string | null
+          canonical_url: string | null
           category_id: string | null
           content_md: string
+          cover_image_alt: string | null
           cover_image_url: string | null
           created_at: string
           excerpt: string | null
           gallery_urls: string[]
           id: string
+          keywords: string[] | null
           meta_description: string | null
           published_at: string | null
           reading_time_minutes: number | null
@@ -247,13 +280,16 @@ export type Database = {
         }
         Insert: {
           author_id?: string | null
+          canonical_url?: string | null
           category_id?: string | null
           content_md: string
+          cover_image_alt?: string | null
           cover_image_url?: string | null
           created_at?: string
           excerpt?: string | null
           gallery_urls?: string[]
           id?: string
+          keywords?: string[] | null
           meta_description?: string | null
           published_at?: string | null
           reading_time_minutes?: number | null
@@ -266,13 +302,16 @@ export type Database = {
         }
         Update: {
           author_id?: string | null
+          canonical_url?: string | null
           category_id?: string | null
           content_md?: string
+          cover_image_alt?: string | null
           cover_image_url?: string | null
           created_at?: string
           excerpt?: string | null
           gallery_urls?: string[]
           id?: string
+          keywords?: string[] | null
           meta_description?: string | null
           published_at?: string | null
           reading_time_minutes?: number | null
@@ -379,7 +418,6 @@ export type Database = {
       }
       subscribers: {
         Row: {
-          confirmation_token: string
           confirmed_at: string | null
           created_at: string
           email: string
@@ -389,7 +427,6 @@ export type Database = {
           unsubscribed_at: string | null
         }
         Insert: {
-          confirmation_token?: string
           confirmed_at?: string | null
           created_at?: string
           email: string
@@ -399,7 +436,6 @@ export type Database = {
           unsubscribed_at?: string | null
         }
         Update: {
-          confirmation_token?: string
           confirmed_at?: string | null
           created_at?: string
           email?: string
@@ -419,12 +455,16 @@ export type Database = {
         Args: { p_key: string; p_max: number; p_window_seconds: number }
         Returns: boolean
       }
+      delete_admin_user: { Args: { target_id: string }; Returns: undefined }
+      dispatch_rebuild_if_due: { Args: never; Returns: undefined }
+      get_secret: { Args: { p_name: string }; Returns: string }
       has_permission: {
         Args: { lvl: string; res: string; uid: string }
         Returns: boolean
       }
       is_admin: { Args: { uid: string }; Returns: boolean }
       is_owner: { Args: { uid: string }; Returns: boolean }
+      queue_rebuild: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

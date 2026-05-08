@@ -31,9 +31,26 @@ const { data: books } = await supabase
   .order("published_at", { ascending: false });
 
 const bio = renderMarkdown(author.bio_md);
+const links = (author.links as Record<string, string> | null) ?? {};
+const sameAs = [links.web, links.twitter, links.instagram].filter(Boolean) as string[];
+const bioPlain = (author.bio_md ?? "").replace(/[#*_`>\-]/g, "").replace(/\s+/g, " ").trim().slice(0, 200);
 ---
 
-<Layout title={author.name}>
+<Layout
+  title={author.name}
+  description={bioPlain || `Ficha del autor ${author.name} en Casa de Asterión Ediciones.`}
+  breadcrumbLabel={author.name}
+  seoType="person"
+  image={author.photo_url}
+  imageAlt={`Foto de ${author.name}`}
+  keywords={author.keywords}
+  sameAs={sameAs}
+  breadcrumbItems={[
+    { name: "Inicio", url: new URL("/", Astro.site).href },
+    { name: "Autores", url: new URL("/autores", Astro.site).href },
+    { name: author.name, url: Astro.url.href },
+  ]}
+>
   <section class="mx-auto max-w-[1100px] px-6 lg:px-12 pt-20 pb-12 grid md:grid-cols-[260px_1fr] gap-12 items-start">
     {author.photo_url ? (
       <img

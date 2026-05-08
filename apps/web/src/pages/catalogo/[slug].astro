@@ -41,7 +41,25 @@ const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
 });
 ---
 
-<Layout title={book.title} description={book.subtitle ?? undefined}>
+<Layout
+  title={book.title}
+  description={book.subtitle ?? book.description_md?.slice(0, 160) ?? undefined}
+  breadcrumbLabel={book.title}
+  seoType="book"
+  image={book.cover_image_url}
+  imageAlt={book.cover_image_alt ?? `Portada de ${book.title}`}
+  keywords={book.keywords}
+  canonical={book.canonical_url}
+  isbn={book.isbn}
+  authorName={author?.name}
+  authorUrl={author ? new URL(`/autores/${author.slug}`, Astro.site).href : null}
+  publishedAt={book.publication_date}
+  breadcrumbItems={[
+    { name: "Inicio", url: new URL("/", Astro.site).href },
+    { name: "Catálogo", url: new URL("/catalogo", Astro.site).href },
+    { name: book.title, url: Astro.url.href },
+  ]}
+>
   <article class="mx-auto max-w-[1100px] px-6 lg:px-12 py-20 grid lg:grid-cols-[1fr_1.4fr] gap-12">
     <div>
       {book.cover_image_url ? (

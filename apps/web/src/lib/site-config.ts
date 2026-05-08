@@ -11,6 +11,10 @@ export type SiteConfigMap = {
   robots_block_ai: string[];
   /** Master switch for the newsletter subscription form + links. */
   subscribe_enabled: boolean;
+  default_keywords: string[];
+  twitter_handle: string;
+  og_image_default: string;
+  organization_logo_url: string;
   [key: string]: unknown;
 };
 
@@ -27,6 +31,10 @@ const DEFAULTS: SiteConfigMap = {
     'Hola, me interesa el libro "{{title}}" de {{author}}. ¿Está disponible?',
   robots_block_ai: [],
   subscribe_enabled: true,
+  default_keywords: [],
+  twitter_handle: "",
+  og_image_default: "",
+  organization_logo_url: "",
 };
 
 let cache: SiteConfigMap | null = null;

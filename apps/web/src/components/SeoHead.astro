@@ -1,0 +1,216 @@
+---
+import type { SiteConfigMap } from "~/lib/site-config";
+
+type SeoType = "website" | "article" | "book" | "person";
+
+interface Props {
+  type: SeoType;
+  title: string;
+  description: string;
+  url: string;
+  image?: string | null;
+  imageAlt?: string | null;
+  keywords?: string[] | null;
+  canonical?: string | null;
+  config: SiteConfigMap;
+  // Article + Book
+  publishedAt?: string | null;
+  updatedAt?: string | null;
+  authorName?: string | null;
+  authorUrl?: string | null;
+  // Article only
+  section?: string | null;
+  tags?: string[] | null;
+  // Book only
+  isbn?: string | null;
+  // Person only
+  sameAs?: string[] | null;
+  // Breadcrumb (for any type)
+  breadcrumb?: { name: string; url: string }[] | null;
+}
+
+const {
+  type,
+  title,
+  description,
+  url,
+  image,
+  imageAlt,
+  keywords,
+  canonical,
+  config,
+  publishedAt,
+  updatedAt,
+  authorName,
+  authorUrl,
+  section,
+  tags,
+  isbn,
+  sameAs,
+  breadcrumb,
+} = Astro.props as Props;
+
+const siteName = "Casa de Asterión Ediciones";
+const fullTitle = title.includes("Casa de Asterión") ? title : `${title} — Casa de Asterión`;
+const ogImage = image || config.og_image_default || "";
+const ogImageAlt = imageAlt || title;
+const canonicalUrl = canonical || url;
+const mergedKeywords = [
+  ...(keywords ?? []),
+  ...(config.default_keywords ?? []),
+].filter(Boolean);
+const twitterHandle = config.twitter_handle?.startsWith("@")
+  ? config.twitter_handle
+  : config.twitter_handle ? `@${config.twitter_handle}` : "";
+
+const siteOrigin = new URL("/", url).href;
+const organization: Record<string, unknown> = {
+  "@type": "Organization",
+  "@id": `${siteOrigin}#organization`,
+  name: siteName,
+  url: siteOrigin,
+};
+if (config.organization_logo_url) {
+  organization.logo = { "@type": "ImageObject", url: config.organization_logo_url };
+}
+const sameAsLinks = [
+  config.social_links?.facebook,
+  config.social_links?.instagram,
+  config.social_links?.twitter,
+].filter(Boolean);
+if (sameAsLinks.length) organization.sameAs = sameAsLinks;
+
+let primary: Record<string, unknown> | null = null;
+
+if (type === "article") {
+  primary = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: title,
+    description,
+    url,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    ...(ogImage ? { image: ogImage } : {}),
+    ...(publishedAt ? { datePublished: publishedAt } : {}),
+    ...(updatedAt ? { dateModified: updatedAt } : {}),
+    ...(authorName
+      ? {
+          author: {
+            "@type": "Person",
+            name: authorName,
+            ...(authorUrl ? { url: authorUrl } : {}),
+          },
+        }
+      : {}),
+    publisher: organization,
+    ...(section ? { articleSection: section } : {}),
+    ...(mergedKeywords.length ? { keywords: mergedKeywords.join(", ") } : {}),
+  };
+} else if (type === "book") {
+  primary = {
+    "@context": "https://schema.org",
+    "@type": "Book",
+    name: title,
+    description,
+    url,
+    ...(ogImage ? { image: ogImage } : {}),
+    ...(isbn ? { isbn } : {}),
+    ...(authorName
+      ? {
+          author: {
+            "@type": "Person",
+            name: authorName,
+            ...(authorUrl ? { url: authorUrl } : {}),
+          },
+        }
+      : {}),
+    ...(publishedAt ? { datePublished: publishedAt } : {}),
+    publisher: organization,
+    ...(mergedKeywords.length ? { keywords: mergedKeywords.join(", ") } : {}),
+  };
+} else if (type === "person") {
+  primary = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: title,
+    description,
+    url,
+    ...(ogImage ? { image: ogImage } : {}),
+    ...(sameAs?.length ? { sameAs } : {}),
+    ...(mergedKeywords.length ? { knowsAbout: mergedKeywords } : {}),
+  };
+} else {
+  primary = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: siteName,
+    description,
+    url: siteOrigin,
+    publisher: organization,
+  };
+}
+
+const ogType =
+  type === "article" ? "article" : type === "book" ? "book" : type === "person" ? "profile" : "website";
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalUrl} />
+{mergedKeywords.length > 0 && (
+  <meta name="keywords" content={mergedKeywords.join(", ")} />
+)}
+
+<meta property="og:site_name" content={siteName} />
+<meta property="og:type" content={ogType} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={url} />
+{ogImage && <meta property="og:image" content={ogImage} />}
+{ogImage && <meta property="og:image:alt" content={ogImageAlt} />}
+
+{type === "article" && publishedAt && (
+  <meta property="article:published_time" content={publishedAt} />
+)}
+{type === "article" && updatedAt && (
+  <meta property="article:modified_time" content={updatedAt} />
+)}
+{type === "article" && authorName && (
+  <meta property="article:author" content={authorName} />
+)}
+{type === "article" && (tags ?? []).map((t) => (
+  <meta property="article:tag" content={t} />
+))}
+
+<meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+{ogImage && <meta name="twitter:image" content={ogImage} />}
+{twitterHandle && <meta name="twitter:site" content={twitterHandle} />}
+{twitterHandle && <meta name="twitter:creator" content={twitterHandle} />}
+
+{primary && (
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify(primary)}
+  />
+)}
+<script
+  type="application/ld+json"
+  set:html={JSON.stringify({ "@context": "https://schema.org", ...organization })}
+/>
+{breadcrumb && breadcrumb.length > 0 && (
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: breadcrumb.map((b, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: b.name,
+        item: b.url,
+      })),
+    })}
+  />
+)}
