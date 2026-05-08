@@ -57,26 +57,25 @@ export async function verifyTurnstile(
     return { ok: false, status: 403, error: "Missing captcha token." };
   }
 
-  // Read secret from vault.secrets via PostgREST (service_role).
+  // The PostgREST API only exposes the `public` schema, so we can't read
+  // vault.decrypted_secrets directly. We call the public.get_secret() RPC
+  // (SECURITY DEFINER, granted to service_role only).
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
-    db: { schema: "vault" as never },
   });
 
-  const { data, error } = await admin
-    .from("decrypted_secrets")
-    .select("decrypted_secret")
-    .eq("name", "turnstile_secret")
-    .single();
+  const { data: secret, error } = await admin.rpc("get_secret", {
+    p_name: "turnstile_secret",
+  });
 
-  if (error || !data?.decrypted_secret) {
+  if (error || !secret) {
     return { ok: false, status: 500, error: "Captcha not configured." };
   }
 
   const form = new URLSearchParams();
-  form.set("secret", data.decrypted_secret as string);
+  form.set("secret", secret as string);
   form.set("response", token);
   if (remoteIp) form.set("remoteip", remoteIp);
 
