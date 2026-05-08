@@ -1,0 +1,152 @@
+---
+import Layout from "~/layouts/Layout.astro";
+---
+
+<Layout title="Suscripción confirmada" breadcrumbLabel="Suscripción">
+  <section class="min-h-[60vh] flex items-center justify-center px-6 py-20">
+    <div class="max-w-md text-center" id="cda-sub-card">
+      {/* Loading state — shown until JS resolves the OAuth callback. */}
+      <div id="cda-sub-loading">
+        <div class="cda-sub-spinner mx-auto mb-6"></div>
+        <h1 class="font-serif text-3xl mb-3">Confirmando suscripción…</h1>
+        <p class="text-[color:var(--fg-muted)] text-sm">
+          Validando tu sesión de Google.
+        </p>
+      </div>
+
+      <div id="cda-sub-success" class="hidden">
+        <div class="cda-sub-icon cda-sub-icon-success mx-auto mb-6">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h1 class="font-serif text-3xl mb-3">¡Suscrito!</h1>
+        <p class="text-[color:var(--fg-muted)] text-sm mb-2">
+          Recibirás los próximos artículos y novedades en
+        </p>
+        <p class="font-medium text-[color:var(--fg)] text-base mb-8" id="cda-sub-email">…</p>
+        <a href="/" class="inline-block px-5 py-2.5 border border-[color:var(--border)] hover:border-[color:var(--fg)] transition text-sm">
+          Volver al inicio
+        </a>
+      </div>
+
+      <div id="cda-sub-error" class="hidden">
+        <div class="cda-sub-icon cda-sub-icon-error mx-auto mb-6">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </div>
+        <h1 class="font-serif text-3xl mb-3">No pudimos confirmar</h1>
+        <p class="text-[color:var(--fg-muted)] text-sm mb-2" id="cda-sub-error-msg">
+          La sesión expiró o el flujo se interrumpió.
+        </p>
+        <a href="/#suscribirse" class="inline-block mt-6 px-5 py-2.5 bg-[color:var(--fg)] text-[color:var(--bg)] hover:opacity-90 transition text-sm">
+          Intentar de nuevo
+        </a>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .cda-sub-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid color-mix(in oklab, var(--fg) 15%, transparent);
+    border-top-color: var(--fg);
+    border-radius: 50%;
+    animation: cda-sub-spin 0.9s linear infinite;
+  }
+  @keyframes cda-sub-spin {
+    to { transform: rotate(360deg); }
+  }
+  .cda-sub-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cda-sub-icon-success {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  .cda-sub-icon-error {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+</style>
+
+<script>
+  import { getBrowserClient } from "~/lib/supabase-browser";
+
+  const loading = document.getElementById("cda-sub-loading");
+  const success = document.getElementById("cda-sub-success");
+  const errorEl = document.getElementById("cda-sub-error");
+  const errorMsg = document.getElementById("cda-sub-error-msg");
+  const emailEl = document.getElementById("cda-sub-email");
+
+  const showError = (msg: string) => {
+    if (loading) loading.classList.add("hidden");
+    if (success) success.classList.add("hidden");
+    if (errorEl) errorEl.classList.remove("hidden");
+    if (errorMsg && msg) errorMsg.textContent = msg;
+  };
+
+  const showSuccess = (email: string) => {
+    if (loading) loading.classList.add("hidden");
+    if (errorEl) errorEl.classList.add("hidden");
+    if (success) success.classList.remove("hidden");
+    if (emailEl) emailEl.textContent = email;
+  };
+
+  (async () => {
+    try {
+      const supabase = getBrowserClient();
+
+      // detectSessionInUrl: true on the client picks up the access token from
+      // the URL hash automatically. We just wait for the session.
+      let session = (await supabase.auth.getSession()).data.session;
+      if (!session) {
+        // Sometimes the hash is still being processed; give it one beat.
+        await new Promise((r) => setTimeout(r, 250));
+        session = (await supabase.auth.getSession()).data.session;
+      }
+      if (!session) {
+        showError("No hay sesión activa. Probablemente cancelaste el inicio de sesión.");
+        return;
+      }
+
+      const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+      const res = await fetch(`${supabaseUrl}/functions/v1/subscribe-with-auth`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ source: "google_oauth" }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        showError(data.error ?? "No pudimos completar la suscripción.");
+      } else {
+        showSuccess(data.email ?? session.user?.email ?? "tu correo");
+      }
+    } catch (err) {
+      showError("Error inesperado. Intenta de nuevo desde la página principal.");
+    } finally {
+      // Always sign out — we don't keep public-site sessions around.
+      try {
+        const supabase = getBrowserClient();
+        await supabase.auth.signOut();
+      } catch {}
+      // Clean the OAuth fragment so a refresh doesn't re-trigger.
+      if (window.location.hash) {
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+    }
+  })();
+</script>

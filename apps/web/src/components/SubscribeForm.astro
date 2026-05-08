@@ -1,7 +1,11 @@
 ---
-const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY;
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-const endpoint = `${supabaseUrl}/functions/v1/subscribe`;
+// OAuth-only subscription. The user clicks the Google button, gets bounced
+// through Supabase Auth → Google → /suscripcion-confirmada, which is the
+// page that actually upserts the subscriber row via the
+// /functions/v1/subscribe-with-auth edge function.
+//
+// No email input, no Turnstile, no honeypot — Google's identity check
+// replaces all of that.
 ---
 
 <section
@@ -14,34 +18,23 @@ const endpoint = `${supabaseUrl}/functions/v1/subscribe`;
       Recibe nuevas publicaciones, ensayos y novedades editoriales en tu correo.
     </p>
 
-    <form
-      id="subscribe-form"
-      class="flex flex-col sm:flex-row gap-3 items-stretch"
-      data-endpoint={endpoint}
+    <button
+      type="button"
+      id="subscribe-google"
+      class="inline-flex items-center justify-center gap-3 px-6 py-3 bg-[color:var(--bg)] border border-[color:var(--border)] hover:border-[color:var(--fg)] transition cursor-pointer"
     >
-      <input
-        type="email"
-        name="email"
-        required
-        autocomplete="email"
-        placeholder="tu@email.com"
-        class="flex-1 px-4 py-3 bg-[color:var(--bg)] border border-[color:var(--border)] focus:outline-none focus:border-[color:var(--fg)]"
-      />
-      <input
-        type="hidden"
-        name="source"
-        value="home_subscribe"
-      />
-      {/* honeypot — bots fill it, humans don't see it */}
-      <div class="hp-field" aria-hidden="true">
-        <label>
-          Sitio web
-          <input type="text" name="website" tabindex="-1" autocomplete="off" />
-        </label>
-      </div>
-      <div class="cf-turnstile" data-sitekey={siteKey} data-size="invisible"></div>
-      <button type="submit" class="btn-solid">Suscribirme</button>
-    </form>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+        <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+        <path d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/>
+        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z" fill="#EA4335"/>
+      </svg>
+      <span class="text-sm font-medium">Suscribirme con Google</span>
+    </button>
+
+    <p class="mt-4 text-xs text-[color:var(--fg-muted)] max-w-md mx-auto">
+      Usamos Google solo para verificar tu correo. No publicamos nada en tu nombre ni accedemos a tus datos.
+    </p>
 
     <p
       id="subscribe-msg"
@@ -52,57 +45,34 @@ const endpoint = `${supabaseUrl}/functions/v1/subscribe`;
   </div>
 </section>
 
-<script
-  is:inline
-  src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-  async
-  defer></script>
-
 <script>
-  const form = document.getElementById("subscribe-form") as HTMLFormElement | null;
+  import { getBrowserClient } from "~/lib/supabase-browser";
+
+  const btn = document.getElementById("subscribe-google") as HTMLButtonElement | null;
   const msg = document.getElementById("subscribe-msg");
-  if (form && msg) {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      msg.textContent = "Enviando...";
-      msg.style.color = "var(--fg-muted)";
 
-      const fd = new FormData(form);
-      const widget = form.querySelector(".cf-turnstile");
-      // @ts-ignore — turnstile is global
-      const token =
-        widget && window.turnstile
-          ? // @ts-ignore
-            window.turnstile.getResponse(widget)
-          : "";
-
-      const body = {
-        email: String(fd.get("email") ?? ""),
-        source: String(fd.get("source") ?? ""),
-        website: String(fd.get("website") ?? ""),
-        turnstile_token: token,
-      };
+  if (btn && msg) {
+    btn.addEventListener("click", async () => {
+      msg.textContent = "";
+      btn.disabled = true;
+      btn.style.opacity = "0.6";
 
       try {
-        const res = await fetch(form.dataset.endpoint!, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(body),
+        const supabase = getBrowserClient();
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: `${window.location.origin}/suscripcion-confirmada`,
+            queryParams: { prompt: "select_account" },
+          },
         });
-        if (res.ok) {
-          msg.textContent = "Listo. Revisa tu email para confirmar la suscripción.";
-          msg.style.color = "var(--fg)";
-          form.reset();
-          // @ts-ignore
-          window.turnstile?.reset();
-        } else {
-          const j = await res.json().catch(() => ({}));
-          msg.textContent = j.error ?? "No pudimos completar la suscripción.";
-          msg.style.color = "#b91c1c";
-        }
+        if (error) throw error;
+        // signInWithOAuth navigates the page on success, so we don't get here.
       } catch (err) {
-        msg.textContent = "Error de red. Intenta de nuevo.";
+        msg.textContent = "No pudimos abrir Google. Intenta de nuevo.";
         msg.style.color = "#b91c1c";
+        btn.disabled = false;
+        btn.style.opacity = "1";
       }
     });
   }
