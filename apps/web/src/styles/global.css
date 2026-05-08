@@ -25,6 +25,16 @@
     --card-fg: var(--color-card-fg);
   }
 
+  /* iOS Safari auto-zooms into any focused input whose computed font-size
+     is < 16px. Force 16px on mobile to keep the viewport from jumping. */
+  @media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
+
   :root[data-theme="dark"] {
     --bg: oklch(15% 0.01 70);
     --bg-alt: oklch(20% 0.01 70);
