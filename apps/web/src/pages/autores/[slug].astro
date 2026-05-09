@@ -63,7 +63,7 @@ const bioPlain = (author.bio_md ?? "").replace(/[#*_`>\-]/g, "").replace(/\s+/g,
     )}
     <div>
       <h1 class="font-serif text-4xl md:text-5xl mb-6">{author.name}</h1>
-      <div class="prose max-w-none [&_p]:mb-4 leading-relaxed" set:html={bio}></div>
+      <div class="cas-md max-w-none" set:html={bio}></div>
     </div>
   </section>
 

@@ -84,10 +84,7 @@ const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
         <p class="text-xl text-[color:var(--fg-muted)] italic mb-8">{book.subtitle}</p>
       )}
 
-      <div
-        class="prose prose-stone max-w-none text-[color:var(--fg)] leading-relaxed mb-10 [&_p]:mb-4"
-        set:html={description}
-      ></div>
+      <div class="cas-md max-w-none mb-10" set:html={description}></div>
 
       <dl class="grid grid-cols-2 gap-y-3 text-sm border-t border-[color:var(--border)] pt-6 mb-10">
         {book.isbn && (
