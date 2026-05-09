@@ -1,5 +1,6 @@
 ---
 import Layout from "~/layouts/Layout.astro";
+import BookCard from "~/components/BookCard.astro";
 import { supabase } from "~/lib/supabase";
 import { loadSiteConfig, buildWhatsappUrl } from "~/lib/site-config";
 import { renderMarkdown } from "~/lib/markdown";
@@ -30,6 +31,29 @@ const { data: author } = book.author_id
   ? await supabase.from("authors").select("*").eq("id", book.author_id).maybeSingle()
   : { data: null };
 
+// Other published books by the same author (max 4) for the bottom rail.
+const { data: otherBooksRaw } = author
+  ? await supabase
+      .from("books")
+      .select("*")
+      .eq("status", "published")
+      .eq("author_id", author.id)
+      .neq("id", book.id)
+      .order("publication_date", { ascending: false })
+      .limit(5)
+  : { data: null };
+
+const otherBooks = (otherBooksRaw ?? []).slice(0, 4);
+
+// Total count by this author (so we can decide whether to show "ver todos").
+const { count: authorBookTotal } = author
+  ? await supabase
+      .from("books")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "published")
+      .eq("author_id", author.id)
+  : { count: 0 };
+
 const description = renderMarkdown(book.description_md);
 
 const whatsappText = book.whatsapp_message_override ?? config.whatsapp_message_template;
@@ -39,6 +63,23 @@ const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
   isbn: book.isbn ?? "",
   slug: book.slug,
 });
+
+const formattedPrice =
+  book.price_amount != null
+    ? new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: book.price_currency,
+        maximumFractionDigits: 0,
+      }).format(Number(book.price_amount))
+    : null;
+
+const techRows: { label: string; value: string }[] = [];
+if (book.isbn) techRows.push({ label: "ISBN", value: book.isbn });
+if (book.pages) techRows.push({ label: "Páginas", value: String(book.pages) });
+if (book.format) techRows.push({ label: "Formato", value: book.format });
+if (book.publication_date)
+  techRows.push({ label: "Publicación", value: String(new Date(book.publication_date).getFullYear()) });
+if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
 ---
 
 <Layout
@@ -60,22 +101,73 @@ const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
     { name: book.title, url: Astro.url.href },
   ]}
 >
-  <article class="mx-auto max-w-[1100px] px-5 sm:px-6 lg:px-12 py-12 sm:py-16 md:py-20 grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-8 md:gap-10 lg:gap-12">
-    <div class="max-w-xs sm:max-w-sm lg:max-w-none mx-auto lg:mx-0 w-full">
-      {book.cover_image_url ? (
-        <img
-          src={book.cover_image_url}
-          alt={`Portada de ${book.title}`}
-          class="w-full aspect-[3/4] object-cover bg-[color:var(--bg-alt)]"
-        />
-      ) : (
-        <div class="aspect-[3/4] bg-[color:var(--bg-alt)]"></div>
-      )}
-    </div>
+  <article class="mx-auto max-w-[1100px] px-5 sm:px-6 lg:px-12 py-10 sm:py-14 md:py-20 grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_1fr] gap-8 md:gap-10 lg:gap-14">
+    {/* Left rail: cover + author card + tech info. On mobile this stacks
+        before the description; tech info is reordered to the bottom. */}
+    <aside class="lg:sticky lg:top-24 self-start space-y-6 lg:space-y-7">
+      <div class="max-w-[280px] sm:max-w-[320px] lg:max-w-none mx-auto lg:mx-0 w-full">
+        {book.cover_image_url ? (
+          <img
+            src={book.cover_image_url}
+            alt={`Portada de ${book.title}`}
+            class="w-full aspect-[3/4] object-cover bg-[color:var(--bg-alt)] shadow-md shadow-stone-900/10 ring-1 ring-stone-900/[0.04]"
+          />
+        ) : (
+          <div class="aspect-[3/4] bg-[color:var(--bg-alt)]"></div>
+        )}
+      </div>
 
-    <div>
+      {/* Author card — clickable. Photo + name. */}
       {author && (
-        <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3 sm:mb-4">
+        <a
+          href={`/autores/${author.slug}`}
+          class="group flex items-center gap-3 sm:gap-4 max-w-[320px] mx-auto lg:mx-0 w-full hover:opacity-85 transition-opacity"
+        >
+          <div class="w-14 h-14 sm:w-16 sm:h-16 shrink-0 overflow-hidden bg-[color:var(--bg-alt)] ring-1 ring-stone-900/[0.06]">
+            {author.photo_url ? (
+              <img
+                src={author.photo_url}
+                alt={author.name}
+                loading="lazy"
+                class="w-full h-full object-cover"
+              />
+            ) : (
+              <div class="w-full h-full flex items-center justify-center text-[color:var(--fg-muted)] font-serif text-xl">
+                {author.name.charAt(0)}
+              </div>
+            )}
+          </div>
+          <div class="min-w-0">
+            <p class="uppercase text-[10px] tracking-[0.18em] text-[color:var(--fg-muted)] mb-0.5">
+              Autor
+            </p>
+            <p class="font-serif text-base sm:text-lg leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
+              {author.name}
+            </p>
+          </div>
+        </a>
+      )}
+
+      {/* Technical info — single column, sits under cover on desktop, below
+          the description on mobile via order-* classes on the wrapper. */}
+      {techRows.length > 0 && (
+        <dl class="hidden lg:block border-t border-[color:var(--border)] pt-5 text-sm space-y-2">
+          {techRows.map(({ label, value }) => (
+            <div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0">
+              <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-[11px] self-baseline">
+                {label}
+              </dt>
+              <dd class={label === "Precio" ? "font-medium" : ""}>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </aside>
+
+    {/* Right column: title, subtitle, description, CTA. */}
+    <div class="min-w-0">
+      {author && (
+        <p class="lg:hidden uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3">
           {author.name}
         </p>
       )}
@@ -84,50 +176,49 @@ const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
         <p class="text-base sm:text-xl text-[color:var(--fg-muted)] italic mb-6 sm:mb-8">{book.subtitle}</p>
       )}
 
-      <div class="cas-md max-w-none mb-10" set:html={description}></div>
+      <div class="cas-md cas-md--book max-w-none mb-8 sm:mb-10" set:html={description}></div>
 
-      <dl class="grid grid-cols-2 gap-y-3 text-sm border-t border-[color:var(--border)] pt-6 mb-10">
-        {book.isbn && (
-          <>
-            <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-xs">ISBN</dt>
-            <dd>{book.isbn}</dd>
-          </>
-        )}
-        {book.pages && (
-          <>
-            <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-xs">Páginas</dt>
-            <dd>{book.pages}</dd>
-          </>
-        )}
-        {book.format && (
-          <>
-            <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-xs">Formato</dt>
-            <dd class="capitalize">{book.format}</dd>
-          </>
-        )}
-        {book.publication_date && (
-          <>
-            <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-xs">Publicación</dt>
-            <dd>{new Date(book.publication_date).getFullYear()}</dd>
-          </>
-        )}
-        {book.price_amount != null && (
-          <>
-            <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-xs">Precio</dt>
-            <dd class="font-medium">
-              {new Intl.NumberFormat("es-CO", {
-                style: "currency",
-                currency: book.price_currency,
-                maximumFractionDigits: 0,
-              }).format(Number(book.price_amount))}
-            </dd>
-          </>
-        )}
-      </dl>
+      {/* Mobile-only tech info: appears under the description before the CTA. */}
+      {techRows.length > 0 && (
+        <dl class="lg:hidden border-t border-[color:var(--border)] pt-5 mb-8 text-sm grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
+          {techRows.map(({ label, value }) => (
+            <>
+              <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-[11px] self-baseline">
+                {label}
+              </dt>
+              <dd class={label === "Precio" ? "font-medium" : ""}>{value}</dd>
+            </>
+          ))}
+        </dl>
+      )}
 
       <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="btn-solid inline-block">
         Comprar por WhatsApp
       </a>
     </div>
   </article>
+
+  {/* Otros libros del autor */}
+  {author && otherBooks.length > 0 && (
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
+      <div class="flex items-end justify-between gap-4 mb-8 sm:mb-10 md:mb-12 border-b border-[color:var(--border)] pb-6 sm:pb-7 md:pb-8">
+        <div class="min-w-0">
+          <p class="uppercase text-[10px] sm:text-xs tracking-[0.2em] text-[color:var(--fg-muted)] mb-1.5 sm:mb-2">
+            Más del autor
+          </p>
+          <h2 class="font-serif text-xl sm:text-2xl md:text-3xl leading-tight">
+            Otros libros de {author.name}
+          </h2>
+        </div>
+        {(authorBookTotal ?? 0) > otherBooks.length + 1 && (
+          <a href={`/autores/${author.slug}`} class="nav-link shrink-0 pb-1">Ver todos</a>
+        )}
+      </div>
+      <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4">
+        {otherBooks.map((b) => (
+          <BookCard book={b} author={author} config={config} />
+        ))}
+      </div>
+    </section>
+  )}
 </Layout>
