@@ -1,6 +1,7 @@
 ---
 import Layout from "~/layouts/Layout.astro";
 import PostCard from "~/components/PostCard.astro";
+import EmptyState from "~/components/EmptyState.astro";
 import { supabase } from "~/lib/supabase";
 
 const { data: filoCat } = await supabase
@@ -40,7 +41,12 @@ const authorMap = new Map((authors ?? []).map((a) => [a.id, a]));
         ))}
       </div>
     ) : (
-      <p class="text-[color:var(--fg-muted)]">Aún no hay artículos publicados en esta categoría.</p>
+      <EmptyState
+        icon="lucide:scroll-text"
+        title="Pronto habrá ensayos aquí"
+        description="Estamos preparando los primeros artículos de filosofía. Vuelve pronto."
+        ctaLabel="Volver al inicio"
+      />
     )}
   </section>
 </Layout>

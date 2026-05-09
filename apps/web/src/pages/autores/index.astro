@@ -1,5 +1,6 @@
 ---
 import Layout from "~/layouts/Layout.astro";
+import EmptyState from "~/components/EmptyState.astro";
 import { supabase } from "~/lib/supabase";
 
 const { data: authors } = await supabase
@@ -77,7 +78,12 @@ const stripDiacritics = (s: string) =>
         </p>
       </>
     ) : (
-      <p class="text-[color:var(--fg-muted)]">Pronto.</p>
+      <EmptyState
+        icon="lucide:users"
+        title="Aún no hay autores publicados"
+        description="Estamos cargando las fichas de los autores que colaboran con la editorial."
+        ctaLabel="Volver al inicio"
+      />
     )}
   </section>
 </Layout>

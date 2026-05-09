@@ -1,6 +1,7 @@
 ---
 import Layout from "~/layouts/Layout.astro";
 import BookCard from "~/components/BookCard.astro";
+import EmptyState from "~/components/EmptyState.astro";
 import { supabase } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
 
@@ -38,7 +39,12 @@ const authorMap = new Map((authors ?? []).map((a) => [a.id, a]));
         ))}
       </div>
     ) : (
-      <p class="text-[color:var(--fg-muted)]">Aún no hay libros publicados.</p>
+      <EmptyState
+        icon="lucide:book-open"
+        title="El catálogo se está armando"
+        description="Pronto encontrarás aquí los libros que publica la editorial. Mientras tanto, puedes explorar nuestros artículos o conocer a los autores."
+        ctaLabel="Volver al inicio"
+      />
     )}
   </section>
 </Layout>

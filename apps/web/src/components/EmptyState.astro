@@ -1,0 +1,61 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface Props {
+  /** lucide icon name. */
+  icon?: string;
+  /** Big serif headline. */
+  title: string;
+  /** One- or two-sentence subtitle. */
+  description?: string;
+  /** Optional CTA button label. */
+  ctaLabel?: string;
+  /** Optional CTA href (defaults to "/" if ctaLabel is set). */
+  ctaHref?: string;
+}
+
+const {
+  icon = "lucide:book-open",
+  title,
+  description,
+  ctaLabel,
+  ctaHref = "/",
+} = Astro.props;
+---
+
+<div class="cas-empty mx-auto max-w-xl text-center py-10 sm:py-14 md:py-20">
+  <div class="cas-empty-icon">
+    <Icon name={icon} class="w-7 h-7 sm:w-8 sm:h-8" aria-hidden="true" />
+  </div>
+  <h3 class="font-serif text-2xl sm:text-3xl text-[color:var(--fg)] mt-6 mb-3">
+    {title}
+  </h3>
+  {description && (
+    <p class="text-[color:var(--fg-muted)] leading-relaxed mb-8">
+      {description}
+    </p>
+  )}
+  {ctaLabel && (
+    <a href={ctaHref} class="btn-outline inline-flex items-center gap-2">
+      <Icon name="lucide:arrow-left" class="w-3.5 h-3.5" aria-hidden="true" />
+      <span>{ctaLabel}</span>
+    </a>
+  )}
+</div>
+
+<style>
+  .cas-empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 9999px;
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    color: var(--fg-muted);
+  }
+  @media (min-width: 640px) {
+    .cas-empty-icon { width: 72px; height: 72px; }
+  }
+</style>

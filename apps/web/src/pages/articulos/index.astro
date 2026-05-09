@@ -1,6 +1,7 @@
 ---
 import Layout from "~/layouts/Layout.astro";
 import PostCard from "~/components/PostCard.astro";
+import EmptyState from "~/components/EmptyState.astro";
 import { supabase } from "~/lib/supabase";
 
 const [{ data: posts }, { data: authors }, { data: categories }] = await Promise.all([
@@ -37,7 +38,12 @@ const categoryMap = new Map((categories ?? []).map((c) => [c.id, c]));
         ))}
       </div>
     ) : (
-      <p class="text-[color:var(--fg-muted)]">Aún no hay artículos publicados.</p>
+      <EmptyState
+        icon="lucide:newspaper"
+        title="Aún no publicamos artículos"
+        description="Estamos preparando los primeros ensayos. Vuelve pronto o suscríbete para enterarte cuando lleguen."
+        ctaLabel="Volver al inicio"
+      />
     )}
   </section>
 </Layout>
