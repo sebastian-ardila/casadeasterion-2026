@@ -84,7 +84,7 @@ const heroCardCss = buildHeroCardCss(heroCardCfg);
     >
       <div>
         {heroCardContent.eyebrow && (
-          <p class="uppercase text-[10px] sm:text-xs tracking-[0.2em] opacity-70 mb-3 sm:mb-5">
+          <p class="hcc-eyebrow uppercase text-[10px] sm:text-xs tracking-[0.2em] opacity-70 mb-3 sm:mb-5">
             {heroCardContent.eyebrow}
           </p>
         )}
@@ -92,12 +92,12 @@ const heroCardCss = buildHeroCardCss(heroCardCfg);
           {heroCardContent.title}
         </h1>
         {heroCardContent.body && (
-          <p class="text-xs sm:text-sm md:text-base opacity-80 leading-relaxed line-clamp-2 md:line-clamp-3">
+          <p class="hcc-body text-xs sm:text-sm md:text-base opacity-80 leading-relaxed line-clamp-2 md:line-clamp-3">
             {heroCardContent.body}
           </p>
         )}
       </div>
-      <span class="uppercase text-[11px] sm:text-xs tracking-[0.18em] border-b border-current/60 pb-1 group-hover:border-current self-start mt-4">
+      <span class="hcc-cta uppercase text-[11px] sm:text-xs tracking-[0.18em] border-b border-current/60 pb-1 group-hover:border-current self-start mt-4">
         {heroCardContent.cta_label}
       </span>
     </a>

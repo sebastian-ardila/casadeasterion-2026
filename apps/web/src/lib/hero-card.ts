@@ -5,16 +5,30 @@
 
 import type { HeroCardConfig, HeroCardLayout } from "./site-config";
 
-// Available title fonts. Keep this in sync with the CMS dropdown options
+// Available fonts for the hero card's eyebrow / title / body / cta.
+// Keep in sync with the CMS FONT_OPTIONS list (HeroCardPlatformControls)
 // and the Google Fonts <link> in apps/web/src/layouts/Layout.astro. Any
 // value not in this map falls back to Cormorant Garamond.
 export const HERO_CARD_FONTS: Record<string, string> = {
-  serif: '"Cormorant Garamond", "EB Garamond", Georgia, serif',
+  // --- Serifs (editorial) ---
+  serif: '"Cormorant Garamond", Georgia, serif',
+  "eb-garamond": '"EB Garamond", Georgia, serif',
   playfair: '"Playfair Display", Georgia, serif',
   lora: '"Lora", Georgia, serif',
+  "libre-baskerville": '"Libre Baskerville", Georgia, serif',
+  crimson: '"Crimson Pro", Georgia, serif',
+  fraunces: '"Fraunces", Georgia, serif',
+  spectral: '"Spectral", Georgia, serif',
+  // --- Sans (modern) ---
   sans: '"Inter", system-ui, -apple-system, sans-serif',
   "dm-sans": '"DM Sans", "Inter", sans-serif',
   "space-grotesk": '"Space Grotesk", "Inter", sans-serif',
+  manrope: '"Manrope", "Inter", sans-serif',
+  "work-sans": '"Work Sans", "Inter", sans-serif',
+  "plus-jakarta": '"Plus Jakarta Sans", "Inter", sans-serif',
+  outfit: '"Outfit", "Inter", sans-serif',
+  // --- Display ---
+  marcellus: '"Marcellus", "Cormorant Garamond", serif',
 };
 
 export type ResolvedHeroContent = {
@@ -54,7 +68,10 @@ function layoutRules(l: HeroCardLayout, platform: "desktop" | "mobile"): string 
     ? `box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);`
     : `box-shadow: none;`;
   const blur = l.bg_blur > 0 ? `backdrop-filter: blur(${l.bg_blur}px);` : "";
-  const titleFont = HERO_CARD_FONTS[l.title_font] ?? HERO_CARD_FONTS.serif;
+  const titleFont   = HERO_CARD_FONTS[l.title_font]   ?? HERO_CARD_FONTS.serif;
+  const eyebrowFont = HERO_CARD_FONTS[l.eyebrow_font] ?? HERO_CARD_FONTS.sans;
+  const bodyFont    = HERO_CARD_FONTS[l.body_font]    ?? HERO_CARD_FONTS.sans;
+  const ctaFont     = HERO_CARD_FONTS[l.cta_font]     ?? HERO_CARD_FONTS.sans;
   // On mobile we mirror offset_x to the right so the card stays
   // visually centered. On desktop the card intentionally extends past
   // the 50% divider so the right edge is flush.
@@ -73,6 +90,9 @@ function layoutRules(l: HeroCardLayout, platform: "desktop" | "mobile"): string 
     ${blur}
     ${shadow}
     --hcc-title-font: ${titleFont};
+    --hcc-eyebrow-font: ${eyebrowFont};
+    --hcc-body-font: ${bodyFont};
+    --hcc-cta-font: ${ctaFont};
   `.replace(/\n\s+/g, " ").trim();
 }
 
@@ -95,7 +115,10 @@ export function buildHeroCardCss(cfg: HeroCardConfig): string {
   const merged = withSharedBgImage(cfg);
   return `
     .hero-card-cms { ${layoutRules(merged.desktop, "desktop")} }
-    .hero-card-cms .hcc-title { font-family: var(--hcc-title-font); }
+    .hero-card-cms .hcc-title   { font-family: var(--hcc-title-font); }
+    .hero-card-cms .hcc-eyebrow { font-family: var(--hcc-eyebrow-font); }
+    .hero-card-cms .hcc-body    { font-family: var(--hcc-body-font); }
+    .hero-card-cms .hcc-cta     { font-family: var(--hcc-cta-font); }
     @media (max-width: 767px) {
       .hero-card-cms { ${layoutRules(merged.mobile, "mobile")} }
     }

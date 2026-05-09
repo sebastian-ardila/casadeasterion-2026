@@ -9,6 +9,9 @@ export type HeroCardLayout = {
   bg_blur: number;
   text_color: string;
   title_font: string;
+  eyebrow_font: string;
+  body_font: string;
+  cta_font: string;
   border_radius_tl: number;
   border_radius_tr: number;
   border_radius_br: number;
@@ -89,6 +92,9 @@ export const DEFAULT_HERO_CARD_CONFIG: HeroCardConfig = {
     bg_blur: 0,
     text_color: "#f5f1ea",
     title_font: "serif",
+    eyebrow_font: "sans",
+    body_font: "sans",
+    cta_font: "sans",
     border_radius_tl: 0,
     border_radius_tr: 0,
     border_radius_br: 0,
@@ -107,6 +113,9 @@ export const DEFAULT_HERO_CARD_CONFIG: HeroCardConfig = {
     bg_blur: 0,
     text_color: "#f5f1ea",
     title_font: "serif",
+    eyebrow_font: "sans",
+    body_font: "sans",
+    cta_font: "sans",
     border_radius_tl: 0,
     border_radius_tr: 0,
     border_radius_br: 0,
