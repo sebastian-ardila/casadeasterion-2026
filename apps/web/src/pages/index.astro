@@ -60,7 +60,10 @@ const heroCardCss = buildHeroCardCss(heroCardCfg);
       On mobile the layout is a normal vertical stack (flex-col): card on
       top, photo below. On md+ flex-row + items-center positions the card
       over the fixed right-half image. */}
-  <section class="hero-section relative overflow-x-clip md:h-screen flex flex-col md:flex-row md:items-center bg-[color:var(--bg-alt)]">
+  <section
+    class="hero-section relative overflow-x-clip md:h-screen flex flex-col md:flex-row md:items-center bg-[color:var(--bg-alt)]"
+    style={config.hero_bg_color?.trim() ? `background-color: ${config.hero_bg_color}` : undefined}
+  >
     {/* Right-half fixed image (desktop only). z-0 so it sits below the
         sticky header (z-30) but above the body bg. */}
     <div

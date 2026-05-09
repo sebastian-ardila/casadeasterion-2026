@@ -66,6 +66,9 @@ export type SiteConfigMap = {
   og_image_default: string;
   organization_logo_url: string;
   hero_image_url: string;
+  /** Page background visible behind the hero card (the area around the
+   *  card and the right-half image). Empty means "use --bg-alt". */
+  hero_bg_color: string;
   hero_card_config: HeroCardConfig;
   [key: string]: unknown;
 };
@@ -142,6 +145,7 @@ const DEFAULTS: SiteConfigMap = {
   og_image_default: "",
   organization_logo_url: "",
   hero_image_url: "",
+  hero_bg_color: "",
   hero_card_config: DEFAULT_HERO_CARD_CONFIG,
 };
 
