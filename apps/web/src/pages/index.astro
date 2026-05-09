@@ -131,10 +131,10 @@ const heroImageMobile = config.hero_image_url?.trim()
 
   {/* Posts recientes */}
   {rest.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 py-16 sm:py-20 md:py-24">
-      <div class="flex items-end justify-between gap-4 mb-8 sm:mb-10 md:mb-12 border-b border-[color:var(--border)] pb-5 sm:pb-6">
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-20 sm:pt-24 md:pt-28 pb-16 sm:pb-20 md:pb-24">
+      <div class="flex items-end justify-between gap-4 mb-10 sm:mb-12 md:mb-14 border-b border-[color:var(--border)] pb-7 sm:pb-8 md:pb-10">
         <h2 class="font-serif text-2xl sm:text-3xl md:text-4xl">Lecturas recientes</h2>
-        <a href="/filosofia" class="nav-link shrink-0">Ver todo</a>
+        <a href="/filosofia" class="nav-link shrink-0 pb-1">Ver todo</a>
       </div>
       <div class="grid gap-10 sm:gap-12 md:grid-cols-2">
         {rest.map((post) => (
@@ -150,10 +150,10 @@ const heroImageMobile = config.hero_image_url?.trim()
 
   {/* Catálogo destacado */}
   {featuredBooks && featuredBooks.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
-      <div class="flex items-end justify-between gap-4 mb-8 sm:mb-10 md:mb-12 border-b border-[color:var(--border)] pb-5 sm:pb-6">
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-16 sm:pt-20 md:pt-24 pb-16 sm:pb-20 md:pb-24">
+      <div class="flex items-end justify-between gap-4 mb-10 sm:mb-12 md:mb-14 border-b border-[color:var(--border)] pb-7 sm:pb-8 md:pb-10">
         <h2 class="font-serif text-2xl sm:text-3xl md:text-4xl">Catálogo</h2>
-        <a href="/catalogo" class="nav-link shrink-0">Ver todo</a>
+        <a href="/catalogo" class="nav-link shrink-0 pb-1">Ver todo</a>
       </div>
       <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4">
         {featuredBooks.map((book) => (
