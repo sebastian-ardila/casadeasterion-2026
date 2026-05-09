@@ -42,6 +42,9 @@ export type SiteConfigMap = {
   social_links: { facebook: string; instagram: string; twitter: string };
   whatsapp_phone: string;
   whatsapp_message_template: string;
+  contact_email: string;
+  contact_address: string;
+  contact_hours: string;
   robots_block_ai: string[];
   /** Master switch for the newsletter subscription form + links. */
   subscribe_enabled: boolean;
@@ -112,6 +115,9 @@ const DEFAULTS: SiteConfigMap = {
   whatsapp_phone: "+573117462759",
   whatsapp_message_template:
     'Hola, me interesa el libro "{{title}}" de {{author}}. ¿Está disponible?',
+  contact_email: "",
+  contact_address: "",
+  contact_hours: "",
   robots_block_ai: [],
   subscribe_enabled: true,
   default_keywords: [],

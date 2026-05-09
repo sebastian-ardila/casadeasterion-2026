@@ -1,32 +1,110 @@
 ---
 import Layout from "~/layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
 import { loadSiteConfig, buildWhatsappUrl } from "~/lib/site-config";
 
 const config = await loadSiteConfig();
+
 const whatsappLink = buildWhatsappUrl(
   config.whatsapp_phone,
   "Hola, me gustaría contactar con Casa de Asterión.",
   {},
 );
+
+const email = (config.contact_email ?? "").trim();
+const address = (config.contact_address ?? "").trim();
+const hours = (config.contact_hours ?? "").trim();
+const social = config.social_links ?? { facebook: "", instagram: "", twitter: "" };
+const socialEntries = (
+  [
+    { key: "instagram", label: "Instagram",   icon: "lucide:instagram", url: social.instagram },
+    { key: "facebook",  label: "Facebook",    icon: "lucide:facebook",  url: social.facebook  },
+    { key: "twitter",   label: "Twitter / X", icon: "lucide:twitter",   url: social.twitter   },
+  ] as const
+).filter((s) => (s.url ?? "").trim());
 ---
 
 <Layout title="Contacto">
-  <section class="mx-auto max-w-[760px] px-5 sm:px-6 lg:px-12 py-16 sm:py-20 md:py-24">
+  <section class="mx-auto max-w-[860px] px-5 sm:px-6 lg:px-12 py-16 sm:py-20 md:py-24">
     <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl mb-5 sm:mb-6">Contacto</h1>
     <p class="text-[color:var(--fg-muted)] leading-relaxed mb-10 sm:mb-12 max-w-prose">
-      Para envíos editoriales, manuscritos, derechos, prensa o consultas generales, escríbenos.
+      Para envíos editoriales, manuscritos, derechos, prensa o consultas
+      generales, escríbenos por el medio que prefieras.
     </p>
 
-    <div class="space-y-6">
-      <a
-        href={whatsappLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="block border border-[color:var(--border)] p-6 sm:p-8 hover:border-[color:var(--fg)] transition"
-      >
-        <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-2">WhatsApp</p>
-        <p class="font-serif text-xl sm:text-2xl break-all">{config.whatsapp_phone}</p>
-      </a>
+    <div class="grid gap-4 sm:gap-5 sm:grid-cols-2">
+      {email && (
+        <a
+          href={`mailto:${email}`}
+          class="group flex flex-col justify-between border border-[color:var(--border)] p-6 sm:p-7 hover:border-[color:var(--fg)] transition min-h-[140px]"
+        >
+          <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3 inline-flex items-center gap-2">
+            <Icon name="lucide:mail" class="w-3.5 h-3.5" aria-hidden="true" />
+            Email
+          </p>
+          <p class="font-serif text-xl sm:text-2xl break-all leading-tight">{email}</p>
+          <p class="text-[11px] sm:text-xs text-[color:var(--fg-muted)] mt-3 group-hover:text-[color:var(--fg)] transition">Escribir →</p>
+        </a>
+      )}
+
+      {config.whatsapp_phone && (
+        <a
+          href={whatsappLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="group flex flex-col justify-between border border-[color:var(--border)] p-6 sm:p-7 hover:border-[color:var(--fg)] transition min-h-[140px]"
+        >
+          <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3 inline-flex items-center gap-2">
+            <Icon name="lucide:message-circle" class="w-3.5 h-3.5" aria-hidden="true" />
+            WhatsApp
+          </p>
+          <p class="font-serif text-xl sm:text-2xl break-all leading-tight">{config.whatsapp_phone}</p>
+          <p class="text-[11px] sm:text-xs text-[color:var(--fg-muted)] mt-3 group-hover:text-[color:var(--fg)] transition">Abrir chat →</p>
+        </a>
+      )}
+
+      {address && (
+        <div class="flex flex-col justify-between border border-[color:var(--border)] p-6 sm:p-7 min-h-[140px]">
+          <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3 inline-flex items-center gap-2">
+            <Icon name="lucide:map-pin" class="w-3.5 h-3.5" aria-hidden="true" />
+            Dirección
+          </p>
+          <p class="font-serif text-lg sm:text-xl leading-snug whitespace-pre-line">{address}</p>
+        </div>
+      )}
+
+      {hours && (
+        <div class="flex flex-col justify-between border border-[color:var(--border)] p-6 sm:p-7 min-h-[140px]">
+          <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3 inline-flex items-center gap-2">
+            <Icon name="lucide:clock" class="w-3.5 h-3.5" aria-hidden="true" />
+            Horario
+          </p>
+          <p class="font-serif text-lg sm:text-xl leading-snug whitespace-pre-line">{hours}</p>
+        </div>
+      )}
     </div>
+
+    {socialEntries.length > 0 && (
+      <div class="mt-12 sm:mt-14 pt-10 border-t border-[color:var(--border)]">
+        <h2 class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-5">
+          También nos encuentras en
+        </h2>
+        <ul class="flex flex-wrap gap-3 sm:gap-4">
+          {socialEntries.map((s) => (
+            <li>
+              <a
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2.5 px-4 py-2.5 border border-[color:var(--border)] hover:border-[color:var(--fg)] transition text-sm"
+              >
+                <Icon name={s.icon} class="w-4 h-4" aria-hidden="true" />
+                <span>{s.label}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
   </section>
 </Layout>
