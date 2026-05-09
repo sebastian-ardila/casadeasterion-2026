@@ -76,12 +76,28 @@ function layoutRules(l: HeroCardLayout, platform: "desktop" | "mobile"): string 
   `.replace(/\n\s+/g, " ").trim();
 }
 
+// Cross-platform fallback: if only one of desktop/mobile has a
+// bg_image_url set, the other side reuses it. The CMS UI nudges
+// editors toward setting only one image when they don't care about
+// per-platform variants.
+function withSharedBgImage(cfg: HeroCardConfig): HeroCardConfig {
+  const dImg = (cfg.desktop.bg_image_url || "").trim();
+  const mImg = (cfg.mobile.bg_image_url || "").trim();
+  const merged = dImg || mImg;
+  return {
+    ...cfg,
+    desktop: { ...cfg.desktop, bg_image_url: dImg || merged },
+    mobile: { ...cfg.mobile, bg_image_url: mImg || merged },
+  };
+}
+
 export function buildHeroCardCss(cfg: HeroCardConfig): string {
+  const merged = withSharedBgImage(cfg);
   return `
-    .hero-card-cms { ${layoutRules(cfg.desktop, "desktop")} }
+    .hero-card-cms { ${layoutRules(merged.desktop, "desktop")} }
     .hero-card-cms .hcc-title { font-family: var(--hcc-title-font); }
     @media (max-width: 767px) {
-      .hero-card-cms { ${layoutRules(cfg.mobile, "mobile")} }
+      .hero-card-cms { ${layoutRules(merged.mobile, "mobile")} }
     }
   `;
 }
