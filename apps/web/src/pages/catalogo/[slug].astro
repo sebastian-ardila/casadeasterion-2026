@@ -101,11 +101,11 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
     { name: book.title, url: Astro.url.href },
   ]}
 >
-  <article class="mx-auto max-w-[1100px] px-5 sm:px-6 lg:px-12 py-10 sm:py-14 md:py-20 grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_1fr] gap-8 md:gap-10 lg:gap-14">
+  <article class="mx-auto max-w-[1100px] px-5 sm:px-6 lg:px-12 pt-6 sm:pt-10 md:pt-16 pb-12 sm:pb-16 md:pb-20 grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_1fr] gap-7 sm:gap-9 lg:gap-14">
     {/* Left rail: cover + author card + tech info. On mobile this stacks
         before the description; tech info is reordered to the bottom. */}
-    <aside class="lg:sticky lg:top-24 self-start space-y-6 lg:space-y-7">
-      <div class="max-w-[280px] sm:max-w-[320px] lg:max-w-none mx-auto lg:mx-0 w-full">
+    <aside class="lg:sticky lg:top-24 self-start space-y-5 sm:space-y-6 lg:space-y-7">
+      <div class="max-w-[220px] sm:max-w-[260px] lg:max-w-none mx-auto lg:mx-0 w-full">
         {book.cover_image_url ? (
           <img
             src={book.cover_image_url}
@@ -123,7 +123,7 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
           href={`/autores/${author.slug}`}
           class="group flex items-center gap-3 sm:gap-4 max-w-[320px] mx-auto lg:mx-0 w-full hover:opacity-85 transition-opacity"
         >
-          <div class="w-14 h-14 sm:w-16 sm:h-16 shrink-0 overflow-hidden bg-[color:var(--bg-alt)] ring-1 ring-stone-900/[0.06]">
+          <div class="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 shrink-0 overflow-hidden bg-[color:var(--bg-alt)] ring-1 ring-stone-900/[0.06]">
             {author.photo_url ? (
               <img
                 src={author.photo_url}
@@ -141,23 +141,24 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
             <p class="uppercase text-[10px] tracking-[0.18em] text-[color:var(--fg-muted)] mb-0.5">
               Autor
             </p>
-            <p class="font-serif text-base sm:text-lg leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
+            <p class="font-serif text-base sm:text-lg leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)] truncate">
               {author.name}
             </p>
           </div>
         </a>
       )}
 
-      {/* Technical info — single column, sits under cover on desktop, below
-          the description on mobile via order-* classes on the wrapper. */}
+      {/* Technical info — single column, sits under cover on desktop. */}
       {techRows.length > 0 && (
         <dl class="hidden lg:block border-t border-[color:var(--border)] pt-5 text-sm space-y-2">
           {techRows.map(({ label, value }) => (
-            <div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0">
+            <div class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-0">
               <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-[11px] self-baseline">
                 {label}
               </dt>
-              <dd class={label === "Precio" ? "font-medium" : ""}>{value}</dd>
+              <dd class:list={["min-w-0 break-words", label === "Precio" && "font-medium"]}>
+                {label === "Formato" ? <span class="capitalize">{value}</span> : value}
+              </dd>
             </div>
           ))}
         </dl>
@@ -166,33 +167,30 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
 
     {/* Right column: title, subtitle, description, CTA. */}
     <div class="min-w-0">
-      {author && (
-        <p class="lg:hidden uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3">
-          {author.name}
-        </p>
-      )}
-      <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl leading-[1.1] mb-3">{book.title}</h1>
+      <h1 class="font-serif text-2xl sm:text-3xl md:text-5xl leading-[1.1] mb-2 sm:mb-3">{book.title}</h1>
       {book.subtitle && (
-        <p class="text-base sm:text-xl text-[color:var(--fg-muted)] italic mb-6 sm:mb-8">{book.subtitle}</p>
+        <p class="text-sm sm:text-base md:text-xl text-[color:var(--fg-muted)] italic mb-5 sm:mb-7 md:mb-8">{book.subtitle}</p>
       )}
 
-      <div class="cas-md cas-md--book max-w-none mb-8 sm:mb-10" set:html={description}></div>
+      <div class="cas-md cas-md--book max-w-none mb-7 sm:mb-9 md:mb-10" set:html={description}></div>
 
       {/* Mobile-only tech info: appears under the description before the CTA. */}
       {techRows.length > 0 && (
-        <dl class="lg:hidden border-t border-[color:var(--border)] pt-5 mb-8 text-sm grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
+        <dl class="lg:hidden border-t border-[color:var(--border)] pt-5 mb-7 sm:mb-8 text-sm grid grid-cols-[max-content_1fr] gap-x-5 sm:gap-x-7 gap-y-2.5">
           {techRows.map(({ label, value }) => (
             <>
               <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-[11px] self-baseline">
                 {label}
               </dt>
-              <dd class={label === "Precio" ? "font-medium" : ""}>{value}</dd>
+              <dd class:list={["min-w-0 break-words", label === "Precio" && "font-medium"]}>
+                {label === "Formato" ? <span class="capitalize">{value}</span> : value}
+              </dd>
             </>
           ))}
         </dl>
       )}
 
-      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="btn-solid inline-block">
+      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="btn-solid inline-block w-full sm:w-auto text-center">
         Comprar por WhatsApp
       </a>
     </div>
