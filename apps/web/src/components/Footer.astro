@@ -1,4 +1,5 @@
 ---
+import { Icon } from "astro-icon/components";
 import { loadSiteConfig } from "~/lib/site-config";
 const config = await loadSiteConfig();
 ---
@@ -19,9 +20,24 @@ const config = await loadSiteConfig();
         Editorial
       </h4>
       <ul class="space-y-3 text-sm opacity-75">
-        <li><a href="/filosofia" class="hover:opacity-100">Filosofía</a></li>
-        <li><a href="/poesia" class="hover:opacity-100">Poesía</a></li>
-        <li><a href="/contacto" class="hover:opacity-100">Contacto</a></li>
+        <li>
+          <a href="/filosofia" class="inline-flex items-center gap-2 hover:opacity-100">
+            <Icon name="lucide:scroll-text" class="w-4 h-4" aria-hidden="true" />
+            <span>Filosofía</span>
+          </a>
+        </li>
+        <li>
+          <a href="/poesia" class="inline-flex items-center gap-2 hover:opacity-100">
+            <Icon name="lucide:feather" class="w-4 h-4" aria-hidden="true" />
+            <span>Poesía</span>
+          </a>
+        </li>
+        <li>
+          <a href="/contacto" class="inline-flex items-center gap-2 hover:opacity-100">
+            <Icon name="lucide:mail" class="w-4 h-4" aria-hidden="true" />
+            <span>Contacto</span>
+          </a>
+        </li>
       </ul>
     </div>
 
@@ -30,9 +46,24 @@ const config = await loadSiteConfig();
         Contenido
       </h4>
       <ul class="space-y-3 text-sm opacity-75">
-        <li><a href="/articulos" class="hover:opacity-100">Artículos</a></li>
-        <li><a href="/catalogo" class="hover:opacity-100">Catálogo</a></li>
-        <li><a href="/autores" class="hover:opacity-100">Autores</a></li>
+        <li>
+          <a href="/articulos" class="inline-flex items-center gap-2 hover:opacity-100">
+            <Icon name="lucide:newspaper" class="w-4 h-4" aria-hidden="true" />
+            <span>Artículos</span>
+          </a>
+        </li>
+        <li>
+          <a href="/catalogo" class="inline-flex items-center gap-2 hover:opacity-100">
+            <Icon name="lucide:book-open" class="w-4 h-4" aria-hidden="true" />
+            <span>Catálogo</span>
+          </a>
+        </li>
+        <li>
+          <a href="/autores" class="inline-flex items-center gap-2 hover:opacity-100">
+            <Icon name="lucide:users" class="w-4 h-4" aria-hidden="true" />
+            <span>Autores</span>
+          </a>
+        </li>
       </ul>
     </div>
   </div>
@@ -43,13 +74,22 @@ const config = await loadSiteConfig();
     <p class="text-center sm:text-left">{config.footer_legal}</p>
     <div class="flex items-center gap-4 sm:gap-6 uppercase tracking-[0.18em]">
       {config.social_links.facebook && (
-        <a href={config.social_links.facebook} target="_blank" rel="noopener noreferrer" class="hover:opacity-100">Facebook</a>
+        <a href={config.social_links.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="inline-flex items-center gap-1.5 hover:opacity-100">
+          <Icon name="lucide:facebook" class="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Facebook</span>
+        </a>
       )}
       {config.social_links.instagram && (
-        <a href={config.social_links.instagram} target="_blank" rel="noopener noreferrer" class="hover:opacity-100">Instagram</a>
+        <a href={config.social_links.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="inline-flex items-center gap-1.5 hover:opacity-100">
+          <Icon name="lucide:instagram" class="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Instagram</span>
+        </a>
       )}
       {config.social_links.twitter && (
-        <a href={config.social_links.twitter} target="_blank" rel="noopener noreferrer" class="hover:opacity-100">Twitter</a>
+        <a href={config.social_links.twitter} target="_blank" rel="noopener noreferrer" aria-label="Twitter" class="inline-flex items-center gap-1.5 hover:opacity-100">
+          <Icon name="lucide:twitter" class="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Twitter</span>
+        </a>
       )}
     </div>
   </div>
