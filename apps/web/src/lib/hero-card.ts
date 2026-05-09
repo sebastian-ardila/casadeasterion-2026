@@ -165,12 +165,18 @@ export function resolveHeroContent(
       cta_href: cfg.manual.cta_href || "/",
     };
   }
+  // Editorial fallback. Editors can override the CTA's text and
+  // destination via cfg.manual.cta_label / cta_href even when
+  // they're using the editorial source — the CMS exposes these
+  // fields in editorial mode for this exact reason.
+  const ctaLabel = (cfg.manual?.cta_label ?? "").trim() || "Explorar el catálogo";
+  const ctaHref = (cfg.manual?.cta_href ?? "").trim() || "/catalogo";
   return {
     eyebrow: "Editorial",
     title: "Casa de Asterión Ediciones",
     body: ctx.editorialDescription,
-    cta_label: "Explorar el catálogo",
-    cta_href: "/catalogo",
+    cta_label: ctaLabel,
+    cta_href: ctaHref,
   };
 }
 
