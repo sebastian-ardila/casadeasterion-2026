@@ -11,9 +11,9 @@ const whatsappLink = buildWhatsappUrl(
 ---
 
 <Layout title="Contacto">
-  <section class="mx-auto max-w-[760px] px-6 lg:px-12 py-24">
-    <h1 class="font-serif text-4xl md:text-5xl mb-6">Contacto</h1>
-    <p class="text-[color:var(--fg-muted)] leading-relaxed mb-12 max-w-prose">
+  <section class="mx-auto max-w-[760px] px-5 sm:px-6 lg:px-12 py-16 sm:py-20 md:py-24">
+    <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl mb-5 sm:mb-6">Contacto</h1>
+    <p class="text-[color:var(--fg-muted)] leading-relaxed mb-10 sm:mb-12 max-w-prose">
       Para envíos editoriales, manuscritos, derechos, prensa o consultas generales, escríbenos.
     </p>
 
@@ -22,10 +22,10 @@ const whatsappLink = buildWhatsappUrl(
         href={whatsappLink}
         target="_blank"
         rel="noopener noreferrer"
-        class="block border border-[color:var(--border)] p-8 hover:border-[color:var(--fg)] transition"
+        class="block border border-[color:var(--border)] p-6 sm:p-8 hover:border-[color:var(--fg)] transition"
       >
-        <p class="uppercase text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-2">WhatsApp</p>
-        <p class="font-serif text-2xl">{config.whatsapp_phone}</p>
+        <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-2">WhatsApp</p>
+        <p class="font-serif text-xl sm:text-2xl break-all">{config.whatsapp_phone}</p>
       </a>
     </div>
   </section>

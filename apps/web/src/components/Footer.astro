@@ -3,10 +3,10 @@ import { loadSiteConfig } from "~/lib/site-config";
 const config = await loadSiteConfig();
 ---
 
-<footer class="bg-[color:var(--card)] text-[color:var(--card-fg)] mt-24">
-  <div class="mx-auto max-w-[1400px] px-6 lg:px-12 py-20 grid gap-12 md:grid-cols-3">
-    <div>
-      <h3 class="font-serif uppercase tracking-[0.18em] text-sm mb-6">
+<footer class="bg-[color:var(--card)] text-[color:var(--card-fg)] mt-16 sm:mt-20 md:mt-24">
+  <div class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 py-12 sm:py-16 md:py-20 grid gap-10 sm:gap-12 sm:grid-cols-2 md:grid-cols-3">
+    <div class="sm:col-span-2 md:col-span-1">
+      <h3 class="font-serif uppercase tracking-[0.18em] text-sm mb-5 sm:mb-6">
         Casa de Asterión
       </h3>
       <p class="text-sm leading-relaxed opacity-75">
@@ -15,7 +15,7 @@ const config = await loadSiteConfig();
     </div>
 
     <div>
-      <h4 class="uppercase tracking-[0.18em] text-xs font-semibold mb-5 opacity-90">
+      <h4 class="uppercase tracking-[0.18em] text-xs font-semibold mb-4 sm:mb-5 opacity-90">
         Editorial
       </h4>
       <ul class="space-y-3 text-sm opacity-75">
@@ -26,7 +26,7 @@ const config = await loadSiteConfig();
     </div>
 
     <div>
-      <h4 class="uppercase tracking-[0.18em] text-xs font-semibold mb-5 opacity-90">
+      <h4 class="uppercase tracking-[0.18em] text-xs font-semibold mb-4 sm:mb-5 opacity-90">
         Contenido
       </h4>
       <ul class="space-y-3 text-sm opacity-75">
@@ -38,10 +38,10 @@ const config = await loadSiteConfig();
   </div>
 
   <div
-    class="border-t border-[color:var(--card-fg)]/15 mx-auto max-w-[1400px] px-6 lg:px-12 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs opacity-65"
+    class="border-t border-[color:var(--card-fg)]/15 mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 py-5 sm:py-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-[11px] sm:text-xs opacity-65"
   >
-    <p>{config.footer_legal}</p>
-    <div class="flex items-center gap-6 uppercase tracking-[0.18em]">
+    <p class="text-center sm:text-left">{config.footer_legal}</p>
+    <div class="flex items-center gap-4 sm:gap-6 uppercase tracking-[0.18em]">
       {config.social_links.facebook && (
         <a href={config.social_links.facebook} target="_blank" rel="noopener noreferrer" class="hover:opacity-100">Facebook</a>
       )}

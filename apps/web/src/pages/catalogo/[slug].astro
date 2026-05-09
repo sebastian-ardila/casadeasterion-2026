@@ -60,8 +60,8 @@ const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
     { name: book.title, url: Astro.url.href },
   ]}
 >
-  <article class="mx-auto max-w-[1100px] px-6 lg:px-12 py-20 grid lg:grid-cols-[1fr_1.4fr] gap-12">
-    <div>
+  <article class="mx-auto max-w-[1100px] px-5 sm:px-6 lg:px-12 py-12 sm:py-16 md:py-20 grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-8 md:gap-10 lg:gap-12">
+    <div class="max-w-xs sm:max-w-sm lg:max-w-none mx-auto lg:mx-0 w-full">
       {book.cover_image_url ? (
         <img
           src={book.cover_image_url}
@@ -75,13 +75,13 @@ const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
 
     <div>
       {author && (
-        <p class="uppercase text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-4">
+        <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3 sm:mb-4">
           {author.name}
         </p>
       )}
-      <h1 class="font-serif text-4xl md:text-5xl leading-[1.1] mb-3">{book.title}</h1>
+      <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl leading-[1.1] mb-3">{book.title}</h1>
       {book.subtitle && (
-        <p class="text-xl text-[color:var(--fg-muted)] italic mb-8">{book.subtitle}</p>
+        <p class="text-base sm:text-xl text-[color:var(--fg-muted)] italic mb-6 sm:mb-8">{book.subtitle}</p>
       )}
 
       <div class="cas-md max-w-none mb-10" set:html={description}></div>

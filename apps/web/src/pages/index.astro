@@ -60,20 +60,20 @@ const rest = (featuredPosts ?? []).slice(1);
     {lead && (
       <a
         href={`/articulos/${lead.slug}`}
-        class="hero-card group relative z-10 block bg-[color:var(--card)] text-[color:var(--card-fg)] p-8 md:p-14 transition-shadow hover:shadow-2xl flex flex-col justify-between mx-6 md:ml-12 lg:ml-24 md:mr-0 md:w-[min(760px,calc(50vw+260px))] min-h-[380px] md:h-[520px] mt-8 md:mt-0 mb-12 md:mb-0 shadow-2xl shadow-stone-900/15"
+        class="hero-card group relative z-10 block bg-[color:var(--card)] text-[color:var(--card-fg)] p-6 sm:p-8 md:p-14 transition-shadow hover:shadow-2xl flex flex-col justify-between mx-4 sm:mx-6 md:ml-12 lg:ml-24 md:mr-0 md:w-[min(760px,calc(50vw+260px))] min-h-[340px] sm:min-h-[380px] md:h-[520px] mt-8 md:mt-0 mb-12 md:mb-0 shadow-2xl shadow-stone-900/15"
       >
         <div>
-          <p class="uppercase text-xs tracking-[0.2em] opacity-70 mb-6">
+          <p class="uppercase text-[11px] sm:text-xs tracking-[0.2em] opacity-70 mb-4 sm:mb-6">
             {categoryMap.get(lead.category_id ?? "")?.name ?? "Editorial"}
           </p>
-          <h1 class="font-serif text-3xl md:text-5xl leading-[1.05] mb-6 line-clamp-3">
+          <h1 class="font-serif text-[1.65rem] sm:text-3xl md:text-5xl leading-[1.05] mb-5 sm:mb-6 line-clamp-3">
             {lead.title}
           </h1>
           {lead.excerpt && (
-            <p class="opacity-80 leading-relaxed line-clamp-3">{lead.excerpt}</p>
+            <p class="text-sm sm:text-base opacity-80 leading-relaxed line-clamp-3">{lead.excerpt}</p>
           )}
         </div>
-        <span class="uppercase text-xs tracking-[0.18em] border-b border-[color:var(--card-fg)]/60 pb-1 group-hover:border-[color:var(--card-fg)] self-start">
+        <span class="uppercase text-[11px] sm:text-xs tracking-[0.18em] border-b border-[color:var(--card-fg)]/60 pb-1 group-hover:border-[color:var(--card-fg)] self-start">
           Leer artículo
         </span>
       </a>
@@ -82,12 +82,12 @@ const rest = (featuredPosts ?? []).slice(1);
 
   {/* Quote — even larger, sits above the (faded) hero image */}
   <section class="relative z-20 bg-[color:var(--bg-alt)] border-y border-[color:var(--border)]">
-    <div class="mx-auto max-w-6xl px-6 py-32 md:py-56 text-center">
+    <div class="mx-auto max-w-6xl px-5 sm:px-6 py-20 sm:py-28 md:py-44 lg:py-56 text-center">
       <div class="quote-mark"></div>
-      <p class="font-serif italic text-4xl md:text-6xl lg:text-7xl leading-[1.15] text-[color:var(--fg)] mb-12">
+      <p class="font-serif italic text-2xl sm:text-3xl md:text-5xl lg:text-7xl leading-[1.15] text-[color:var(--fg)] mb-8 sm:mb-10 md:mb-12">
         {config.hero_quote}
       </p>
-      <p class="uppercase text-sm tracking-[0.22em] text-[color:var(--fg-muted)]">
+      <p class="uppercase text-xs sm:text-sm tracking-[0.22em] text-[color:var(--fg-muted)]">
         — {config.hero_quote_author}
       </p>
     </div>
@@ -118,12 +118,12 @@ const rest = (featuredPosts ?? []).slice(1);
 
   {/* Posts recientes */}
   {rest.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-6 lg:px-12 py-24">
-      <div class="flex items-end justify-between mb-12 border-b border-[color:var(--border)] pb-6">
-        <h2 class="font-serif text-3xl md:text-4xl">Lecturas recientes</h2>
-        <a href="/filosofia" class="nav-link hidden md:inline">Ver todo</a>
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 py-16 sm:py-20 md:py-24">
+      <div class="flex items-end justify-between gap-4 mb-8 sm:mb-10 md:mb-12 border-b border-[color:var(--border)] pb-5 sm:pb-6">
+        <h2 class="font-serif text-2xl sm:text-3xl md:text-4xl">Lecturas recientes</h2>
+        <a href="/filosofia" class="nav-link shrink-0">Ver todo</a>
       </div>
-      <div class="grid gap-12 md:grid-cols-2">
+      <div class="grid gap-10 sm:gap-12 md:grid-cols-2">
         {rest.map((post) => (
           <PostCard
             post={post}
@@ -137,12 +137,12 @@ const rest = (featuredPosts ?? []).slice(1);
 
   {/* Catálogo destacado */}
   {featuredBooks && featuredBooks.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-6 lg:px-12 pb-24">
-      <div class="flex items-end justify-between mb-12 border-b border-[color:var(--border)] pb-6">
-        <h2 class="font-serif text-3xl md:text-4xl">Catálogo</h2>
-        <a href="/catalogo" class="nav-link hidden md:inline">Ver todo</a>
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
+      <div class="flex items-end justify-between gap-4 mb-8 sm:mb-10 md:mb-12 border-b border-[color:var(--border)] pb-5 sm:pb-6">
+        <h2 class="font-serif text-2xl sm:text-3xl md:text-4xl">Catálogo</h2>
+        <a href="/catalogo" class="nav-link shrink-0">Ver todo</a>
       </div>
-      <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid gap-8 sm:gap-10 sm:grid-cols-2 lg:grid-cols-4">
         {featuredBooks.map((book) => (
           <BookCard
             book={book}

@@ -93,8 +93,12 @@ const railItems = [...authors, ...authors];
     padding: 0 24px;
     animation: cas-rail-scroll var(--cas-rail-duration, 60s) linear infinite;
   }
-  .cas-rail-wrap:hover .cas-rail {
-    animation-play-state: paused;
+  /* Pause on hover only on devices that actually have hover (desktop).
+     Touch devices keep auto-scrolling because there's no equivalent gesture. */
+  @media (hover: hover) {
+    .cas-rail-wrap:hover .cas-rail {
+      animation-play-state: paused;
+    }
   }
   @keyframes cas-rail-scroll {
     0%   { transform: translateX(0); }

@@ -17,17 +17,17 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
 <header
   class="sticky top-0 z-30 backdrop-blur bg-[color:var(--bg)]/90 border-b border-[color:var(--border)]"
 >
-  <div class="mx-auto max-w-[1400px] px-6 lg:px-12 h-20 flex items-center justify-between gap-6">
+  <div class="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-12 h-16 sm:h-20 flex items-center justify-between gap-3 sm:gap-6">
     <a
       href="/"
-      class="flex items-center gap-3 font-serif tracking-[0.18em] uppercase text-sm font-medium hover:opacity-70 transition shrink-0"
+      class="flex items-center gap-2 sm:gap-3 font-serif tracking-[0.18em] uppercase text-sm font-medium hover:opacity-70 transition shrink-0 min-w-0"
     >
       <img
         src="/casadeasterion.webp"
         alt=""
         width="48"
         height="48"
-        class="h-10 w-10 md:h-12 md:w-12 object-contain"
+        class="h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12 object-contain shrink-0"
       />
       <span class="hidden sm:inline">Casa de Asterión</span>
     </a>

@@ -9,16 +9,16 @@ const { data: authors } = await supabase
 ---
 
 <Layout title="Autores">
-  <section class="mx-auto max-w-[1400px] px-6 lg:px-12 pt-20 pb-12">
-    <h1 class="font-serif text-4xl md:text-6xl mb-4">Autores</h1>
+  <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-20 pb-10 sm:pb-12">
+    <h1 class="font-serif text-3xl sm:text-4xl md:text-6xl mb-3 sm:mb-4">Autores</h1>
     <p class="text-[color:var(--fg-muted)] max-w-prose">
       Voces que publican y colaboran con la editorial.
     </p>
   </section>
 
-  <section class="mx-auto max-w-[1400px] px-6 lg:px-12 pb-24">
+  <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
     {authors && authors.length > 0 ? (
-      <div class="grid gap-12 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div class="grid gap-8 sm:gap-10 md:gap-12 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {authors.map((a) => (
           <a href={`/autores/${a.slug}`} class="group">
             {a.photo_url ? (

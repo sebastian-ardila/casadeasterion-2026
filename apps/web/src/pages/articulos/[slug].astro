@@ -65,28 +65,28 @@ const formatted = post.published_at
     { name: post.title, url: Astro.url.href },
   ]}
 >
-  <article class="mx-auto max-w-[760px] px-6 lg:px-12 py-20">
+  <article class="mx-auto max-w-[760px] px-5 sm:px-6 lg:px-12 py-12 sm:py-16 md:py-20">
     {post.cover_image_url && (
       <img
         src={post.cover_image_url}
         alt=""
-        class="w-full aspect-[16/9] object-cover mb-12"
+        class="w-full aspect-[16/9] object-cover mb-8 sm:mb-10 md:mb-12"
       />
     )}
 
     {category && (
-      <p class="uppercase text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-4">
+      <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3 sm:mb-4">
         {category.name}
       </p>
     )}
 
-    <h1 class="font-serif text-4xl md:text-5xl leading-[1.1] mb-6">{post.title}</h1>
+    <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl leading-[1.1] mb-5 sm:mb-6">{post.title}</h1>
 
     {post.subtitle && (
-      <p class="text-xl text-[color:var(--fg-muted)] italic mb-8">{post.subtitle}</p>
+      <p class="text-base sm:text-xl text-[color:var(--fg-muted)] italic mb-6 sm:mb-8">{post.subtitle}</p>
     )}
 
-    <div class="flex items-center gap-4 text-xs uppercase tracking-[0.12em] text-[color:var(--fg-muted)] mb-12 border-y border-[color:var(--border)] py-4">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] sm:text-xs uppercase tracking-[0.12em] text-[color:var(--fg-muted)] mb-8 sm:mb-12 border-y border-[color:var(--border)] py-3 sm:py-4">
       {author && <span>{author.name}</span>}
       {formatted && <span>{formatted}</span>}
       {post.reading_time_minutes && <span>{post.reading_time_minutes} min</span>}
