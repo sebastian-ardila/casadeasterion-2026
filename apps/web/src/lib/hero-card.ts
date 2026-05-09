@@ -28,7 +28,7 @@ export function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-function layoutRules(l: HeroCardLayout): string {
+function layoutRules(l: HeroCardLayout, platform: "desktop" | "mobile"): string {
   const bg = hexToRgba(l.bg_color, l.bg_alpha);
   const bgRule = l.bg_image_url
     ? `background: linear-gradient(${bg}, ${bg}), url('${l.bg_image_url}') center/cover no-repeat;`
@@ -45,6 +45,10 @@ function layoutRules(l: HeroCardLayout): string {
   const titleFont = l.title_font === "serif"
     ? "var(--font-serif)"
     : "var(--font-sans)";
+  // On mobile we mirror offset_x to the right so the card stays
+  // visually centered. On desktop the card intentionally extends past
+  // the 50% divider so the right edge is flush.
+  const marginRight = platform === "mobile" ? `${l.offset_x}px` : "0";
   return `
     ${bgRule}
     color: ${l.text_color};
@@ -54,7 +58,7 @@ function layoutRules(l: HeroCardLayout): string {
     min-height: ${l.height}px;
     margin-left: ${l.offset_x}px;
     margin-top: ${l.offset_y}px;
-    margin-right: 0;
+    margin-right: ${marginRight};
     margin-bottom: 0;
     ${blur}
     ${shadow}
@@ -64,10 +68,10 @@ function layoutRules(l: HeroCardLayout): string {
 
 export function buildHeroCardCss(cfg: HeroCardConfig): string {
   return `
-    .hero-card-cms { ${layoutRules(cfg.desktop)} }
+    .hero-card-cms { ${layoutRules(cfg.desktop, "desktop")} }
     .hero-card-cms .hcc-title { font-family: var(--hcc-title-font); }
     @media (max-width: 767px) {
-      .hero-card-cms { ${layoutRules(cfg.mobile)} }
+      .hero-card-cms { ${layoutRules(cfg.mobile, "mobile")} }
     }
   `;
 }
