@@ -34,16 +34,29 @@ export type HeroCardConfig = {
   mobile: HeroCardLayout;
 };
 
+export type ContactEmail = { email: string; label?: string };
+export type ContactPhone = { phone: string; label?: string; whatsapp?: boolean };
+export type ContactAddress = { address: string; label?: string };
+export type SocialAccount = { platform: string; url: string; label?: string };
+
 export type SiteConfigMap = {
   hero_quote: string;
   hero_quote_author: string;
   editorial_description: string;
   footer_legal: string;
   social_links: { facebook: string; instagram: string; twitter: string };
+  /** Extra social profiles beyond the three primary ones above. */
+  social_accounts: SocialAccount[];
   whatsapp_phone: string;
   whatsapp_message_template: string;
+  /** Primary contact email — kept for backward compat. The contact page
+   *  joins this with `contact_emails_extra` to render the full list. */
   contact_email: string;
+  contact_emails_extra: ContactEmail[];
   contact_address: string;
+  contact_addresses_extra: ContactAddress[];
+  /** Phones beyond the commerce WhatsApp number. */
+  contact_phones: ContactPhone[];
   contact_hours: string;
   robots_block_ai: string[];
   /** Master switch for the newsletter subscription form + links. */
@@ -116,8 +129,12 @@ const DEFAULTS: SiteConfigMap = {
   whatsapp_message_template:
     'Hola, me interesa el libro "{{title}}" de {{author}}. ¿Está disponible?',
   contact_email: "",
+  contact_emails_extra: [],
   contact_address: "",
+  contact_addresses_extra: [],
+  contact_phones: [],
   contact_hours: "",
+  social_accounts: [],
   robots_block_ai: [],
   subscribe_enabled: true,
   default_keywords: [],

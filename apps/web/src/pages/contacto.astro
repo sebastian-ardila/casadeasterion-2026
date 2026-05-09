@@ -1,96 +1,218 @@
 ---
 import Layout from "~/layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
-import { loadSiteConfig, buildWhatsappUrl } from "~/lib/site-config";
+import {
+  loadSiteConfig,
+  buildWhatsappUrl,
+  type ContactEmail,
+  type ContactPhone,
+  type ContactAddress,
+  type SocialAccount,
+} from "~/lib/site-config";
 
 const config = await loadSiteConfig();
 
-const whatsappLink = buildWhatsappUrl(
-  config.whatsapp_phone,
-  "Hola, me gustaría contactar con Casa de Asterión.",
-  {},
+// Combine the legacy singletons with the extra arrays. The first
+// item is treated as primary and rendered first.
+const primaryEmail = (config.contact_email ?? "").trim();
+const emails: ContactEmail[] = [
+  ...(primaryEmail ? [{ email: primaryEmail, label: "" }] : []),
+  ...((config.contact_emails_extra ?? []).filter((e) => (e?.email ?? "").trim())),
+];
+
+const primaryAddress = (config.contact_address ?? "").trim();
+const addresses: ContactAddress[] = [
+  ...(primaryAddress ? [{ address: primaryAddress, label: "" }] : []),
+  ...((config.contact_addresses_extra ?? []).filter((a) => (a?.address ?? "").trim())),
+];
+
+const phones: ContactPhone[] = (config.contact_phones ?? []).filter(
+  (p) => (p?.phone ?? "").trim(),
 );
 
-const email = (config.contact_email ?? "").trim();
-const address = (config.contact_address ?? "").trim();
 const hours = (config.contact_hours ?? "").trim();
-const social = config.social_links ?? { facebook: "", instagram: "", twitter: "" };
-const socialEntries = (
-  [
-    { key: "instagram", label: "Instagram",   icon: "lucide:instagram", url: social.instagram },
-    { key: "facebook",  label: "Facebook",    icon: "lucide:facebook",  url: social.facebook  },
-    { key: "twitter",   label: "Twitter / X", icon: "lucide:twitter",   url: social.twitter   },
-  ] as const
-).filter((s) => (s.url ?? "").trim());
+
+// Always include the commerce WhatsApp as a phone-style card if set,
+// labeled as "WhatsApp ventas" so visitors know its purpose.
+const commerceWhatsapp = (config.whatsapp_phone ?? "").trim();
+const commerceWhatsappLink = commerceWhatsapp
+  ? buildWhatsappUrl(
+      commerceWhatsapp,
+      "Hola, me gustaría contactar con Casa de Asterión.",
+      {},
+    )
+  : "";
+
+// Social accounts: union of the legacy 3 known platforms + any extras.
+const legacySocial = config.social_links ?? { facebook: "", instagram: "", twitter: "" };
+const legacyAsArray: SocialAccount[] = [
+  { platform: "instagram", url: legacySocial.instagram ?? "" },
+  { platform: "facebook",  url: legacySocial.facebook ?? "" },
+  { platform: "twitter",   url: legacySocial.twitter ?? "" },
+].filter((s) => s.url.trim());
+const socials: SocialAccount[] = [
+  ...legacyAsArray,
+  ...((config.social_accounts ?? []).filter((s) => (s?.url ?? "").trim())),
+];
+
+const SOCIAL_ICONS: Record<string, string> = {
+  instagram: "lucide:instagram",
+  facebook: "lucide:facebook",
+  twitter: "lucide:twitter",
+  youtube: "lucide:youtube",
+  linkedin: "lucide:linkedin",
+  tiktok: "lucide:music",
+  website: "lucide:globe",
+  threads: "lucide:at-sign",
+  bluesky: "lucide:cloud",
+  other: "lucide:link",
+};
+const SOCIAL_LABELS: Record<string, string> = {
+  instagram: "Instagram",
+  facebook: "Facebook",
+  twitter: "Twitter / X",
+  youtube: "YouTube",
+  linkedin: "LinkedIn",
+  tiktok: "TikTok",
+  website: "Sitio web",
+  threads: "Threads",
+  bluesky: "Bluesky",
+  other: "Enlace",
+};
+
+const buildPhoneLink = (p: ContactPhone) => {
+  if (p.whatsapp) {
+    return buildWhatsappUrl(
+      p.phone,
+      "Hola, me gustaría contactar con Casa de Asterión.",
+      {},
+    );
+  }
+  return `tel:${p.phone.replace(/[^\d+]/g, "")}`;
+};
 ---
 
 <Layout title="Contacto">
-  <section class="mx-auto max-w-[860px] px-5 sm:px-6 lg:px-12 py-16 sm:py-20 md:py-24">
+  <section class="mx-auto max-w-[1080px] px-5 sm:px-6 lg:px-12 py-16 sm:py-20 md:py-24">
     <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl mb-5 sm:mb-6">Contacto</h1>
     <p class="text-[color:var(--fg-muted)] leading-relaxed mb-10 sm:mb-12 max-w-prose">
       Para envíos editoriales, manuscritos, derechos, prensa o consultas
       generales, escríbenos por el medio que prefieras.
     </p>
 
-    <div class="grid gap-4 sm:gap-5 sm:grid-cols-2">
-      {email && (
-        <a
-          href={`mailto:${email}`}
-          class="group flex flex-col justify-between border border-[color:var(--border)] p-6 sm:p-7 hover:border-[color:var(--fg)] transition min-h-[140px]"
-        >
-          <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3 inline-flex items-center gap-2">
-            <Icon name="lucide:mail" class="w-3.5 h-3.5" aria-hidden="true" />
-            Email
-          </p>
-          <p class="font-serif text-xl sm:text-2xl break-all leading-tight">{email}</p>
-          <p class="text-[11px] sm:text-xs text-[color:var(--fg-muted)] mt-3 group-hover:text-[color:var(--fg)] transition">Escribir →</p>
-        </a>
-      )}
+    {emails.length > 0 && (
+      <div class="mb-10 sm:mb-12">
+        <h2 class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-4 inline-flex items-center gap-2">
+          <Icon name="lucide:mail" class="w-3.5 h-3.5" aria-hidden="true" />
+          {emails.length === 1 ? "Email" : "Emails"}
+        </h2>
+        <ul class="contact-list">
+          {emails.map((e) => (
+            <li>
+              <a href={`mailto:${e.email}`} class="contact-row">
+                <span class="contact-row-icon" aria-hidden="true">
+                  <Icon name="lucide:mail" class="w-4 h-4" />
+                </span>
+                <span class="contact-row-body">
+                  {e.label && <span class="contact-row-label">{e.label}</span>}
+                  <span class="contact-row-value">{e.email}</span>
+                </span>
+                <span class="contact-row-cta">Escribir →</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
 
-      {config.whatsapp_phone && (
-        <a
-          href={whatsappLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="group flex flex-col justify-between border border-[color:var(--border)] p-6 sm:p-7 hover:border-[color:var(--fg)] transition min-h-[140px]"
-        >
-          <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3 inline-flex items-center gap-2">
-            <Icon name="lucide:message-circle" class="w-3.5 h-3.5" aria-hidden="true" />
-            WhatsApp
-          </p>
-          <p class="font-serif text-xl sm:text-2xl break-all leading-tight">{config.whatsapp_phone}</p>
-          <p class="text-[11px] sm:text-xs text-[color:var(--fg-muted)] mt-3 group-hover:text-[color:var(--fg)] transition">Abrir chat →</p>
-        </a>
-      )}
+    {(commerceWhatsapp || phones.length > 0) && (
+      <div class="mb-10 sm:mb-12">
+        <h2 class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-4 inline-flex items-center gap-2">
+          <Icon name="lucide:phone" class="w-3.5 h-3.5" aria-hidden="true" />
+          Teléfonos
+        </h2>
+        <ul class="contact-list">
+          {commerceWhatsapp && (
+            <li>
+              <a href={commerceWhatsappLink} target="_blank" rel="noopener noreferrer" class="contact-row">
+                <span class="contact-row-icon" aria-hidden="true">
+                  <Icon name="lucide:message-circle" class="w-4 h-4" />
+                </span>
+                <span class="contact-row-body">
+                  <span class="contact-row-label">WhatsApp · ventas</span>
+                  <span class="contact-row-value contact-row-value-num">{commerceWhatsapp}</span>
+                </span>
+                <span class="contact-row-cta">Abrir chat →</span>
+              </a>
+            </li>
+          )}
+          {phones.map((p) => (
+            <li>
+              <a
+                href={buildPhoneLink(p)}
+                target={p.whatsapp ? "_blank" : undefined}
+                rel={p.whatsapp ? "noopener noreferrer" : undefined}
+                class="contact-row"
+              >
+                <span class="contact-row-icon" aria-hidden="true">
+                  <Icon name={p.whatsapp ? "lucide:message-circle" : "lucide:phone"} class="w-4 h-4" />
+                </span>
+                <span class="contact-row-body">
+                  <span class="contact-row-label">{p.label || (p.whatsapp ? "WhatsApp" : "Teléfono")}</span>
+                  <span class="contact-row-value contact-row-value-num">{p.phone}</span>
+                </span>
+                <span class="contact-row-cta">{p.whatsapp ? "Abrir chat →" : "Llamar →"}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
 
-      {address && (
-        <div class="flex flex-col justify-between border border-[color:var(--border)] p-6 sm:p-7 min-h-[140px]">
-          <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3 inline-flex items-center gap-2">
-            <Icon name="lucide:map-pin" class="w-3.5 h-3.5" aria-hidden="true" />
-            Dirección
-          </p>
-          <p class="font-serif text-lg sm:text-xl leading-snug whitespace-pre-line">{address}</p>
-        </div>
-      )}
+    {(addresses.length > 0 || hours) && (
+      <div class="mb-10 sm:mb-12">
+        <h2 class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-4 inline-flex items-center gap-2">
+          <Icon name="lucide:map-pin" class="w-3.5 h-3.5" aria-hidden="true" />
+          {addresses.length > 1 ? "Direcciones" : "Dirección"}{hours ? " y horario" : ""}
+        </h2>
+        <ul class="contact-list">
+          {addresses.map((a) => (
+            <li>
+              <div class="contact-row contact-row-static">
+                <span class="contact-row-icon" aria-hidden="true">
+                  <Icon name="lucide:map-pin" class="w-4 h-4" />
+                </span>
+                <span class="contact-row-body">
+                  {a.label && <span class="contact-row-label">{a.label}</span>}
+                  <span class="contact-row-value contact-row-value-multi">{a.address}</span>
+                </span>
+              </div>
+            </li>
+          ))}
+          {hours && (
+            <li>
+              <div class="contact-row contact-row-static">
+                <span class="contact-row-icon" aria-hidden="true">
+                  <Icon name="lucide:clock" class="w-4 h-4" />
+                </span>
+                <span class="contact-row-body">
+                  <span class="contact-row-label">Horario</span>
+                  <span class="contact-row-value contact-row-value-multi">{hours}</span>
+                </span>
+              </div>
+            </li>
+          )}
+        </ul>
+      </div>
+    )}
 
-      {hours && (
-        <div class="flex flex-col justify-between border border-[color:var(--border)] p-6 sm:p-7 min-h-[140px]">
-          <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3 inline-flex items-center gap-2">
-            <Icon name="lucide:clock" class="w-3.5 h-3.5" aria-hidden="true" />
-            Horario
-          </p>
-          <p class="font-serif text-lg sm:text-xl leading-snug whitespace-pre-line">{hours}</p>
-        </div>
-      )}
-    </div>
-
-    {socialEntries.length > 0 && (
+    {socials.length > 0 && (
       <div class="mt-12 sm:mt-14 pt-10 border-t border-[color:var(--border)]">
         <h2 class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-5">
           También nos encuentras en
         </h2>
         <ul class="flex flex-wrap gap-3 sm:gap-4">
-          {socialEntries.map((s) => (
+          {socials.map((s) => (
             <li>
               <a
                 href={s.url}
@@ -98,8 +220,8 @@ const socialEntries = (
                 rel="noopener noreferrer"
                 class="inline-flex items-center gap-2.5 px-4 py-2.5 border border-[color:var(--border)] hover:border-[color:var(--fg)] transition text-sm"
               >
-                <Icon name={s.icon} class="w-4 h-4" aria-hidden="true" />
-                <span>{s.label}</span>
+                <Icon name={SOCIAL_ICONS[s.platform] ?? "lucide:link"} class="w-4 h-4" aria-hidden="true" />
+                <span>{s.label || SOCIAL_LABELS[s.platform] || s.platform}</span>
               </a>
             </li>
           ))}
@@ -108,3 +230,103 @@ const socialEntries = (
     )}
   </section>
 </Layout>
+
+<style>
+  /*
+   * Contact list rows. Designed for any combination of values
+   * (single or many entries, short or long). Key choices:
+   * - Row layout instead of grid cards: scales gracefully when an
+   *   editor adds a 5th email — no awkward odd-row gap.
+   * - Sans-serif tabular-friendly font for the value (emails and
+   *   phone numbers look wrong in a serif and break ugly).
+   * - overflow-wrap: anywhere lets long emails wrap at any character
+   *   only when they really must, so casadeasterionediciones@gmail.com
+   *   stays on one line on most viewports and only wraps as a last
+   *   resort. break-all (used before) split words mid-letter even
+   *   when a clean break was available.
+   */
+  .contact-list {
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 768px) {
+    .contact-list { grid-template-columns: 1fr 1fr; gap: 0.625rem 0.75rem; }
+  }
+  .contact-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    transition: border-color 0.15s, background-color 0.15s;
+    text-decoration: none;
+    color: inherit;
+    height: 100%;
+    min-height: 64px;
+  }
+  a.contact-row:hover { border-color: var(--fg); }
+  .contact-row-static { cursor: default; }
+  .contact-row-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    flex-shrink: 0;
+    color: var(--fg-muted);
+    margin-top: 1px;
+  }
+  a.contact-row:hover .contact-row-icon { color: var(--fg); }
+  .contact-row-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    overflow: hidden;
+  }
+  .contact-row-label {
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: var(--fg-muted);
+    line-height: 1.4;
+  }
+  .contact-row-value {
+    font-size: 0.95rem;
+    line-height: 1.35;
+    font-weight: 500;
+    /* Wrap only when needed, prefer keeping the address on one line */
+    overflow-wrap: anywhere;
+    word-break: normal;
+    color: var(--fg);
+  }
+  .contact-row-value-num {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+  }
+  .contact-row-value-multi { white-space: pre-line; line-height: 1.5; }
+  .contact-row-cta {
+    flex-shrink: 0;
+    align-self: center;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--fg-muted);
+    transition: color 0.15s;
+    white-space: nowrap;
+    margin-left: 0.25rem;
+  }
+  a.contact-row:hover .contact-row-cta { color: var(--fg); }
+  /* Tight viewports: stack the CTA below the value to free width */
+  @media (max-width: 480px) {
+    .contact-row-cta {
+      align-self: flex-start;
+      margin-left: 0;
+      margin-top: 0.25rem;
+    }
+    .contact-row { flex-wrap: wrap; }
+    .contact-row-body { flex-basis: 100%; }
+  }
+</style>
