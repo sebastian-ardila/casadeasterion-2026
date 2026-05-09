@@ -1,5 +1,39 @@
 import { supabase } from "./supabase";
 
+export type ContentSource = "editorial" | "manual" | "latest_post" | "latest_book";
+
+export type HeroCardLayout = {
+  bg_color: string;
+  bg_alpha: number;
+  bg_image_url: string;
+  bg_blur: number;
+  text_color: string;
+  title_font: "serif" | "sans";
+  border_radius_tl: number;
+  border_radius_tr: number;
+  border_radius_br: number;
+  border_radius_bl: number;
+  width: number;
+  height: number;
+  padding: number;
+  offset_x: number;
+  offset_y: number;
+  shadow: boolean;
+};
+
+export type HeroCardConfig = {
+  content_source: ContentSource;
+  manual: {
+    eyebrow: string;
+    title: string;
+    body: string;
+    cta_label: string;
+    cta_href: string;
+  };
+  desktop: HeroCardLayout;
+  mobile: HeroCardLayout;
+};
+
 export type SiteConfigMap = {
   hero_quote: string;
   hero_quote_author: string;
@@ -16,7 +50,55 @@ export type SiteConfigMap = {
   og_image_default: string;
   organization_logo_url: string;
   hero_image_url: string;
+  hero_card_config: HeroCardConfig;
   [key: string]: unknown;
+};
+
+export const DEFAULT_HERO_CARD_CONFIG: HeroCardConfig = {
+  content_source: "editorial",
+  manual: {
+    eyebrow: "Editorial",
+    title: "Casa de Asterión Ediciones",
+    body: "",
+    cta_label: "Explorar el catálogo",
+    cta_href: "/catalogo",
+  },
+  desktop: {
+    bg_color: "#1a1715",
+    bg_alpha: 1,
+    bg_image_url: "",
+    bg_blur: 0,
+    text_color: "#f5f1ea",
+    title_font: "serif",
+    border_radius_tl: 0,
+    border_radius_tr: 0,
+    border_radius_br: 0,
+    border_radius_bl: 0,
+    width: 760,
+    height: 520,
+    padding: 56,
+    offset_x: 96,
+    offset_y: 0,
+    shadow: true,
+  },
+  mobile: {
+    bg_color: "#1a1715",
+    bg_alpha: 1,
+    bg_image_url: "",
+    bg_blur: 0,
+    text_color: "#f5f1ea",
+    title_font: "serif",
+    border_radius_tl: 0,
+    border_radius_tr: 0,
+    border_radius_br: 0,
+    border_radius_bl: 0,
+    width: 0,
+    height: 280,
+    padding: 24,
+    offset_x: 16,
+    offset_y: 32,
+    shadow: true,
+  },
 };
 
 const DEFAULTS: SiteConfigMap = {
@@ -37,6 +119,7 @@ const DEFAULTS: SiteConfigMap = {
   og_image_default: "",
   organization_logo_url: "",
   hero_image_url: "",
+  hero_card_config: DEFAULT_HERO_CARD_CONFIG,
 };
 
 let cache: SiteConfigMap | null = null;
