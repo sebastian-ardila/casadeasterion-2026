@@ -3,6 +3,7 @@ import Layout from "~/layouts/Layout.astro";
 import SubscribeForm from "~/components/SubscribeForm.astro";
 import PostCard from "~/components/PostCard.astro";
 import BookCard from "~/components/BookCard.astro";
+import AuthorsCarousel from "~/components/AuthorsCarousel.astro";
 import { supabase } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
 
@@ -20,9 +21,9 @@ const [{ data: featuredPosts }, { data: featuredBooks }, { data: authors }, { da
       .from("books")
       .select("*")
       .eq("status", "published")
-      .order("published_at", { ascending: false })
+      .order("publication_date", { ascending: false })
       .limit(4),
-    supabase.from("authors").select("*"),
+    supabase.from("authors").select("*").order("name"),
     supabase.from("categories").select("*"),
   ]);
 
@@ -91,6 +92,9 @@ const rest = (featuredPosts ?? []).slice(1);
       </p>
     </div>
   </section>
+
+  {/* Authors carousel — autoplays L→R, pauses on hover */}
+  <AuthorsCarousel authors={authors ?? []} />
 
   <script is:inline>
     (() => {

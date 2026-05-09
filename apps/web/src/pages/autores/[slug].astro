@@ -28,7 +28,7 @@ const { data: books } = await supabase
   .select("*")
   .eq("status", "published")
   .eq("author_id", author.id)
-  .order("published_at", { ascending: false });
+  .order("publication_date", { ascending: false });
 
 const bio = renderMarkdown(author.bio_md);
 const links = (author.links as Record<string, string> | null) ?? {};

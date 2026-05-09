@@ -1,0 +1,157 @@
+---
+interface AuthorItem {
+  id: string;
+  name: string;
+  slug: string;
+  photo_url?: string | null;
+}
+
+interface Props {
+  authors: AuthorItem[];
+  /** Heading shown above the rail. */
+  title?: string;
+  /** Loop duration (seconds). Lower = faster. */
+  durationSeconds?: number;
+}
+
+const { authors, title = "Nuestros autores", durationSeconds = 60 } = Astro.props;
+
+// Duplicate the list once so the CSS translate(-50%) animation loops
+// seamlessly without a visible reset.
+const railItems = [...authors, ...authors];
+---
+
+{authors.length > 0 && (
+  <section class="cas-authors-carousel relative bg-[color:var(--bg-alt)] border-b border-[color:var(--border)] py-16 md:py-20 overflow-hidden">
+    <div class="mx-auto max-w-[1400px] px-6 lg:px-12">
+      <div class="flex items-end justify-between mb-10">
+        <h2 class="font-serif text-3xl md:text-4xl">{title}</h2>
+        <a
+          href="/autores"
+          class="hidden md:inline-flex items-center gap-1.5 uppercase text-xs tracking-[0.18em] font-medium text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] border-b border-[color:var(--fg-muted)] hover:border-[color:var(--fg)] pb-0.5 transition"
+        >
+          Ver todos
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12h14"/>
+            <path d="M13 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <div
+      class="cas-rail-wrap relative"
+      style={`--cas-rail-duration: ${durationSeconds}s;`}
+      aria-label="Carrusel de autores"
+    >
+      <div class="cas-rail" data-rail>
+        {railItems.map((a, i) => (
+          <a
+            href={`/autores/${a.slug}`}
+            class="cas-rail-card group"
+            aria-hidden={i >= authors.length ? "true" : undefined}
+            tabindex={i >= authors.length ? -1 : undefined}
+          >
+            {a.photo_url ? (
+              <img
+                src={a.photo_url}
+                alt={a.name}
+                loading="lazy"
+                class="cas-rail-photo"
+              />
+            ) : (
+              <div class="cas-rail-photo cas-rail-placeholder" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="9" r="3.5"/>
+                  <path d="M5 20a7 7 0 0 1 14 0"/>
+                </svg>
+              </div>
+            )}
+            <p class="cas-rail-name">{a.name}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <div class="mx-auto max-w-[1400px] px-6 lg:px-12 mt-10 flex justify-center md:hidden">
+      <a href="/autores" class="btn-outline">Ver todos los autores</a>
+    </div>
+  </section>
+)}
+
+<style>
+  .cas-rail-wrap {
+    /* Soft fade on both edges so cards visually disappear into the bg
+       instead of clipping at the panel boundary. */
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+            mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  }
+  .cas-rail {
+    display: flex;
+    width: max-content;
+    gap: 36px;
+    padding: 0 24px;
+    animation: cas-rail-scroll var(--cas-rail-duration, 60s) linear infinite;
+  }
+  .cas-rail-wrap:hover .cas-rail {
+    animation-play-state: paused;
+  }
+  @keyframes cas-rail-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  /* Respect reduced-motion preference. */
+  @media (prefers-reduced-motion: reduce) {
+    .cas-rail { animation: none; }
+    .cas-rail-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .cas-rail-wrap { mask-image: none; -webkit-mask-image: none; }
+  }
+  .cas-rail-card {
+    flex: 0 0 auto;
+    width: 140px;
+    text-align: center;
+    text-decoration: none;
+    color: var(--fg);
+    transition: transform 0.25s;
+  }
+  .cas-rail-card:hover {
+    transform: translateY(-3px);
+  }
+  .cas-rail-photo {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 9999px;
+    background: #e7e5e4;
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+    transition: filter 0.3s;
+    filter: grayscale(40%);
+  }
+  .cas-rail-card:hover .cas-rail-photo {
+    filter: grayscale(0%);
+  }
+  .cas-rail-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a8a29e;
+  }
+  .cas-rail-placeholder svg {
+    width: 56px;
+    height: 56px;
+  }
+  .cas-rail-name {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    line-height: 1.25;
+    color: var(--fg);
+    padding: 0 4px;
+  }
+  @media (max-width: 640px) {
+    .cas-rail-card { width: 110px; }
+    .cas-rail-photo { width: 110px; height: 110px; }
+    .cas-rail-name { font-size: 0.92rem; }
+    .cas-rail { gap: 24px; }
+  }
+</style>
