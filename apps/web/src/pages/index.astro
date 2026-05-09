@@ -45,9 +45,10 @@ const heroImageMobile = config.hero_image_url?.trim()
       fixed-positioned so it visually stays in place while the page scrolls
       past it; JS fades it to 0 by ~0.6vh of scroll, after which the (now
       invisible) image doesn't interfere with later sections.
-      On mobile the layout is a normal vertical stack: card first, then
-      the photo below it (no longer used as a background). */}
-  <section class="hero-section relative overflow-x-clip md:h-screen flex md:items-center bg-[color:var(--bg-alt)]">
+      On mobile the layout is a normal vertical stack (flex-col): card on
+      top, photo below. On md+ flex-row + items-center positions the card
+      over the fixed right-half image. */}
+  <section class="hero-section relative overflow-x-clip md:h-screen flex flex-col md:flex-row md:items-center bg-[color:var(--bg-alt)]">
     {/* Right-half fixed image (desktop only). z-0 so it sits below the
         sticky header (z-30) but above the body bg. */}
     <div
@@ -57,45 +58,40 @@ const heroImageMobile = config.hero_image_url?.trim()
     >
     </div>
 
-    {/* Mobile-only stack wrapper: card on top, photo below.
-        Desktop ignores this wrapper's flex/spacing — the card is
-        absolutely-positioned-feeling via mx/ml on md+. */}
-    <div class="md:contents flex flex-col w-full">
-      {/* Card — fixed height, anchored left; on desktop the card width
-          extends past the 50% divider so it visibly sits over both
-          white and image. */}
-      {lead && (
-        <a
-          href={`/articulos/${lead.slug}`}
-          class="hero-card group relative z-10 block bg-[color:var(--card)] text-[color:var(--card-fg)] p-5 sm:p-7 md:p-14 transition-shadow hover:shadow-2xl flex flex-col justify-between mx-4 sm:mx-6 md:ml-12 lg:ml-24 md:mr-0 md:w-[min(760px,calc(50vw+260px))] min-h-[260px] sm:min-h-[320px] md:h-[520px] mt-6 sm:mt-10 md:my-0 shadow-2xl shadow-stone-900/15"
-        >
-          <div>
-            <p class="uppercase text-[10px] sm:text-xs tracking-[0.2em] opacity-70 mb-3 sm:mb-5">
-              {categoryMap.get(lead.category_id ?? "")?.name ?? "Editorial"}
-            </p>
-            <h1 class="font-serif text-[1.4rem] sm:text-2xl md:text-5xl leading-[1.1] mb-3 sm:mb-5 line-clamp-3">
-              {lead.title}
-            </h1>
-            {lead.excerpt && (
-              <p class="text-xs sm:text-sm md:text-base opacity-80 leading-relaxed line-clamp-2 md:line-clamp-3">{lead.excerpt}</p>
-            )}
-          </div>
-          <span class="uppercase text-[11px] sm:text-xs tracking-[0.18em] border-b border-[color:var(--card-fg)]/60 pb-1 group-hover:border-[color:var(--card-fg)] self-start">
-            Leer artículo
-          </span>
-        </a>
-      )}
+    {/* Card — fixed height, anchored left; on desktop the card width
+        extends past the 50% divider so it visibly sits over both
+        white and image. */}
+    {lead && (
+      <a
+        href={`/articulos/${lead.slug}`}
+        class="hero-card group relative z-10 block bg-[color:var(--card)] text-[color:var(--card-fg)] p-5 sm:p-7 md:p-14 transition-shadow hover:shadow-2xl flex flex-col justify-between mx-4 sm:mx-6 md:ml-12 lg:ml-24 md:mr-0 md:w-[min(760px,calc(50vw+260px))] min-h-[260px] sm:min-h-[320px] md:h-[520px] mt-6 sm:mt-10 md:my-0 shadow-2xl shadow-stone-900/15"
+      >
+        <div>
+          <p class="uppercase text-[10px] sm:text-xs tracking-[0.2em] opacity-70 mb-3 sm:mb-5">
+            {categoryMap.get(lead.category_id ?? "")?.name ?? "Editorial"}
+          </p>
+          <h1 class="font-serif text-[1.4rem] sm:text-2xl md:text-5xl leading-[1.1] mb-3 sm:mb-5 line-clamp-3">
+            {lead.title}
+          </h1>
+          {lead.excerpt && (
+            <p class="text-xs sm:text-sm md:text-base opacity-80 leading-relaxed line-clamp-2 md:line-clamp-3">{lead.excerpt}</p>
+          )}
+        </div>
+        <span class="uppercase text-[11px] sm:text-xs tracking-[0.18em] border-b border-[color:var(--card-fg)]/60 pb-1 group-hover:border-[color:var(--card-fg)] self-start">
+          Leer artículo
+        </span>
+      </a>
+    )}
 
-      {/* Mobile photo — stacked below the card. Hidden on md+ where the
-          fixed right-half image takes over. */}
-      <img
-        src={heroImageMobile}
-        alt=""
-        loading="eager"
-        decoding="async"
-        class="md:hidden block w-full aspect-[4/3] object-cover mt-6 sm:mt-8"
-      />
-    </div>
+    {/* Mobile photo — stacked below the card. Hidden on md+ where the
+        fixed right-half image takes over. */}
+    <img
+      src={heroImageMobile}
+      alt=""
+      loading="eager"
+      decoding="async"
+      class="md:hidden block w-full aspect-[4/3] object-cover mt-6 sm:mt-8"
+    />
   </section>
 
   {/* Quote — even larger, sits above the (faded) hero image */}
