@@ -126,32 +126,79 @@ export function buildHeroCardCss(cfg: HeroCardConfig): string {
 }
 
 type ResolveCtx = {
-  lead: { slug: string; title: string; excerpt: string | null; category_id: string | null } | null | undefined;
-  featuredBook: { slug: string; title: string; subtitle: string | null; author_id: string | null } | null | undefined;
+  lead: {
+    slug: string;
+    title: string;
+    excerpt: string | null;
+    content_md?: string | null;
+    category_id: string | null;
+  } | null | undefined;
+  featuredBook: {
+    slug: string;
+    title: string;
+    subtitle: string | null;
+    description_md?: string | null;
+    author_id: string | null;
+  } | null | undefined;
   authorMap: Map<string, { name: string }>;
   categoryMap: Map<string, { name: string }>;
   editorialDescription: string;
 };
+
+// Strip a small subset of markdown syntax to plain text and trim
+// to a sensible body length so the hero card's line-clamp has
+// real text to clamp instead of e.g. "*emphasis*" with raw stars.
+// Truncates at the last word before `max` so we don't cut mid-word.
+export function markdownToTeaser(md: string | null | undefined, max = 280): string {
+  if (!md) return "";
+  const stripped = md
+    .replace(/`{3}[\s\S]*?`{3}/g, " ")          // fenced code blocks
+    .replace(/`([^`]+)`/g, "$1")                  // inline code
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")         // images
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")      // links → keep label
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")           // ATX headings
+    .replace(/^\s{0,3}>\s?/gm, "")                // blockquotes
+    .replace(/^\s*[-*+]\s+/gm, "")                // unordered lists
+    .replace(/^\s*\d+\.\s+/gm, "")                // ordered lists
+    .replace(/(\*\*|__)(.*?)\1/g, "$2")           // bold
+    .replace(/(\*|_)(.*?)\1/g, "$2")              // italic
+    .replace(/~~(.*?)~~/g, "$1")                  // strike
+    .replace(/\s+/g, " ")
+    .trim();
+  if (stripped.length <= max) return stripped;
+  const cut = stripped.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd() + "…";
+}
 
 export function resolveHeroContent(
   cfg: HeroCardConfig,
   ctx: ResolveCtx,
 ): ResolvedHeroContent {
   if (cfg.content_source === "latest_post" && ctx.lead) {
+    // Body falls back from authored excerpt → stripped content_md
+    // teaser → empty. Keeps short editor-written excerpts on top
+    // when present, otherwise gives the reader real prose.
+    const body =
+      (ctx.lead.excerpt ?? "").trim() ||
+      markdownToTeaser(ctx.lead.content_md);
     return {
       eyebrow: ctx.categoryMap.get(ctx.lead.category_id ?? "")?.name ?? "Editorial",
       title: ctx.lead.title,
-      body: ctx.lead.excerpt ?? "",
+      body,
       cta_label: "Leer artículo",
       cta_href: `/articulos/${ctx.lead.slug}`,
     };
   }
   if (cfg.content_source === "latest_book" && ctx.featuredBook) {
     const a = ctx.authorMap.get(ctx.featuredBook.author_id ?? "");
+    const body =
+      (ctx.featuredBook.subtitle ?? "").trim() ||
+      markdownToTeaser(ctx.featuredBook.description_md);
     return {
       eyebrow: a?.name ?? "Catálogo",
       title: ctx.featuredBook.title,
-      body: ctx.featuredBook.subtitle ?? "",
+      body,
       cta_label: "Ver libro",
       cta_href: `/catalogo/${ctx.featuredBook.slug}`,
     };
