@@ -5,6 +5,18 @@
 
 import type { HeroCardConfig, HeroCardLayout } from "./site-config";
 
+// Available title fonts. Keep this in sync with the CMS dropdown options
+// and the Google Fonts <link> in apps/web/src/layouts/Layout.astro. Any
+// value not in this map falls back to Cormorant Garamond.
+export const HERO_CARD_FONTS: Record<string, string> = {
+  serif: '"Cormorant Garamond", "EB Garamond", Georgia, serif',
+  playfair: '"Playfair Display", Georgia, serif',
+  lora: '"Lora", Georgia, serif',
+  sans: '"Inter", system-ui, -apple-system, sans-serif',
+  "dm-sans": '"DM Sans", "Inter", sans-serif',
+  "space-grotesk": '"Space Grotesk", "Inter", sans-serif',
+};
+
 export type ResolvedHeroContent = {
   eyebrow: string;
   title: string;
@@ -42,9 +54,7 @@ function layoutRules(l: HeroCardLayout, platform: "desktop" | "mobile"): string 
     ? `box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);`
     : `box-shadow: none;`;
   const blur = l.bg_blur > 0 ? `backdrop-filter: blur(${l.bg_blur}px);` : "";
-  const titleFont = l.title_font === "serif"
-    ? "var(--font-serif)"
-    : "var(--font-sans)";
+  const titleFont = HERO_CARD_FONTS[l.title_font] ?? HERO_CARD_FONTS.serif;
   // On mobile we mirror offset_x to the right so the card stays
   // visually centered. On desktop the card intentionally extends past
   // the 50% divider so the right edge is flush.

@@ -8,7 +8,7 @@ export type HeroCardLayout = {
   bg_image_url: string;
   bg_blur: number;
   text_color: string;
-  title_font: "serif" | "sans";
+  title_font: string;
   border_radius_tl: number;
   border_radius_tr: number;
   border_radius_br: number;
