@@ -15,6 +15,7 @@ export type SiteConfigMap = {
   twitter_handle: string;
   og_image_default: string;
   organization_logo_url: string;
+  hero_image_url: string;
   [key: string]: unknown;
 };
 
@@ -35,6 +36,7 @@ const DEFAULTS: SiteConfigMap = {
   twitter_handle: "",
   og_image_default: "",
   organization_logo_url: "",
+  hero_image_url: "",
 };
 
 let cache: SiteConfigMap | null = null;

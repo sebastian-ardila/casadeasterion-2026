@@ -31,6 +31,13 @@ const authorMap = new Map((authors ?? []).map((a) => [a.id, a]));
 const categoryMap = new Map((categories ?? []).map((c) => [c.id, c]));
 const lead = featuredPosts?.[0];
 const rest = (featuredPosts ?? []).slice(1);
+
+const HERO_FALLBACK =
+  "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=2400&q=80";
+const heroImage = config.hero_image_url?.trim() || HERO_FALLBACK;
+const heroImageMobile = config.hero_image_url?.trim()
+  ? config.hero_image_url
+  : "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=1600&q=80";
 ---
 
 <Layout>
@@ -38,20 +45,26 @@ const rest = (featuredPosts ?? []).slice(1);
       fixed-positioned so it visually stays in place while the page scrolls
       past it; JS fades it to 0 by ~0.6vh of scroll, after which the (now
       invisible) image doesn't interfere with later sections. */}
-  <section class="hero-section relative bg-[color:var(--bg-alt)] overflow-x-clip md:h-screen flex md:items-center">
+  <section class="hero-section relative overflow-x-clip md:h-screen flex md:items-center bg-[color:var(--bg-alt)]">
+    {/* Mobile background image — sits BEHIND everything (z-0). The card
+        renders on top with z-10. Hidden on md+ where the right-half fixed
+        image takes over. */}
+    <div
+      class="md:hidden absolute inset-0 z-0 bg-cover bg-center pointer-events-none"
+      style={`background-image: url('${heroImageMobile}')`}
+      aria-hidden="true"
+    >
+    </div>
+    {/* Soft overlay so the dark card has enough contrast against the
+        mobile background image. */}
+    <div class="md:hidden absolute inset-0 z-0 bg-[color:var(--bg-alt)]/35 pointer-events-none" aria-hidden="true"></div>
+
     {/* Right-half fixed image (desktop only). z-0 so it sits below the
         sticky header (z-30) but above the body bg. */}
     <div
       id="hero-image"
       class="hidden md:block fixed top-0 right-0 h-screen w-1/2 bg-cover bg-center pointer-events-none will-change-[opacity] transition-opacity duration-200 z-0"
-      style="background-image: url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=2400&q=80')"
-    >
-    </div>
-
-    {/* Mobile-only image (no sticky on small screens) */}
-    <div
-      class="md:hidden h-[55vh] bg-cover bg-center"
-      style="background-image: url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=1600&q=80')"
+      style={`background-image: url('${heroImage}')`}
     >
     </div>
 
@@ -60,17 +73,17 @@ const rest = (featuredPosts ?? []).slice(1);
     {lead && (
       <a
         href={`/articulos/${lead.slug}`}
-        class="hero-card group relative z-10 block bg-[color:var(--card)] text-[color:var(--card-fg)] p-6 sm:p-8 md:p-14 transition-shadow hover:shadow-2xl flex flex-col justify-between mx-4 sm:mx-6 md:ml-12 lg:ml-24 md:mr-0 md:w-[min(760px,calc(50vw+260px))] min-h-[340px] sm:min-h-[380px] md:h-[520px] mt-8 md:mt-0 mb-12 md:mb-0 shadow-2xl shadow-stone-900/15"
+        class="hero-card group relative z-10 block bg-[color:var(--card)] text-[color:var(--card-fg)] p-5 sm:p-7 md:p-14 transition-shadow hover:shadow-2xl flex flex-col justify-between mx-4 sm:mx-6 md:ml-12 lg:ml-24 md:mr-0 md:w-[min(760px,calc(50vw+260px))] min-h-[260px] sm:min-h-[320px] md:h-[520px] my-10 sm:my-14 md:my-0 shadow-2xl shadow-stone-900/15"
       >
         <div>
-          <p class="uppercase text-[11px] sm:text-xs tracking-[0.2em] opacity-70 mb-4 sm:mb-6">
+          <p class="uppercase text-[10px] sm:text-xs tracking-[0.2em] opacity-70 mb-3 sm:mb-5">
             {categoryMap.get(lead.category_id ?? "")?.name ?? "Editorial"}
           </p>
-          <h1 class="font-serif text-[1.65rem] sm:text-3xl md:text-5xl leading-[1.05] mb-5 sm:mb-6 line-clamp-3">
+          <h1 class="font-serif text-[1.4rem] sm:text-2xl md:text-5xl leading-[1.1] mb-3 sm:mb-5 line-clamp-3">
             {lead.title}
           </h1>
           {lead.excerpt && (
-            <p class="text-sm sm:text-base opacity-80 leading-relaxed line-clamp-3">{lead.excerpt}</p>
+            <p class="text-xs sm:text-sm md:text-base opacity-80 leading-relaxed line-clamp-2 md:line-clamp-3">{lead.excerpt}</p>
           )}
         </div>
         <span class="uppercase text-[11px] sm:text-xs tracking-[0.18em] border-b border-[color:var(--card-fg)]/60 pb-1 group-hover:border-[color:var(--card-fg)] self-start">
