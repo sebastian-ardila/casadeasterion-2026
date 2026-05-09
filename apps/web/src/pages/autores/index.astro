@@ -6,36 +6,109 @@ const { data: authors } = await supabase
   .from("authors")
   .select("*")
   .order("name");
+
+// Pre-compute the diacritic-stripped search text so the live filter is a
+// simple substring match — keeps the script tiny and avoids work per keystroke.
+const stripDiacritics = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 ---
 
 <Layout title="Autores">
-  <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-20 pb-10 sm:pb-12">
+  <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-20 pb-6 sm:pb-8">
     <h1 class="font-serif text-3xl sm:text-4xl md:text-6xl mb-3 sm:mb-4">Autores</h1>
     <p class="text-[color:var(--fg-muted)] max-w-prose">
       Voces que publican y colaboran con la editorial.
     </p>
   </section>
 
-  <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
+  <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24" data-authors-section>
     {authors && authors.length > 0 ? (
-      <div class="grid gap-8 sm:gap-10 md:gap-12 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {authors.map((a) => (
-          <a href={`/autores/${a.slug}`} class="group">
-            {a.photo_url ? (
-              <img
-                src={a.photo_url}
-                alt={a.name}
-                class="w-full aspect-square object-cover bg-[color:var(--bg-alt)] grayscale group-hover:grayscale-0 transition"
-              />
-            ) : (
-              <div class="aspect-square bg-[color:var(--bg-alt)]"></div>
-            )}
-            <h3 class="font-serif text-lg mt-4">{a.name}</h3>
-          </a>
-        ))}
-      </div>
+      <>
+        {/* Search bar */}
+        <div class="relative max-w-md mb-10 sm:mb-12">
+          <svg
+            class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[color:var(--fg-muted)] pointer-events-none"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7"/>
+            <path d="m21 21-4.3-4.3"/>
+          </svg>
+          <input
+            type="text"
+            data-authors-search
+            placeholder="Buscar autor…"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Buscar autor"
+            class="w-full pl-10 pr-3 py-2.5 sm:py-3 text-sm sm:text-base bg-[color:var(--bg-alt)] border border-[color:var(--border)] focus:border-[color:var(--fg)] focus:outline-none transition"
+          />
+        </div>
+
+        <div class="grid gap-8 sm:gap-10 md:gap-12 grid-cols-2 md:grid-cols-3 lg:grid-cols-4" data-authors-grid>
+          {authors.map((a) => (
+            <a
+              href={`/autores/${a.slug}`}
+              class="group"
+              data-author-card
+              data-search-text={stripDiacritics(a.name ?? "")}
+            >
+              {a.photo_url ? (
+                <img
+                  src={a.photo_url}
+                  alt={a.name}
+                  class="w-full aspect-square object-cover bg-[color:var(--bg-alt)] grayscale group-hover:grayscale-0 transition"
+                />
+              ) : (
+                <div class="aspect-square bg-[color:var(--bg-alt)]"></div>
+              )}
+              <h3 class="font-serif text-lg mt-4">{a.name}</h3>
+            </a>
+          ))}
+        </div>
+
+        <p class="text-[color:var(--fg-muted)] mt-12 hidden" data-authors-empty>
+          No encontramos autores con ese nombre.
+        </p>
+      </>
     ) : (
       <p class="text-[color:var(--fg-muted)]">Pronto.</p>
     )}
   </section>
 </Layout>
+
+<script is:inline>
+  (() => {
+    const section = document.querySelector("[data-authors-section]");
+    if (!section) return;
+    const input = section.querySelector("[data-authors-search]");
+    const grid = section.querySelector("[data-authors-grid]");
+    const empty = section.querySelector("[data-authors-empty]");
+    if (!input || !grid) return;
+
+    const normalize = (s) =>
+      String(s ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+    const cards = Array.from(grid.querySelectorAll("[data-author-card]"));
+
+    const apply = () => {
+      const q = normalize(input.value.trim());
+      let visible = 0;
+      cards.forEach((c) => {
+        const text = c.dataset.searchText || "";
+        const match = !q || text.includes(q);
+        c.classList.toggle("hidden", !match);
+        if (match) visible++;
+      });
+      grid.classList.toggle("hidden", visible === 0);
+      if (empty) empty.classList.toggle("hidden", visible !== 0);
+    };
+
+    input.addEventListener("input", apply);
+  })();
+</script>
