@@ -17,19 +17,35 @@ const [{ data: books }, { data: authors }] = await Promise.all([
 ]);
 
 const authorMap = new Map((authors ?? []).map((a) => [a.id, a]));
+const totalBooks = books?.length ?? 0;
 ---
 
 <Layout title="Catálogo" description="Todos los libros publicados por Casa de Asterión.">
-  <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-20 pb-10 sm:pb-12">
-    <h1 class="font-serif text-3xl sm:text-4xl md:text-6xl mb-3 sm:mb-4">Catálogo</h1>
-    <p class="text-[color:var(--fg-muted)] max-w-prose">
+  {/* Header with serif heading + count badge for a more editorial feel */}
+  <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-10 sm:pt-14 md:pt-20 pb-6 sm:pb-10">
+    <div class="flex items-end justify-between gap-4 border-b border-[color:var(--border)] pb-5 sm:pb-7">
+      <div class="min-w-0">
+        <p class="uppercase text-[10px] sm:text-xs tracking-[0.22em] text-[color:var(--fg-muted)] mb-2 sm:mb-3">
+          Casa de Asterión
+        </p>
+        <h1 class="font-serif text-3xl sm:text-4xl md:text-6xl leading-[1.05]">
+          Catálogo
+        </h1>
+      </div>
+      {totalBooks > 0 && (
+        <p class="hidden sm:block uppercase text-xs tracking-[0.22em] text-[color:var(--fg-muted)] shrink-0 pb-1">
+          {totalBooks} {totalBooks === 1 ? "título" : "títulos"}
+        </p>
+      )}
+    </div>
+    <p class="text-sm sm:text-base text-[color:var(--fg-muted)] max-w-prose mt-4 sm:mt-6 leading-relaxed">
       La biblioteca completa. Cada compra se gestiona por WhatsApp.
     </p>
   </section>
 
   <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
-    {books && books.length > 0 ? (
-      <div class="grid gap-8 sm:gap-10 grid-cols-2 lg:grid-cols-4">
+    {totalBooks > 0 ? (
+      <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4">
         {books.map((book) => (
           <BookCard
             book={book}

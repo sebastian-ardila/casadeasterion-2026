@@ -21,10 +21,13 @@ const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
 });
 ---
 
-<article class="group flex flex-col">
+<article class="group flex flex-col h-full">
   {
     book.cover_image_url ? (
-      <a href={`/catalogo/${book.slug}`} class="block aspect-[3/4] overflow-hidden bg-[color:var(--bg-alt)]">
+      <a
+        href={`/catalogo/${book.slug}`}
+        class="block aspect-[3/4] overflow-hidden bg-[color:var(--bg-alt)] shadow-sm shadow-stone-900/10 ring-1 ring-stone-900/[0.04] transition-shadow duration-300 group-hover:shadow-md group-hover:shadow-stone-900/15"
+      >
         <img
           src={book.cover_image_url}
           alt={`Portada de ${book.title}`}
@@ -34,35 +37,40 @@ const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
         />
       </a>
     ) : (
-      <div class="aspect-[3/4] bg-[color:var(--bg-alt)] flex items-center justify-center text-[color:var(--fg-muted)]">
+      <a
+        href={`/catalogo/${book.slug}`}
+        class="aspect-[3/4] bg-[color:var(--bg-alt)] flex items-center justify-center text-[color:var(--fg-muted)] text-xs sm:text-sm uppercase tracking-[0.16em]"
+      >
         Sin portada
-      </div>
+      </a>
     )
   }
 
-  <div class="pt-5 flex flex-col flex-1">
-    <h3 class="font-serif text-xl leading-tight">
-      <a href={`/catalogo/${book.slug}`} class="hover:opacity-70">{book.title}</a>
-    </h3>
+  <div class="pt-4 sm:pt-5 flex flex-col flex-1 min-w-0">
     {author && (
-      <p class="mt-1 text-sm uppercase tracking-[0.12em] text-[color:var(--fg-muted)]">
+      <p class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)] line-clamp-1 mb-1.5 sm:mb-2">
         {author.name}
       </p>
     )}
-    {book.price_amount != null && (
-      <p class="mt-3 text-sm">
-        {new Intl.NumberFormat("es-CO", {
-          style: "currency",
-          currency: book.price_currency,
-          maximumFractionDigits: 0,
-        }).format(Number(book.price_amount))}
-      </p>
-    )}
+    <h3 class="font-serif text-base sm:text-lg md:text-xl leading-snug line-clamp-2">
+      <a href={`/catalogo/${book.slug}`} class="hover:opacity-70 transition-opacity">{book.title}</a>
+    </h3>
+    {/* Reserve a fixed price slot so cards with and without a price stay
+        aligned: same metadata height across the row. */}
+    <p class="mt-2 sm:mt-3 text-sm sm:text-[15px] tabular-nums min-h-[1.25rem]">
+      {book.price_amount != null
+        ? new Intl.NumberFormat("es-CO", {
+            style: "currency",
+            currency: book.price_currency,
+            maximumFractionDigits: 0,
+          }).format(Number(book.price_amount))
+        : ""}
+    </p>
     <a
       href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
-      class="btn-outline mt-5 self-start"
+      class="btn-outline mt-4 sm:mt-5 self-start text-[10px] sm:text-[11px] whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2.5"
     >
       Comprar por WhatsApp
     </a>
