@@ -25,7 +25,7 @@ function corsHeaders(origin: string | null): Record<string, string> {
   return {
     "access-control-allow-origin": allow,
     "access-control-allow-methods": "POST, OPTIONS",
-    "access-control-allow-headers": "content-type, authorization",
+    "access-control-allow-headers": "content-type, authorization, apikey, x-client-info",
     "access-control-max-age": "86400",
     vary: "origin",
   };
