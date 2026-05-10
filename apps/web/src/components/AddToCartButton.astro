@@ -54,7 +54,7 @@ const qtyBtnHoverClasses = variant === "primary"
     type="button"
     data-cda-add-btn
     class:list={[
-      "w-full h-10 inline-flex items-center justify-center gap-2 px-3 sm:px-4 text-[11px] sm:text-xs uppercase tracking-[0.16em] transition-colors",
+      "w-full h-10 inline-flex items-center justify-center gap-2 px-3 sm:px-4 text-[11px] sm:text-xs uppercase tracking-[0.16em] transition-colors cursor-pointer",
       addClasses,
     ]}
   >
@@ -79,7 +79,7 @@ const qtyBtnHoverClasses = variant === "primary"
       data-cda-qty-dec
       aria-label="Quitar uno"
       class:list={[
-        "h-full px-4 inline-flex items-center justify-center transition-colors",
+        "h-full px-4 inline-flex items-center justify-center transition-colors cursor-pointer",
         qtyBtnHoverClasses,
       ]}
     >
@@ -95,7 +95,7 @@ const qtyBtnHoverClasses = variant === "primary"
       data-cda-qty-inc
       aria-label="Agregar uno"
       class:list={[
-        "h-full px-4 inline-flex items-center justify-center transition-colors",
+        "h-full px-4 inline-flex items-center justify-center transition-colors cursor-pointer",
         qtyBtnHoverClasses,
       ]}
     >
