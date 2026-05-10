@@ -1,0 +1,98 @@
+---
+// Floating cart summary anchored to the bottom-right of the viewport.
+// Stays hidden when the cart is empty so it doesn't get in the way.
+// Clicking it opens the side drawer (same event the header button
+// dispatches).
+---
+
+<button
+  type="button"
+  id="cda-cart-bubble"
+  aria-label="Ver carrito"
+  hidden
+  class="fixed bottom-4 right-4 z-30 inline-flex items-center gap-3 bg-stone-900 text-white pl-3 pr-4 py-2.5 shadow-lg shadow-stone-900/25 hover:bg-stone-800 transition-all duration-200 sm:bottom-6 sm:right-6"
+>
+  <span class="relative inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/10">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.6"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+      <path d="M3 6h18" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
+    <span
+      id="cda-cart-bubble-badge"
+      class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-amber-300 text-stone-900 text-[10px] font-semibold rounded-full inline-flex items-center justify-center leading-none"
+    >0</span>
+  </span>
+  <span class="flex flex-col items-start leading-tight">
+    <span id="cda-cart-bubble-count" class="text-[10px] uppercase tracking-[0.16em] text-white/70">0 libros</span>
+    <span class="text-xs uppercase tracking-[0.16em] font-medium">Ver carrito</span>
+  </span>
+</button>
+
+<script>
+  import { getCart, subscribe } from "~/lib/cart";
+
+  function pluralize(n: number) {
+    return n === 1 ? "1 libro" : `${n} libros`;
+  }
+
+  function isHiddenRoute() {
+    // The /checkout page already shows the cart as primary content,
+    // so the bubble would just be noise. Drawer-driven flows don't
+    // pop up there either.
+    const path = window.location.pathname.replace(/\/$/, "");
+    return path === "/checkout";
+  }
+
+  function sync() {
+    const btn = document.getElementById("cda-cart-bubble") as HTMLButtonElement | null;
+    const badge = document.getElementById("cda-cart-bubble-badge");
+    const count = document.getElementById("cda-cart-bubble-count");
+    if (!btn || !badge || !count) return;
+    const total = getCart().reduce((s, it) => s + it.quantity, 0);
+    if (total > 0 && !isHiddenRoute()) {
+      badge.textContent = total > 99 ? "99+" : String(total);
+      count.textContent = pluralize(total);
+      btn.hidden = false;
+    } else {
+      btn.hidden = true;
+    }
+  }
+
+  function init() {
+    sync();
+    const btn = document.getElementById("cda-cart-bubble");
+    if (btn && !btn.dataset.bound) {
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => {
+        window.dispatchEvent(new CustomEvent("cda:open-cart"));
+      });
+    }
+    // Hide the bubble while the drawer is open so it doesn't peek
+    // through. Reveal it again on close.
+    if (!(window as any).__cdaBubbleDrawerWired) {
+      (window as any).__cdaBubbleDrawerWired = true;
+      window.addEventListener("cda:open-cart", () => {
+        const b = document.getElementById("cda-cart-bubble") as HTMLButtonElement | null;
+        if (b) b.hidden = true;
+      });
+      window.addEventListener("cda:close-cart", () => {
+        sync();
+      });
+    }
+  }
+
+  subscribe(sync);
+  init();
+  document.addEventListener("astro:page-load", init);
+</script>

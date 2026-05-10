@@ -145,6 +145,7 @@
     setTimeout(() => {
       drawer?.classList.add("hidden");
       document.body.style.overflow = "";
+      window.dispatchEvent(new CustomEvent("cda:close-cart"));
     }, 200);
   }
 

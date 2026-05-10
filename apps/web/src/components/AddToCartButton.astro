@@ -1,7 +1,12 @@
 ---
-// Drop-in "Agregar al carrito" button. Stores all the snapshot fields
-// in data-attrs so the cart store can persist a usable copy without
-// re-fetching the book server-side.
+// Drop-in cart action widget for a single book. Renders one of two
+// states depending on whether the slug is already in the cart:
+//
+//   - Not in cart  →  "Agregar al carrito" button.
+//   - In cart      →  [-] N [+] quantity controls.
+//
+// Switching between the two doesn't reload the page — the script
+// subscribes to the cart store and toggles visibility.
 //
 // Usage:
 //   <AddToCartButton
@@ -32,71 +37,150 @@ const {
   className = "",
 } = Astro.props;
 
-const baseClasses = variant === "primary"
+const addClasses = variant === "primary"
   ? "bg-stone-900 text-white hover:bg-stone-800"
   : "border border-stone-900 text-stone-900 hover:bg-stone-900 hover:text-white";
+
+const qtyShellClasses = variant === "primary"
+  ? "bg-stone-900 text-white"
+  : "border border-stone-900 text-stone-900";
+
+const qtyBtnHoverClasses = variant === "primary"
+  ? "hover:bg-stone-700"
+  : "hover:bg-stone-100";
 ---
 
-<button
-  type="button"
-  class:list={[
-    "cda-add-to-cart inline-flex items-center justify-center gap-2 px-4 py-2 text-xs uppercase tracking-[0.16em] transition-colors",
-    baseClasses,
-    className,
-  ]}
-  data-cda-add
+<div
+  class:list={["cda-cart-action inline-flex", className]}
+  data-cda-cart-action
   data-slug={slug}
   data-title={title}
   data-cover={coverImageUrl ?? ""}
   data-price={priceAmount != null ? String(priceAmount) : ""}
   data-currency={priceCurrency ?? "COP"}
 >
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-    <path d="M5 6h14l-1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6Z" />
-    <path d="M9 6V4a3 3 0 0 1 6 0v2" />
-  </svg>
-  <span data-cda-label>Agregar al carrito</span>
-</button>
+  <button
+    type="button"
+    data-cda-add-btn
+    class:list={[
+      "inline-flex items-center justify-center gap-2 px-4 py-2 text-xs uppercase tracking-[0.16em] transition-colors w-full",
+      addClasses,
+    ]}
+  >
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <path d="M5 6h14l-1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6Z" />
+      <path d="M9 6V4a3 3 0 0 1 6 0v2" />
+    </svg>
+    <span data-cda-label>Agregar al carrito</span>
+  </button>
+
+  <div
+    data-cda-qty
+    hidden
+    class:list={[
+      "inline-flex items-stretch justify-between text-xs uppercase tracking-[0.16em]",
+      qtyShellClasses,
+    ]}
+  >
+    <button
+      type="button"
+      data-cda-qty-dec
+      aria-label="Quitar uno"
+      class:list={[
+        "inline-flex items-center justify-center w-9 transition-colors",
+        qtyBtnHoverClasses,
+      ]}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M5 12h14" />
+      </svg>
+    </button>
+    <span data-cda-qty-value class="inline-flex items-center justify-center min-w-[2.5rem] px-2 tabular-nums font-medium">1</span>
+    <button
+      type="button"
+      data-cda-qty-inc
+      aria-label="Agregar uno"
+      class:list={[
+        "inline-flex items-center justify-center w-9 transition-colors",
+        qtyBtnHoverClasses,
+      ]}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+    </button>
+  </div>
+</div>
 
 <script>
-  import { addToCart } from "~/lib/cart";
+  import { addToCart, getCart, setQuantity, subscribe } from "~/lib/cart";
+
+  function applyState(root: HTMLElement) {
+    const slug = root.dataset.slug || "";
+    if (!slug) return;
+    const item = getCart().find((it) => it.slug === slug);
+    const addBtn = root.querySelector<HTMLElement>("[data-cda-add-btn]");
+    const qty = root.querySelector<HTMLElement>("[data-cda-qty]");
+    const qtyVal = root.querySelector<HTMLElement>("[data-cda-qty-value]");
+    if (!addBtn || !qty || !qtyVal) return;
+    if (item) {
+      addBtn.hidden = true;
+      qty.hidden = false;
+      qtyVal.textContent = String(item.quantity);
+    } else {
+      addBtn.hidden = false;
+      qty.hidden = true;
+    }
+  }
 
   function bind() {
-    document.querySelectorAll<HTMLButtonElement>("[data-cda-add]").forEach((btn) => {
-      if (btn.dataset.bound) return;
-      btn.dataset.bound = "1";
-      btn.addEventListener("click", () => {
-        const slug = btn.dataset.slug || "";
-        const title = btn.dataset.title || "";
-        if (!slug || !title) return;
-        const priceRaw = btn.dataset.price || "";
+    document.querySelectorAll<HTMLElement>("[data-cda-cart-action]").forEach((root) => {
+      if (root.dataset.bound) {
+        applyState(root);
+        return;
+      }
+      root.dataset.bound = "1";
+      const slug = root.dataset.slug || "";
+      const title = root.dataset.title || "";
+      if (!slug || !title) return;
+
+      const addBtn = root.querySelector<HTMLButtonElement>("[data-cda-add-btn]");
+      const dec = root.querySelector<HTMLButtonElement>("[data-cda-qty-dec]");
+      const inc = root.querySelector<HTMLButtonElement>("[data-cda-qty-inc]");
+
+      addBtn?.addEventListener("click", () => {
+        const priceRaw = root.dataset.price || "";
         const price = priceRaw ? Number(priceRaw) : null;
         addToCart({
           slug,
           title,
-          cover_image_url: btn.dataset.cover || null,
+          cover_image_url: root.dataset.cover || null,
           price_amount: Number.isFinite(price) ? price : null,
-          price_currency: btn.dataset.currency || "COP",
+          price_currency: root.dataset.currency || "COP",
         });
-        // Visual confirmation: swap the label to "✓ En el carrito" for
-        // 1.5s, then revert.
-        const label = btn.querySelector<HTMLSpanElement>("[data-cda-label]");
-        if (label && !btn.dataset.flashing) {
-          btn.dataset.flashing = "1";
-          const original = label.textContent;
-          label.textContent = "✓ Agregado";
-          setTimeout(() => {
-            label.textContent = original ?? "Agregar al carrito";
-            delete btn.dataset.flashing;
-          }, 1500);
-        }
-        // Open the drawer so the customer sees their cart filling up.
-        // Comment this out if you'd rather it stay implicit.
-        window.dispatchEvent(new CustomEvent("cda:open-cart"));
       });
+
+      dec?.addEventListener("click", () => {
+        const item = getCart().find((it) => it.slug === slug);
+        if (!item) return;
+        setQuantity(slug, item.quantity - 1);
+      });
+
+      inc?.addEventListener("click", () => {
+        const item = getCart().find((it) => it.slug === slug);
+        if (!item) return;
+        setQuantity(slug, item.quantity + 1);
+      });
+
+      applyState(root);
     });
   }
 
+  function syncAll() {
+    document.querySelectorAll<HTMLElement>("[data-cda-cart-action]").forEach(applyState);
+  }
+
+  subscribe(syncAll);
   bind();
   document.addEventListener("astro:page-load", bind);
 </script>
