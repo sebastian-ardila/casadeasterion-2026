@@ -1,5 +1,5 @@
 ---
-// Floating cart summary anchored to the bottom-right of the viewport.
+// Floating cart summary anchored to the bottom-center of the viewport.
 // Stays hidden when the cart is empty so it doesn't get in the way.
 // Clicking it opens the side drawer (same event the header button
 // dispatches).
@@ -10,9 +10,9 @@
   id="cda-cart-bubble"
   aria-label="Ver carrito"
   hidden
-  class="fixed bottom-4 right-4 z-30 inline-flex items-center gap-3 bg-stone-900 text-white pl-3 pr-4 py-2.5 shadow-lg shadow-stone-900/25 hover:bg-stone-800 transition-all duration-200 sm:bottom-6 sm:right-6"
+  class="fixed left-1/2 bottom-5 -translate-x-1/2 z-30 inline-flex items-center gap-3 bg-amber-400 text-stone-900 pl-3 pr-5 py-2.5 rounded-full shadow-xl shadow-stone-900/30 hover:bg-amber-300 hover:-translate-y-0.5 hover:shadow-2xl active:translate-y-0 transition-all duration-200 sm:bottom-7 ring-1 ring-stone-900/10"
 >
-  <span class="relative inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/10">
+  <span class="relative inline-flex items-center justify-center w-9 h-9 rounded-full bg-stone-900 text-amber-300">
     <svg
       width="18"
       height="18"
@@ -30,13 +30,16 @@
     </svg>
     <span
       id="cda-cart-bubble-badge"
-      class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-amber-300 text-stone-900 text-[10px] font-semibold rounded-full inline-flex items-center justify-center leading-none"
+      class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-stone-900 text-amber-300 text-[10px] font-semibold rounded-full inline-flex items-center justify-center leading-none ring-2 ring-amber-400"
     >0</span>
   </span>
   <span class="flex flex-col items-start leading-tight">
-    <span id="cda-cart-bubble-count" class="text-[10px] uppercase tracking-[0.16em] text-white/70">0 libros</span>
-    <span class="text-xs uppercase tracking-[0.16em] font-medium">Ver carrito</span>
+    <span id="cda-cart-bubble-count" class="text-[10px] uppercase tracking-[0.16em] text-stone-700">0 libros</span>
+    <span class="text-xs uppercase tracking-[0.16em] font-semibold">Ver carrito</span>
   </span>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" class="ml-1">
+    <path d="M9 18l6-6-6-6" />
+  </svg>
 </button>
 
 <script>
@@ -48,8 +51,7 @@
 
   function isHiddenRoute() {
     // The /checkout page already shows the cart as primary content,
-    // so the bubble would just be noise. Drawer-driven flows don't
-    // pop up there either.
+    // so the bubble would just be noise.
     const path = window.location.pathname.replace(/\/$/, "");
     return path === "/checkout";
   }
@@ -78,8 +80,6 @@
         window.dispatchEvent(new CustomEvent("cda:open-cart"));
       });
     }
-    // Hide the bubble while the drawer is open so it doesn't peek
-    // through. Reveal it again on close.
     if (!(window as any).__cdaBubbleDrawerWired) {
       (window as any).__cdaBubbleDrawerWired = true;
       window.addEventListener("cda:open-cart", () => {

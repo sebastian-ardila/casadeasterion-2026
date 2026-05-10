@@ -23,7 +23,7 @@ const [{ data: featuredPosts }, { data: featuredBooks }, { data: authors }, { da
       .select("*")
       .eq("status", "published")
       .order("publication_date", { ascending: false })
-      .limit(4),
+      .limit(8),
     supabase.from("authors").select("*").order("name"),
     supabase.from("categories").select("*"),
   ]);
@@ -184,6 +184,18 @@ const heroCardCss = buildHeroCardCss(heroCardCfg);
             config={config}
           />
         ))}
+      </div>
+      <div class="mt-12 sm:mt-16 md:mt-20 flex justify-center">
+        <a
+          href="/catalogo"
+          class="group inline-flex items-center gap-3 border border-stone-900 px-7 py-3.5 sm:px-9 sm:py-4 text-xs sm:text-sm uppercase tracking-[0.2em] hover:bg-stone-900 hover:text-white transition-colors"
+        >
+          Ver todos los libros
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" class="transition-transform group-hover:translate-x-1">
+            <path d="M5 12h14" />
+            <path d="m13 5 7 7-7 7" />
+          </svg>
+        </a>
       </div>
     </section>
   )}

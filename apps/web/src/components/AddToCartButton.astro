@@ -3,19 +3,10 @@
 // states depending on whether the slug is already in the cart:
 //
 //   - Not in cart  →  "Agregar al carrito" button.
-//   - In cart      →  [-] N [+] quantity controls.
+//   - In cart      →  [-] N [+] quantity controls (matching height).
 //
 // Switching between the two doesn't reload the page — the script
 // subscribes to the cart store and toggles visibility.
-//
-// Usage:
-//   <AddToCartButton
-//     slug={book.slug}
-//     title={book.title}
-//     coverImageUrl={book.cover_image_url}
-//     priceAmount={book.price_amount}
-//     priceCurrency={book.price_currency}
-//   />
 
 interface Props {
   slug: string;
@@ -51,7 +42,7 @@ const qtyBtnHoverClasses = variant === "primary"
 ---
 
 <div
-  class:list={["cda-cart-action inline-flex", className]}
+  class:list={["cda-cart-action block w-full", className]}
   data-cda-cart-action
   data-slug={slug}
   data-title={title}
@@ -63,22 +54,23 @@ const qtyBtnHoverClasses = variant === "primary"
     type="button"
     data-cda-add-btn
     class:list={[
-      "inline-flex items-center justify-center gap-2 px-4 py-2 text-xs uppercase tracking-[0.16em] transition-colors w-full",
+      "w-full h-10 inline-flex items-center justify-center gap-2 px-3 sm:px-4 text-[11px] sm:text-xs uppercase tracking-[0.16em] transition-colors",
       addClasses,
     ]}
   >
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" class="shrink-0">
       <path d="M5 6h14l-1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6Z" />
       <path d="M9 6V4a3 3 0 0 1 6 0v2" />
     </svg>
-    <span data-cda-label>Agregar al carrito</span>
+    <span class="hidden sm:inline">Agregar al carrito</span>
+    <span class="sm:hidden">Agregar</span>
   </button>
 
   <div
     data-cda-qty
     hidden
     class:list={[
-      "inline-flex items-stretch justify-between text-xs uppercase tracking-[0.16em]",
+      "w-full h-10 inline-flex items-stretch text-[11px] sm:text-xs uppercase tracking-[0.16em] select-none",
       qtyShellClasses,
     ]}
   >
@@ -87,7 +79,7 @@ const qtyBtnHoverClasses = variant === "primary"
       data-cda-qty-dec
       aria-label="Quitar uno"
       class:list={[
-        "inline-flex items-center justify-center w-9 transition-colors",
+        "h-full px-4 inline-flex items-center justify-center transition-colors",
         qtyBtnHoverClasses,
       ]}
     >
@@ -95,13 +87,15 @@ const qtyBtnHoverClasses = variant === "primary"
         <path d="M5 12h14" />
       </svg>
     </button>
-    <span data-cda-qty-value class="inline-flex items-center justify-center min-w-[2.5rem] px-2 tabular-nums font-medium">1</span>
+    <span class="flex-1 inline-flex items-center justify-center tabular-nums font-medium text-sm">
+      <span data-cda-qty-value>1</span>
+    </span>
     <button
       type="button"
       data-cda-qty-inc
       aria-label="Agregar uno"
       class:list={[
-        "inline-flex items-center justify-center w-9 transition-colors",
+        "h-full px-4 inline-flex items-center justify-center transition-colors",
         qtyBtnHoverClasses,
       ]}
     >
