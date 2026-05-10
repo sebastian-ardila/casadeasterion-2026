@@ -92,7 +92,9 @@ import Layout from "~/layouts/Layout.astro";
             />
           </label>
           <label class="flex flex-col gap-1.5 sm:col-span-2">
-            <span class="text-xs uppercase tracking-[0.14em] text-stone-500">Nombre completo</span>
+            <span class="text-xs uppercase tracking-[0.14em] text-stone-500">
+              Nombre completo <span class="text-red-700" aria-hidden="true">*</span>
+            </span>
             <input
               type="text"
               id="checkout-name"
