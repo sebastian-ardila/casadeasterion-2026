@@ -43,7 +43,10 @@ const { book, author } = Astro.props;
         {author.name}
       </p>
     )}
-    <h3 class="font-serif text-base sm:text-lg md:text-xl leading-snug line-clamp-2">
+    {/* Reserve room for two lines of title so single-line titles
+        don't shorten the card. line-height-snug = 1.375, so 2.75em
+        is exactly two line-heights of the current font-size. */}
+    <h3 class="font-serif text-base sm:text-lg md:text-xl leading-snug line-clamp-2 min-h-[2.75em]">
       <a href={`/catalogo/${book.slug}`} class="hover:opacity-70 transition-opacity">{book.title}</a>
     </h3>
     {/* Reserve a fixed price slot so cards with and without a price stay
@@ -57,7 +60,7 @@ const { book, author } = Astro.props;
           }).format(Number(book.price_amount))
         : ""}
     </p>
-    <div class="mt-4 sm:mt-5">
+    <div class="mt-auto pt-4 sm:pt-5">
       <AddToCartButton
         slug={book.slug}
         title={book.title}
