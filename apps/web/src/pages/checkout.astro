@@ -228,7 +228,15 @@ import Layout from "~/layouts/Layout.astro";
     }
     renderSummary();
 
-    const session = await getCustomerSession();
+    let session = null;
+    try {
+      session = await getCustomerSession();
+    } catch (err) {
+      // If the auth client errors out (misconfigured env, network),
+      // fall through to the login screen instead of leaving every
+      // section hidden.
+      console.error("[checkout] session error:", err);
+    }
     if (!session) {
       showSection("login");
       return;
