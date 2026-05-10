@@ -84,7 +84,45 @@
 
 <script>
   import { getCart, removeFromCart, setQuantity, clearCart, subscribe, formatPrice, type CartItem } from "~/lib/cart";
-  import { getCustomerSession, signInWithGoogle } from "~/lib/customer-auth";
+  import { getCustomerClient, getCustomerSession, signInWithGoogle } from "~/lib/customer-auth";
+
+  // Catch the Google OAuth callback no matter where it lands. Some
+  // Supabase projects only allow the project's Site URL (e.g.
+  // https://casadeasterionediciones.com/) as a redirect target, so
+  // even when we ask for `redirectTo: "/checkout"` the browser comes
+  // back to "/?code=...". When the cda-customer-session client
+  // exchanges that code for a session and SIGNED_IN fires, redirect
+  // the user to /checkout so they can finish the order.
+  function wireOAuthCatcher() {
+    if ((window as any).__cdaOAuthCatcher) return;
+    (window as any).__cdaOAuthCatcher = true;
+    try {
+      const supabase = getCustomerClient();
+      supabase.auth.onAuthStateChange((event, session) => {
+        if (event !== "SIGNED_IN" || !session) return;
+        const url = new URL(window.location.href);
+        const isCallback =
+          url.searchParams.has("code") ||
+          url.hash.includes("access_token=") ||
+          url.hash.includes("error=");
+        const onCheckout = url.pathname.replace(/\/$/, "") === "/checkout";
+        if (isCallback && !onCheckout) {
+          // Clean the URL so the next page load doesn't try to
+          // re-exchange a one-time code.
+          url.searchParams.delete("code");
+          url.searchParams.delete("state");
+          url.hash = "";
+          window.history.replaceState({}, "", url.toString());
+          window.location.href = "/checkout";
+        }
+      });
+    } catch (err) {
+      // Auth client unavailable (env not configured). Don't break
+      // the rest of the cart UX.
+      console.error("[cart] OAuth catcher init failed:", err);
+    }
+  }
+  wireOAuthCatcher();
 
   let drawer: HTMLElement | null = null;
   let panel: HTMLElement | null = null;
