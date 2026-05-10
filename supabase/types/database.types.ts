@@ -20,18 +20,21 @@ export type Database = {
           added_by: string | null
           email: string
           note: string | null
+          role: string
         }
         Insert: {
           added_at?: string
           added_by?: string | null
           email: string
           note?: string | null
+          role?: string
         }
         Update: {
           added_at?: string
           added_by?: string | null
           email?: string
           note?: string | null
+          role?: string
         }
         Relationships: [
           {
@@ -83,6 +86,7 @@ export type Database = {
           photo_url: string | null
           slug: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           bio_md?: string | null
@@ -94,6 +98,7 @@ export type Database = {
           photo_url?: string | null
           slug: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           bio_md?: string | null
@@ -105,8 +110,17 @@ export type Database = {
           photo_url?: string | null
           slug?: string
           updated_at?: string
+          updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "authors_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       books: {
         Row: {
@@ -133,6 +147,7 @@ export type Database = {
           tags: string[]
           title: string
           updated_at: string
+          updated_by: string | null
           whatsapp_message_override: string | null
         }
         Insert: {
@@ -159,6 +174,7 @@ export type Database = {
           tags?: string[]
           title: string
           updated_at?: string
+          updated_by?: string | null
           whatsapp_message_override?: string | null
         }
         Update: {
@@ -185,6 +201,7 @@ export type Database = {
           tags?: string[]
           title?: string
           updated_at?: string
+          updated_by?: string | null
           whatsapp_message_override?: string | null
         }
         Relationships: [
@@ -202,6 +219,13 @@ export type Database = {
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "books_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       categories: {
@@ -214,6 +238,7 @@ export type Database = {
           slug: string
           sort_order: number
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           created_at?: string
@@ -224,6 +249,7 @@ export type Database = {
           slug: string
           sort_order?: number
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           created_at?: string
@@ -234,8 +260,17 @@ export type Database = {
           slug?: string
           sort_order?: number
           updated_at?: string
+          updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pending_rebuild: {
         Row: {
@@ -277,6 +312,7 @@ export type Database = {
           tags: string[]
           title: string
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           author_id?: string | null
@@ -299,6 +335,7 @@ export type Database = {
           tags?: string[]
           title: string
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           author_id?: string | null
@@ -321,6 +358,7 @@ export type Database = {
           tags?: string[]
           title?: string
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -337,6 +375,13 @@ export type Database = {
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "posts_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -346,6 +391,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          last_active_at: string | null
           role: string
           updated_at: string
         }
@@ -355,6 +401,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          last_active_at?: string | null
           role?: string
           updated_at?: string
         }
@@ -364,10 +411,124 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          last_active_at?: string | null
           role?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      purchase_intent_items: {
+        Row: {
+          book_id: string | null
+          book_isbn: string | null
+          book_slug: string
+          book_title: string
+          cover_image_url: string | null
+          created_at: string
+          currency: string
+          id: string
+          intent_id: string
+          position: number
+          quantity: number
+          unit_price: number | null
+        }
+        Insert: {
+          book_id?: string | null
+          book_isbn?: string | null
+          book_slug: string
+          book_title: string
+          cover_image_url?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          intent_id: string
+          position?: number
+          quantity?: number
+          unit_price?: number | null
+        }
+        Update: {
+          book_id?: string | null
+          book_isbn?: string | null
+          book_slug?: string
+          book_title?: string
+          cover_image_url?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          intent_id?: string
+          position?: number
+          quantity?: number
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_intent_items_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_intent_items_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_intents: {
+        Row: {
+          created_at: string
+          currency: string
+          email: string
+          full_name: string
+          id: string
+          notes: string | null
+          phone: string | null
+          profile_id: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+          whatsapp_message: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          email: string
+          full_name: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          profile_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          whatsapp_message: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          email?: string
+          full_name?: string
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          profile_id?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          whatsapp_message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_intents_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rate_limits: {
         Row: {
@@ -464,7 +625,20 @@ export type Database = {
       }
       is_admin: { Args: { uid: string }; Returns: boolean }
       is_owner: { Args: { uid: string }; Returns: boolean }
+      list_cms_users: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          email: string
+          full_name: string
+          id: string
+          last_active_at: string
+          last_sign_in_at: string
+          role: string
+        }[]
+      }
       queue_rebuild: { Args: never; Returns: undefined }
+      touch_profile_activity: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

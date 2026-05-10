@@ -1,0 +1,221 @@
+---
+// Slide-in drawer with the full cart contents. Mounted once in the
+// Layout so any page that fires "cda:open-cart" gets it. The CartButton
+// in the header dispatches that event.
+---
+
+<aside
+  id="cda-cart-drawer"
+  class="fixed inset-0 z-50 hidden"
+  aria-hidden="true"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="cda-cart-title"
+>
+  <button
+    type="button"
+    id="cda-cart-backdrop"
+    class="absolute inset-0 bg-stone-900/40 backdrop-blur-[1px] cursor-pointer"
+    aria-label="Cerrar carrito"
+  ></button>
+  <div
+    class="absolute right-0 top-0 h-full w-full sm:w-[400px] md:w-[440px] bg-[color:var(--bg,#fff)] shadow-2xl flex flex-col transform translate-x-full transition-transform duration-200"
+    id="cda-cart-panel"
+  >
+    <header class="px-5 sm:px-6 py-5 border-b border-[color:var(--border,#e7e5e4)] flex items-center justify-between gap-3">
+      <h2 id="cda-cart-title" class="font-serif text-xl tracking-wide">Tu carrito</h2>
+      <button
+        type="button"
+        id="cda-cart-close"
+        class="text-stone-500 hover:text-stone-900 transition-colors p-1"
+        aria-label="Cerrar"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </header>
+
+    <div class="flex-1 overflow-y-auto" id="cda-cart-body">
+      <div id="cda-cart-empty" class="px-5 sm:px-6 py-16 text-center">
+        <p class="text-stone-500 text-sm leading-relaxed">
+          Tu carrito está vacío. Agrega libros desde el catálogo para empezar.
+        </p>
+        <a
+          href="/catalogo"
+          class="inline-block mt-6 text-xs uppercase tracking-[0.16em] underline underline-offset-4 hover:text-stone-900"
+          data-cda-close-on-click
+        >Ver catálogo</a>
+      </div>
+      <ul id="cda-cart-list" class="hidden divide-y divide-[color:var(--border,#e7e5e4)]"></ul>
+    </div>
+
+    <footer
+      id="cda-cart-footer"
+      class="border-t border-[color:var(--border,#e7e5e4)] px-5 sm:px-6 py-5 hidden"
+    >
+      <div class="flex items-baseline justify-between mb-4">
+        <span class="text-xs uppercase tracking-[0.16em] text-stone-500">Total estimado</span>
+        <span id="cda-cart-total" class="font-serif text-2xl">—</span>
+      </div>
+      <a
+        href="/checkout"
+        id="cda-cart-checkout"
+        class="block w-full text-center bg-stone-900 text-white py-3 text-sm uppercase tracking-[0.16em] hover:bg-stone-800 transition-colors"
+      >Confirmar pedido</a>
+      <button
+        type="button"
+        id="cda-cart-clear"
+        class="block w-full text-center text-xs text-stone-500 hover:text-stone-900 mt-3 underline underline-offset-4"
+      >Vaciar carrito</button>
+    </footer>
+  </div>
+</aside>
+
+<script>
+  import { getCart, removeFromCart, setQuantity, clearCart, subscribe, formatPrice, type CartItem } from "~/lib/cart";
+
+  let drawer: HTMLElement | null = null;
+  let panel: HTMLElement | null = null;
+
+  function open() {
+    if (!drawer || !panel) return;
+    drawer.classList.remove("hidden");
+    drawer.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    // Animate in.
+    requestAnimationFrame(() => {
+      panel.classList.remove("translate-x-full");
+    });
+  }
+
+  function close() {
+    if (!drawer || !panel) return;
+    panel.classList.add("translate-x-full");
+    drawer.setAttribute("aria-hidden", "true");
+    setTimeout(() => {
+      drawer?.classList.add("hidden");
+      document.body.style.overflow = "";
+    }, 200);
+  }
+
+  function escape(s: string) {
+    return s.replace(/[&<>"']/g, (c) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string
+    ));
+  }
+
+  function renderItem(item: CartItem) {
+    const cover = item.cover_image_url
+      ? `<img src="${escape(item.cover_image_url)}" alt="" loading="lazy" class="w-16 h-20 object-cover bg-stone-100 shrink-0" />`
+      : `<div class="w-16 h-20 bg-stone-100 shrink-0 flex items-center justify-center text-stone-300">
+           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M21 16l-5-5-7 7"/></svg>
+         </div>`;
+    const price = formatPrice(item.price_amount, item.price_currency);
+    return `
+      <li class="flex gap-3 p-4 sm:p-5" data-cda-item="${escape(item.slug)}">
+        ${cover}
+        <div class="flex-1 min-w-0 flex flex-col">
+          <a href="/catalogo/${escape(item.slug)}" data-cda-close-on-click class="font-serif text-sm leading-tight hover:underline pr-2 break-words">
+            ${escape(item.title)}
+          </a>
+          <span class="text-xs text-stone-500 mt-0.5">${escape(price)}</span>
+          <div class="mt-auto flex items-center justify-between gap-2 pt-2">
+            <div class="inline-flex items-center border border-stone-300">
+              <button type="button" class="w-7 h-7 flex items-center justify-center hover:bg-stone-100 disabled:opacity-30" data-cda-qty-down="${escape(item.slug)}" aria-label="Restar uno">−</button>
+              <span class="w-7 h-7 flex items-center justify-center text-xs font-medium tabular-nums">${item.quantity}</span>
+              <button type="button" class="w-7 h-7 flex items-center justify-center hover:bg-stone-100" data-cda-qty-up="${escape(item.slug)}" aria-label="Sumar uno">+</button>
+            </div>
+            <button type="button" class="text-xs text-stone-500 hover:text-red-700 underline underline-offset-2" data-cda-remove="${escape(item.slug)}">Quitar</button>
+          </div>
+        </div>
+      </li>`;
+  }
+
+  function render() {
+    const items = getCart();
+    const empty = document.getElementById("cda-cart-empty");
+    const list = document.getElementById("cda-cart-list");
+    const footer = document.getElementById("cda-cart-footer");
+    const total = document.getElementById("cda-cart-total");
+    if (!list || !empty || !footer || !total) return;
+
+    if (items.length === 0) {
+      empty.classList.remove("hidden");
+      list.classList.add("hidden");
+      footer.classList.add("hidden");
+      list.innerHTML = "";
+      return;
+    }
+    empty.classList.add("hidden");
+    list.classList.remove("hidden");
+    footer.classList.remove("hidden");
+    list.innerHTML = items.map(renderItem).join("");
+
+    let amount = 0;
+    let currency = "COP";
+    let allPriced = true;
+    for (const it of items) {
+      if (it.price_amount == null) allPriced = false;
+      else amount += it.price_amount * it.quantity;
+      if (it.price_currency) currency = it.price_currency;
+    }
+    total.textContent = allPriced ? formatPrice(amount, currency) : "Consultar precio";
+  }
+
+  function init() {
+    drawer = document.getElementById("cda-cart-drawer");
+    panel = document.getElementById("cda-cart-panel");
+    if (!drawer || drawer.dataset.bound) {
+      // Always re-render on init in case items changed while away.
+      render();
+      return;
+    }
+    drawer.dataset.bound = "1";
+
+    window.addEventListener("cda:open-cart", open);
+
+    drawer.addEventListener("click", (e) => {
+      const t = e.target as HTMLElement;
+      if (t.id === "cda-cart-backdrop" || t.id === "cda-cart-close" || t.closest("[data-cda-close-on-click]")) {
+        close();
+        return;
+      }
+      const remove = t.closest<HTMLElement>("[data-cda-remove]");
+      if (remove) {
+        removeFromCart(remove.dataset.cdaRemove!);
+        return;
+      }
+      const up = t.closest<HTMLElement>("[data-cda-qty-up]");
+      if (up) {
+        const slug = up.dataset.cdaQtyUp!;
+        const it = getCart().find((i) => i.slug === slug);
+        setQuantity(slug, (it?.quantity ?? 0) + 1);
+        return;
+      }
+      const down = t.closest<HTMLElement>("[data-cda-qty-down]");
+      if (down) {
+        const slug = down.dataset.cdaQtyDown!;
+        const it = getCart().find((i) => i.slug === slug);
+        setQuantity(slug, (it?.quantity ?? 0) - 1);
+        return;
+      }
+      if (t.id === "cda-cart-clear") {
+        if (confirm("¿Vaciar el carrito?")) clearCart();
+        return;
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && drawer && drawer.getAttribute("aria-hidden") === "false") {
+        close();
+      }
+    });
+
+    render();
+  }
+
+  subscribe(render);
+  init();
+  document.addEventListener("astro:page-load", init);
+</script>

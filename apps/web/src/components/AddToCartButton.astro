@@ -1,0 +1,102 @@
+---
+// Drop-in "Agregar al carrito" button. Stores all the snapshot fields
+// in data-attrs so the cart store can persist a usable copy without
+// re-fetching the book server-side.
+//
+// Usage:
+//   <AddToCartButton
+//     slug={book.slug}
+//     title={book.title}
+//     coverImageUrl={book.cover_image_url}
+//     priceAmount={book.price_amount}
+//     priceCurrency={book.price_currency}
+//   />
+
+interface Props {
+  slug: string;
+  title: string;
+  coverImageUrl?: string | null;
+  priceAmount?: number | null;
+  priceCurrency?: string | null;
+  /** Visual variant. Defaults to "primary" (filled). */
+  variant?: "primary" | "ghost";
+  className?: string;
+}
+const {
+  slug,
+  title,
+  coverImageUrl = null,
+  priceAmount = null,
+  priceCurrency = "COP",
+  variant = "primary",
+  className = "",
+} = Astro.props;
+
+const baseClasses = variant === "primary"
+  ? "bg-stone-900 text-white hover:bg-stone-800"
+  : "border border-stone-900 text-stone-900 hover:bg-stone-900 hover:text-white";
+---
+
+<button
+  type="button"
+  class:list={[
+    "cda-add-to-cart inline-flex items-center justify-center gap-2 px-4 py-2 text-xs uppercase tracking-[0.16em] transition-colors",
+    baseClasses,
+    className,
+  ]}
+  data-cda-add
+  data-slug={slug}
+  data-title={title}
+  data-cover={coverImageUrl ?? ""}
+  data-price={priceAmount != null ? String(priceAmount) : ""}
+  data-currency={priceCurrency ?? "COP"}
+>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+    <path d="M5 6h14l-1 12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6Z" />
+    <path d="M9 6V4a3 3 0 0 1 6 0v2" />
+  </svg>
+  <span data-cda-label>Agregar al carrito</span>
+</button>
+
+<script>
+  import { addToCart } from "~/lib/cart";
+
+  function bind() {
+    document.querySelectorAll<HTMLButtonElement>("[data-cda-add]").forEach((btn) => {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => {
+        const slug = btn.dataset.slug || "";
+        const title = btn.dataset.title || "";
+        if (!slug || !title) return;
+        const priceRaw = btn.dataset.price || "";
+        const price = priceRaw ? Number(priceRaw) : null;
+        addToCart({
+          slug,
+          title,
+          cover_image_url: btn.dataset.cover || null,
+          price_amount: Number.isFinite(price) ? price : null,
+          price_currency: btn.dataset.currency || "COP",
+        });
+        // Visual confirmation: swap the label to "✓ En el carrito" for
+        // 1.5s, then revert.
+        const label = btn.querySelector<HTMLSpanElement>("[data-cda-label]");
+        if (label && !btn.dataset.flashing) {
+          btn.dataset.flashing = "1";
+          const original = label.textContent;
+          label.textContent = "✓ Agregado";
+          setTimeout(() => {
+            label.textContent = original ?? "Agregar al carrito";
+            delete btn.dataset.flashing;
+          }, 1500);
+        }
+        // Open the drawer so the customer sees their cart filling up.
+        // Comment this out if you'd rather it stay implicit.
+        window.dispatchEvent(new CustomEvent("cda:open-cart"));
+      });
+    });
+  }
+
+  bind();
+  document.addEventListener("astro:page-load", bind);
+</script>

@@ -1,0 +1,62 @@
+---
+// Header-side button that opens the cart drawer. The count badge
+// updates in real time via the cart store's subscribe() listener.
+---
+
+<button
+  type="button"
+  id="cda-cart-btn"
+  aria-label="Abrir carrito"
+  class="relative inline-flex items-center justify-center w-10 h-10 hover:bg-[color:var(--bg-alt,rgba(0,0,0,0.04))] transition-colors rounded-sm"
+>
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+    <path d="M3 6h18" />
+    <path d="M16 10a4 4 0 0 1-8 0" />
+  </svg>
+  <span
+    id="cda-cart-badge"
+    class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-stone-900 text-white text-[10px] font-medium rounded-full inline-flex items-center justify-center hidden"
+  >0</span>
+</button>
+
+<script>
+  import { getCart, subscribe } from "~/lib/cart";
+
+  function syncBadge() {
+    const badge = document.getElementById("cda-cart-badge");
+    if (!badge) return;
+    const total = getCart().reduce((s, it) => s + it.quantity, 0);
+    if (total > 0) {
+      badge.textContent = String(total > 99 ? "99+" : total);
+      badge.classList.remove("hidden");
+    } else {
+      badge.classList.add("hidden");
+    }
+  }
+
+  function init() {
+    syncBadge();
+    const btn = document.getElementById("cda-cart-btn");
+    if (btn && !btn.dataset.bound) {
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => {
+        window.dispatchEvent(new CustomEvent("cda:open-cart"));
+      });
+    }
+  }
+
+  subscribe(syncBadge);
+  init();
+  document.addEventListener("astro:page-load", init);
+</script>

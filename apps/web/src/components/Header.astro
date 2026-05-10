@@ -1,5 +1,6 @@
 ---
 import { Icon } from "astro-icon/components";
+import CartButton from "~/components/CartButton.astro";
 import { loadSiteConfig } from "~/lib/site-config";
 const config = await loadSiteConfig();
 const showSubscribe = config.subscribe_enabled !== false;
@@ -52,10 +53,11 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
       ))}
     </nav>
 
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2 sm:gap-3">
       {showSubscribe && (
         <a href="/#suscribirse" class="btn-outline hidden sm:inline-block">Suscribirse</a>
       )}
+      <CartButton />
 
       {/* Mobile hamburger */}
       <button

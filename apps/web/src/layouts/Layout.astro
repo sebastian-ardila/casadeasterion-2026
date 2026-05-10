@@ -4,6 +4,7 @@ import Header from "~/components/Header.astro";
 import Footer from "~/components/Footer.astro";
 import Breadcrumb from "~/components/Breadcrumb.astro";
 import SeoHead from "~/components/SeoHead.astro";
+import CartDrawer from "~/components/CartDrawer.astro";
 import { loadSiteConfig } from "~/lib/site-config";
 
 type SeoType = "website" | "article" | "book" | "person";
@@ -115,5 +116,6 @@ const url = Astro.url.href;
       <slot />
     </main>
     <Footer />
+    <CartDrawer />
   </body>
 </html>

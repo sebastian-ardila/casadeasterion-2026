@@ -1,8 +1,9 @@
 ---
 import Layout from "~/layouts/Layout.astro";
 import BookCard from "~/components/BookCard.astro";
+import AddToCartButton from "~/components/AddToCartButton.astro";
 import { supabase } from "~/lib/supabase";
-import { loadSiteConfig, buildWhatsappUrl } from "~/lib/site-config";
+import { loadSiteConfig } from "~/lib/site-config";
 import { renderMarkdown } from "~/lib/markdown";
 
 export async function getStaticPaths() {
@@ -55,14 +56,6 @@ const { count: authorBookTotal } = author
   : { count: 0 };
 
 const description = renderMarkdown(book.description_md);
-
-const whatsappText = book.whatsapp_message_override ?? config.whatsapp_message_template;
-const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
-  title: book.title,
-  author: author?.name ?? "",
-  isbn: book.isbn ?? "",
-  slug: book.slug,
-});
 
 const formattedPrice =
   book.price_amount != null
@@ -190,9 +183,15 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
         </dl>
       )}
 
-      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" class="btn-solid inline-block w-full sm:w-auto text-center">
-        Comprar por WhatsApp
-      </a>
+      <AddToCartButton
+        slug={book.slug}
+        title={book.title}
+        coverImageUrl={book.cover_image_url}
+        priceAmount={book.price_amount}
+        priceCurrency={book.price_currency}
+        variant="primary"
+        className="w-full sm:w-auto justify-center"
+      />
     </div>
   </article>
 

@@ -1,6 +1,7 @@
 ---
 import type { Book, Author } from "~/lib/supabase";
-import { buildWhatsappUrl, type SiteConfigMap } from "~/lib/site-config";
+import type { SiteConfigMap } from "~/lib/site-config";
+import AddToCartButton from "~/components/AddToCartButton.astro";
 
 interface Props {
   book: Book;
@@ -8,17 +9,7 @@ interface Props {
   config: SiteConfigMap;
 }
 
-const { book, author, config } = Astro.props;
-
-const whatsappText =
-  book.whatsapp_message_override ?? config.whatsapp_message_template;
-
-const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
-  title: book.title,
-  author: author?.name ?? "",
-  isbn: book.isbn ?? "",
-  slug: book.slug,
-});
+const { book, author } = Astro.props;
 ---
 
 <article class="group flex flex-col h-full">
@@ -66,13 +57,16 @@ const whatsappUrl = buildWhatsappUrl(config.whatsapp_phone, whatsappText, {
           }).format(Number(book.price_amount))
         : ""}
     </p>
-    <a
-      href={whatsappUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      class="btn-outline mt-4 sm:mt-5 self-start text-[10px] sm:text-[11px] whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2.5"
-    >
-      Comprar por WhatsApp
-    </a>
+    <div class="mt-4 sm:mt-5">
+      <AddToCartButton
+        slug={book.slug}
+        title={book.title}
+        coverImageUrl={book.cover_image_url}
+        priceAmount={book.price_amount}
+        priceCurrency={book.price_currency}
+        variant="ghost"
+        className="self-start text-[10px] sm:text-[11px] whitespace-nowrap px-3 py-2 sm:px-4 sm:py-2.5"
+      />
+    </div>
   </div>
 </article>
