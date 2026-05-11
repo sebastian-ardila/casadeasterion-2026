@@ -37,6 +37,20 @@ export type HeroCardConfig = {
   mobile: HeroCardLayout;
 };
 
+// Typography overrides for the /catalogo/[slug] and /articulos/[slug]
+// detail pages. The CMS picks one of the font keys defined in
+// HERO_CARD_FONTS for the title and for the body/description block.
+// Falls back to the editorial serif when unset.
+export type DetailTypography = {
+  title_font: string;
+  body_font: string;
+};
+
+export const DEFAULT_DETAIL_TYPOGRAPHY: DetailTypography = {
+  title_font: "serif",
+  body_font: "serif",
+};
+
 export type ContactEmail = { email: string; label?: string };
 export type ContactPhone = { phone: string; label?: string; whatsapp?: boolean };
 export type ContactAddress = { address: string; label?: string };
@@ -73,6 +87,11 @@ export type SiteConfigMap = {
    *  card and the right-half image). Empty means "use --bg-alt". */
   hero_bg_color: string;
   hero_card_config: HeroCardConfig;
+  /** Site-wide typography for the book detail page. Applies to every
+   *  book in the catalog — not per-row. */
+  book_detail_typography: DetailTypography;
+  /** Site-wide typography for the article detail page. */
+  article_detail_typography: DetailTypography;
   [key: string]: unknown;
 };
 
@@ -156,6 +175,8 @@ const DEFAULTS: SiteConfigMap = {
   hero_image_url: "",
   hero_bg_color: "",
   hero_card_config: DEFAULT_HERO_CARD_CONFIG,
+  book_detail_typography: DEFAULT_DETAIL_TYPOGRAPHY,
+  article_detail_typography: DEFAULT_DETAIL_TYPOGRAPHY,
 };
 
 let cache: SiteConfigMap | null = null;

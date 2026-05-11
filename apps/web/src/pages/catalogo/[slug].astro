@@ -6,6 +6,7 @@ import { supabase, type Author } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
 import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
 import { extractAuthors, joinAuthorNames } from "~/lib/multi-author";
+import { resolveFont } from "~/lib/hero-card";
 
 export async function getStaticPaths() {
   const { data } = await supabase
@@ -66,6 +67,13 @@ if (authorIds.length > 0) {
 
 const description = renderMarkdown(book.description_md);
 const authorListLabel = joinAuthorNames(authors.map((a) => a.name));
+
+// Site-wide typography for the book detail page. Editors choose this
+// in /site?page=catalogo in the CMS; here we just turn the saved key
+// into a usable CSS font-family stack. Affects every book.
+const bookTypo = config.book_detail_typography ?? { title_font: "serif", body_font: "serif" };
+const bookTitleFont = resolveFont(bookTypo.title_font);
+const bookBodyFont = resolveFont(bookTypo.body_font);
 
 // Meta description: prefer subtitle, fall back to a cleaned excerpt
 // of the description (markdown stripped, ~155 chars at word boundary).
@@ -183,14 +191,16 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
       )}
     </aside>
 
-    {/* Right column: title, subtitle, description, CTA. */}
+    {/* Right column: title, subtitle, description, CTA. The font-family
+        overrides cascade into the .cas-md children too — see the inline
+        <style> block at the bottom of this page. */}
     <div class="min-w-0">
-      <h1 class="font-serif text-2xl sm:text-3xl md:text-5xl leading-[1.1] mb-2 sm:mb-3">{book.title}</h1>
+      <h1 class="cas-book-title font-serif text-2xl sm:text-3xl md:text-5xl leading-[1.1] mb-2 sm:mb-3">{book.title}</h1>
       {book.subtitle && (
         <p class="text-sm sm:text-base md:text-xl text-[color:var(--fg-muted)] italic mb-5 sm:mb-7 md:mb-8">{book.subtitle}</p>
       )}
 
-      <div class="cas-md cas-md--book max-w-none mb-7 sm:mb-9 md:mb-10" set:html={description}></div>
+      <div class="cas-book-description cas-md cas-md--book max-w-none mb-7 sm:mb-9 md:mb-10" set:html={description}></div>
 
       {/* Mobile-only tech info: appears under the description before the CTA. */}
       {techRows.length > 0 && (
@@ -248,4 +258,19 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
       </div>
     </section>
   )}
+
+  {/* Site-wide typography (read from site_configuration). The body
+      font cascades into the markdown children — paragraphs, lists,
+      blockquotes — overriding the .cas-md defaults. The title font is
+      applied to the h1 only. */}
+  <style is:inline set:html={`
+    .cas-book-title { font-family: ${bookTitleFont}; }
+    .cas-book-description,
+    .cas-book-description p,
+    .cas-book-description li,
+    .cas-book-description blockquote,
+    .cas-book-description h2,
+    .cas-book-description h3,
+    .cas-book-description h4 { font-family: ${bookBodyFont}; }
+  `}></style>
 </Layout>

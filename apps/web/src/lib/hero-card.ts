@@ -13,6 +13,7 @@ export const HERO_CARD_FONTS: Record<string, string> = {
   // --- Serifs (editorial) ---
   serif: '"Cormorant Garamond", Georgia, serif',
   "eb-garamond": '"EB Garamond", Georgia, serif',
+  goudy: '"Sorts Mill Goudy", "EB Garamond", Georgia, serif',
   playfair: '"Playfair Display", Georgia, serif',
   lora: '"Lora", Georgia, serif',
   "libre-baskerville": '"Libre Baskerville", Georgia, serif',
@@ -30,6 +31,14 @@ export const HERO_CARD_FONTS: Record<string, string> = {
   // --- Display ---
   marcellus: '"Marcellus", "Cormorant Garamond", serif',
 };
+
+// Resolve a font key (as stored in site_configuration) into a CSS
+// font-family stack. Falls back to the editorial serif when the key
+// isn't recognized, which preserves the current visuals if a config
+// row references a font that has since been renamed or removed.
+export function resolveFont(key: string | null | undefined): string {
+  return HERO_CARD_FONTS[key ?? ""] ?? HERO_CARD_FONTS.serif;
+}
 
 export type ResolvedHeroContent = {
   eyebrow: string;

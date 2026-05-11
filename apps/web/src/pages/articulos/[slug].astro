@@ -1,8 +1,10 @@
 ---
 import Layout from "~/layouts/Layout.astro";
 import { supabase, type Author } from "~/lib/supabase";
+import { loadSiteConfig } from "~/lib/site-config";
 import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
 import { extractAuthors, joinAuthorNames } from "~/lib/multi-author";
+import { resolveFont } from "~/lib/hero-card";
 
 export async function getStaticPaths() {
   const { data } = await supabase
@@ -34,6 +36,13 @@ const authorListLabel = joinAuthorNames(authors.map((a) => a.name));
 const { data: category } = post.category_id
   ? await supabase.from("categories").select("*").eq("id", post.category_id).maybeSingle()
   : { data: null };
+
+// Site-wide typography for the article detail page. Same pattern as
+// /catalogo/[slug] — see book_detail_typography for context.
+const config = await loadSiteConfig();
+const articleTypo = config.article_detail_typography ?? { title_font: "serif", body_font: "serif" };
+const articleTitleFont = resolveFont(articleTypo.title_font);
+const articleBodyFont = resolveFont(articleTypo.body_font);
 
 const html = renderMarkdown(post.content_md);
 
@@ -92,7 +101,7 @@ const formatted = post.published_at
       </p>
     )}
 
-    <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl leading-[1.1] mb-5 sm:mb-6">{post.title}</h1>
+    <h1 class="cas-article-title font-serif text-3xl sm:text-4xl md:text-5xl leading-[1.1] mb-5 sm:mb-6">{post.title}</h1>
 
     {post.subtitle && (
       <p class="text-base sm:text-xl text-[color:var(--fg-muted)] italic mb-6 sm:mb-8">{post.subtitle}</p>
@@ -113,6 +122,18 @@ const formatted = post.published_at
       {post.reading_time_minutes && <span>{post.reading_time_minutes} min</span>}
     </div>
 
-    <div class="cas-md max-w-none" set:html={html}></div>
+    <div class="cas-article-body cas-md max-w-none" set:html={html}></div>
   </article>
+
+  {/* Site-wide typography (read from site_configuration). */}
+  <style is:inline set:html={`
+    .cas-article-title { font-family: ${articleTitleFont}; }
+    .cas-article-body,
+    .cas-article-body p,
+    .cas-article-body li,
+    .cas-article-body blockquote,
+    .cas-article-body h2,
+    .cas-article-body h3,
+    .cas-article-body h4 { font-family: ${articleBodyFont}; }
+  `}></style>
 </Layout>
