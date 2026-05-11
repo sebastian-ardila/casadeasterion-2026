@@ -1,52 +1,24 @@
 ---
-import Layout from "~/layouts/Layout.astro";
-import PostCard from "~/components/PostCard.astro";
-import EmptyState from "~/components/EmptyState.astro";
-import { supabase } from "~/lib/supabase";
-
-const { data: cat } = await supabase
-  .from("categories")
-  .select("*")
-  .eq("slug", "poesia")
-  .maybeSingle();
-
-const [{ data: posts }, { data: authors }] = await Promise.all([
-  cat
-    ? supabase
-        .from("posts")
-        .select("*")
-        .eq("status", "published")
-        .eq("category_id", cat.id)
-        .order("published_at", { ascending: false })
-    : { data: [] },
-  supabase.from("authors").select("*"),
-]);
-
-const authorMap = new Map((authors ?? []).map((a) => [a.id, a]));
+// Legacy URL — el contenido de poesía ahora vive como filtro de
+// /articulos. SSG-friendly meta-refresh + JS redirect para preservar
+// bookmarks y links externos.
+export const prerender = true;
+const target = "/articulos?categoria=poesia";
 ---
 
-<Layout title="Poesía" description="Poemas, antologías y crítica poética.">
-  <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-20 pb-10 sm:pb-12">
-    <h1 class="font-serif text-3xl sm:text-4xl md:text-6xl mb-3 sm:mb-4">Poesía</h1>
-    <p class="text-[color:var(--fg-muted)] max-w-prose">
-      {cat?.description ?? "Poemas, antologías y crítica poética."}
-    </p>
-  </section>
-
-  <section class="mx-auto max-w-[900px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
-    {posts && posts.length > 0 ? (
-      <div class="space-y-10 sm:space-y-12">
-        {posts.map((post) => (
-          <PostCard post={post} author={authorMap.get(post.author_id ?? "")} category={cat} />
-        ))}
-      </div>
-    ) : (
-      <EmptyState
-        icon="lucide:feather"
-        title="Pronto habrá poemas aquí"
-        description="Estamos preparando los primeros versos. Vuelve pronto."
-        ctaLabel="Volver al inicio"
-      />
-    )}
-  </section>
-</Layout>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <link rel="canonical" href={target} />
+    <title>Poesía · Casa de Asterión Ediciones</title>
+    <script is:inline define:vars={{ target }}>
+      window.location.replace(target);
+    </script>
+  </head>
+  <body>
+    <p>Si no eres redirigido, <a href={target}>haz clic aquí</a>.</p>
+  </body>
+</html>

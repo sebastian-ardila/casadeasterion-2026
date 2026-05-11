@@ -7,21 +7,29 @@ import { loadSiteConfig } from "~/lib/site-config";
 
 const config = await loadSiteConfig();
 
-const [{ data: books }, { data: authors }] = await Promise.all([
+const [{ data: books }, { data: authors }, { data: categories }] = await Promise.all([
   supabase
     .from("books")
     .select("*")
     .eq("status", "published")
     .order("publication_date", { ascending: false }),
   supabase.from("authors").select("*"),
+  supabase.from("categories").select("*").order("sort_order").order("name"),
 ]);
 
 const authorMap = new Map((authors ?? []).map((a) => [a.id, a]));
+const categoryMap = new Map((categories ?? []).map((c) => [c.id, c]));
 const totalBooks = books?.length ?? 0;
+
+// Only show filter chips for categories that actually have at least
+// one published book — keeps the bar honest.
+const usedCategoryIds = new Set(
+  (books ?? []).map((b) => b.category_id).filter(Boolean) as string[],
+);
+const filterCategories = (categories ?? []).filter((c) => usedCategoryIds.has(c.id));
 ---
 
 <Layout title="Catálogo" description="Todos los libros publicados por Casa de Asterión.">
-  {/* Header with serif heading + count badge for a more editorial feel */}
   <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-10 sm:pt-14 md:pt-20 pb-6 sm:pb-10">
     <div class="flex items-end justify-between gap-4 border-b border-[color:var(--border)] pb-5 sm:pb-7">
       <div class="min-w-0">
@@ -33,7 +41,11 @@ const totalBooks = books?.length ?? 0;
         </h1>
       </div>
       {totalBooks > 0 && (
-        <p class="hidden sm:block uppercase text-xs tracking-[0.22em] text-[color:var(--fg-muted)] shrink-0 pb-1">
+        <p
+          id="catalogo-count"
+          class="hidden sm:block uppercase text-xs tracking-[0.22em] text-[color:var(--fg-muted)] shrink-0 pb-1"
+          data-total={totalBooks}
+        >
           {totalBooks} {totalBooks === 1 ? "título" : "títulos"}
         </p>
       )}
@@ -46,7 +58,7 @@ const totalBooks = books?.length ?? 0;
   <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
     {totalBooks > 0 ? (
       <>
-        <div class="mb-8 sm:mb-10">
+        <div class="mb-8 sm:mb-10 space-y-4">
           <label for="catalogo-search" class="sr-only">Buscar en el catálogo</label>
           <div class="relative max-w-xl">
             <svg
@@ -64,10 +76,32 @@ const totalBooks = books?.length ?? 0;
               autocomplete="off"
             />
           </div>
+
+          {filterCategories.length > 0 && (
+            <div class="flex flex-wrap gap-2" data-cda-filter-bar>
+              <button
+                type="button"
+                data-cda-filter="all"
+                class="cda-filter-chip cda-filter-active text-[11px] uppercase tracking-[0.14em] px-3 py-1.5 border cursor-pointer transition-colors border-stone-900 bg-stone-900 text-white"
+              >
+                Todos
+              </button>
+              {filterCategories.map((c) => (
+                <button
+                  type="button"
+                  data-cda-filter={c.slug}
+                  class="cda-filter-chip text-[11px] uppercase tracking-[0.14em] px-3 py-1.5 border cursor-pointer transition-colors border-stone-300 text-stone-700 hover:border-stone-900 hover:text-stone-900"
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
+          )}
+
           <p
             id="catalogo-empty"
-            class="hidden mt-6 text-sm text-stone-500"
-          >Ningún libro coincide con tu búsqueda.</p>
+            class="hidden text-sm text-stone-500"
+          >Ningún libro coincide con la búsqueda.</p>
         </div>
         <div
           id="catalogo-grid"
@@ -75,18 +109,24 @@ const totalBooks = books?.length ?? 0;
         >
           {books.map((book) => {
             const author = authorMap.get(book.author_id ?? "");
+            const category = categoryMap.get(book.category_id ?? "");
             const haystack = [
               book.title,
               author?.name,
               book.subtitle,
               book.isbn,
+              category?.name,
               ...(book.tags ?? []),
             ]
               .filter(Boolean)
               .join(" ")
               .toLowerCase();
             return (
-              <div data-cda-book data-search={haystack}>
+              <div
+                data-cda-book
+                data-search={haystack}
+                data-category={category?.slug ?? ""}
+              >
                 <BookCard book={book} author={author} config={config} />
               </div>
             );
@@ -104,30 +144,87 @@ const totalBooks = books?.length ?? 0;
   </section>
 </Layout>
 
+<style>
+  .cda-filter-chip.cda-filter-active {
+    background: #1c1917;
+    color: #fafaf9;
+    border-color: #1c1917;
+  }
+</style>
+
 <script is:inline>
   (() => {
     const input = document.getElementById("catalogo-search");
     const grid = document.getElementById("catalogo-grid");
     const empty = document.getElementById("catalogo-empty");
+    const countEl = document.getElementById("catalogo-count");
+    const bar = document.querySelector("[data-cda-filter-bar]");
     if (!input || !grid) return;
-    // Lowercase + strip diacritics so 'paisaje' matches 'Paisaje' and
-    // 'cipriano' matches 'Cipriano Vălcan'.
+
     const norm = (s) =>
       String(s ?? "").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
     const cards = Array.from(grid.querySelectorAll("[data-cda-book]"));
     const haystacks = cards.map((c) => norm(c.getAttribute("data-search") || ""));
+    const categories = cards.map((c) => c.getAttribute("data-category") || "");
 
-    function filter() {
+    let activeCategory = "all";
+
+    const filter = () => {
       const q = norm(input.value.trim());
       let visible = 0;
       cards.forEach((card, i) => {
-        const match = !q || haystacks[i].includes(q);
+        const matchQ = !q || haystacks[i].includes(q);
+        const matchCat = activeCategory === "all" || categories[i] === activeCategory;
+        const match = matchQ && matchCat;
         card.style.display = match ? "" : "none";
         if (match) visible++;
       });
       if (empty) empty.classList.toggle("hidden", visible !== 0);
-    }
+      if (countEl) {
+        const total = Number(countEl.getAttribute("data-total") || cards.length);
+        const word = visible === 1 ? "título" : "títulos";
+        if (q || activeCategory !== "all") {
+          countEl.textContent = `${visible} de ${total} ${word}`;
+        } else {
+          countEl.textContent = `${total} ${word}`;
+        }
+      }
+    };
+
+    const setCategory = (slug, pushUrl) => {
+      activeCategory = slug || "all";
+      if (bar) {
+        bar.querySelectorAll("[data-cda-filter]").forEach((b) => {
+          const on = b.getAttribute("data-cda-filter") === activeCategory;
+          b.classList.toggle("cda-filter-active", on);
+          b.classList.toggle("border-stone-900", on);
+          b.classList.toggle("bg-stone-900", on);
+          b.classList.toggle("text-white", on);
+          b.classList.toggle("border-stone-300", !on);
+          b.classList.toggle("text-stone-700", !on);
+        });
+      }
+      if (pushUrl) {
+        const url = new URL(window.location.href);
+        if (activeCategory === "all") url.searchParams.delete("categoria");
+        else url.searchParams.set("categoria", activeCategory);
+        window.history.replaceState({}, "", url.toString());
+      }
+      filter();
+    };
+
+    // Wire chips.
+    bar?.addEventListener("click", (e) => {
+      const t = e.target instanceof Element ? e.target.closest("[data-cda-filter]") : null;
+      if (!t) return;
+      setCategory(t.getAttribute("data-cda-filter"), true);
+    });
 
     input.addEventListener("input", filter);
+
+    // Initialize from URL.
+    const fromUrl = new URL(window.location.href).searchParams.get("categoria");
+    if (fromUrl) setCategory(fromUrl, false);
+    else filter();
   })();
 </script>
