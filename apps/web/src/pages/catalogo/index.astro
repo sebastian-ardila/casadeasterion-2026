@@ -2,6 +2,7 @@
 import Layout from "~/layouts/Layout.astro";
 import BookCard from "~/components/BookCard.astro";
 import EmptyState from "~/components/EmptyState.astro";
+import { Icon } from "astro-icon/components";
 import { supabase } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
 
@@ -82,7 +83,7 @@ const filterCategories = (categories ?? []).filter((c) => usedCategoryIds.has(c.
               <button
                 type="button"
                 data-cda-filter="all"
-                class="cda-filter-chip cda-filter-active text-[11px] uppercase tracking-[0.14em] px-3 py-1.5 border cursor-pointer transition-colors border-stone-900 bg-stone-900 text-white"
+                class="cda-filter-chip cda-filter-active inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] px-3 py-1.5 border cursor-pointer transition-colors border-stone-900 bg-stone-900 text-white"
               >
                 Todos
               </button>
@@ -90,9 +91,12 @@ const filterCategories = (categories ?? []).filter((c) => usedCategoryIds.has(c.
                 <button
                   type="button"
                   data-cda-filter={c.slug}
-                  class="cda-filter-chip text-[11px] uppercase tracking-[0.14em] px-3 py-1.5 border cursor-pointer transition-colors border-stone-300 text-stone-700 hover:border-stone-900 hover:text-stone-900"
+                  class="cda-filter-chip inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] px-3 py-1.5 border cursor-pointer transition-colors border-stone-300 text-stone-700 hover:border-stone-900 hover:text-stone-900"
                 >
-                  {c.name}
+                  {c.icon && (
+                    <Icon name={`lucide:${c.icon}`} class="w-3.5 h-3.5" aria-hidden="true" />
+                  )}
+                  <span>{c.name}</span>
                 </button>
               ))}
             </div>
