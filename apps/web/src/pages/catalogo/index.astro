@@ -22,12 +22,19 @@ const authorMap = new Map((authors ?? []).map((a) => [a.id, a]));
 const categoryMap = new Map((categories ?? []).map((c) => [c.id, c]));
 const totalBooks = books?.length ?? 0;
 
-// Only show filter chips for categories that actually have at least
-// one published book — keeps the bar honest.
 const usedCategoryIds = new Set(
   (books ?? []).map((b) => b.category_id).filter(Boolean) as string[],
 );
 const filterCategories = (categories ?? []).filter((c) => usedCategoryIds.has(c.id));
+
+const sortOptions = [
+  { value: "recent",     label: "Más recientes" },
+  { value: "oldest",     label: "Más antiguos" },
+  { value: "title-az",   label: "Título A–Z" },
+  { value: "title-za",   label: "Título Z–A" },
+  { value: "price-asc",  label: "Precio: menor a mayor" },
+  { value: "price-desc", label: "Precio: mayor a menor" },
+];
 ---
 
 <Layout title="Catálogo" description="Todos los libros publicados por Casa de Asterión.">
@@ -60,22 +67,37 @@ const filterCategories = (categories ?? []).filter((c) => usedCategoryIds.has(c.
     {totalBooks > 0 ? (
       <>
         <div class="mb-8 sm:mb-10 space-y-4">
-          <label for="catalogo-search" class="sr-only">Buscar en el catálogo</label>
-          <div class="relative max-w-xl">
-            <svg
-              class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"
-              width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
-            <input
-              id="catalogo-search"
-              type="search"
-              placeholder="Buscar por título, autor o categoría…"
-              class="w-full pl-10 pr-3 py-3 border border-[color:var(--border)] bg-[color:var(--bg)] text-sm focus:outline-none focus:border-stone-900 transition-colors"
-              autocomplete="off"
-            />
+          <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <label for="catalogo-search" class="sr-only">Buscar en el catálogo</label>
+            <div class="relative flex-1 max-w-xl">
+              <svg
+                class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"
+                width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                id="catalogo-search"
+                type="search"
+                placeholder="Buscar por título, autor o categoría…"
+                class="w-full pl-10 pr-3 py-3 border border-[color:var(--border)] bg-[color:var(--bg)] text-sm focus:outline-none focus:border-stone-900 transition-colors"
+                autocomplete="off"
+              />
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <label for="catalogo-sort" class="text-[10px] sm:text-xs uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">
+                Ordenar
+              </label>
+              <select
+                id="catalogo-sort"
+                class="py-2 pl-3 pr-8 border border-[color:var(--border)] bg-[color:var(--bg)] text-sm focus:outline-none focus:border-stone-900 transition-colors cursor-pointer"
+              >
+                {sortOptions.map((o) => (
+                  <option value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {filterCategories.length > 0 && (
@@ -125,11 +147,22 @@ const filterCategories = (categories ?? []).filter((c) => usedCategoryIds.has(c.
               .filter(Boolean)
               .join(" ")
               .toLowerCase();
+            // Best-effort publication timestamp: prefer the printed
+            // publication date the editor sets, fall back to the
+            // status-flip timestamp, then 0.
+            const pubMs = book.publication_date
+              ? new Date(book.publication_date).getTime()
+              : book.published_at
+                ? new Date(book.published_at).getTime()
+                : 0;
             return (
               <div
                 data-cda-book
                 data-search={haystack}
                 data-category={category?.slug ?? ""}
+                data-title={(book.title ?? "").toLowerCase()}
+                data-pub={Number.isFinite(pubMs) ? pubMs : 0}
+                data-price={book.price_amount != null ? String(book.price_amount) : ""}
               >
                 <BookCard book={book} author={author} config={config} />
               </div>
@@ -163,6 +196,7 @@ const filterCategories = (categories ?? []).filter((c) => usedCategoryIds.has(c.
     const empty = document.getElementById("catalogo-empty");
     const countEl = document.getElementById("catalogo-count");
     const bar = document.querySelector("[data-cda-filter-bar]");
+    const sortEl = document.getElementById("catalogo-sort");
     if (!input || !grid) return;
 
     const norm = (s) =>
@@ -172,6 +206,41 @@ const filterCategories = (categories ?? []).filter((c) => usedCategoryIds.has(c.
     const categories = cards.map((c) => c.getAttribute("data-category") || "");
 
     let activeCategory = "all";
+    let activeSort = "recent";
+
+    // Comparators per sort key. Cards with missing values (e.g. no
+    // price) sort to the end regardless of direction so they don't
+    // crowd out the top of a relevant ordering.
+    const numAttr = (card, name) => {
+      const v = card.getAttribute(name);
+      if (v === null || v === "") return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    const compareNumber = (a, b, dir) => {
+      const av = numAttr(a, "data-price");
+      const bv = numAttr(b, "data-price");
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return dir === "asc" ? av - bv : bv - av;
+    };
+    const comparators = {
+      recent: (a, b) => (Number(b.getAttribute("data-pub") || 0)) - (Number(a.getAttribute("data-pub") || 0)),
+      oldest: (a, b) => (Number(a.getAttribute("data-pub") || 0)) - (Number(b.getAttribute("data-pub") || 0)),
+      "title-az": (a, b) => (a.getAttribute("data-title") || "").localeCompare(b.getAttribute("data-title") || "", "es"),
+      "title-za": (a, b) => (b.getAttribute("data-title") || "").localeCompare(a.getAttribute("data-title") || "", "es"),
+      "price-asc": (a, b) => compareNumber(a, b, "asc"),
+      "price-desc": (a, b) => compareNumber(a, b, "desc"),
+    };
+
+    const sortCards = () => {
+      const cmp = comparators[activeSort] || comparators.recent;
+      const sorted = cards.slice().sort(cmp);
+      const frag = document.createDocumentFragment();
+      sorted.forEach((c) => frag.appendChild(c));
+      grid.appendChild(frag);
+    };
 
     const filter = () => {
       const q = norm(input.value.trim());
@@ -195,6 +264,15 @@ const filterCategories = (categories ?? []).filter((c) => usedCategoryIds.has(c.
       }
     };
 
+    const writeUrl = () => {
+      const url = new URL(window.location.href);
+      if (activeCategory === "all") url.searchParams.delete("categoria");
+      else url.searchParams.set("categoria", activeCategory);
+      if (activeSort === "recent") url.searchParams.delete("orden");
+      else url.searchParams.set("orden", activeSort);
+      window.history.replaceState({}, "", url.toString());
+    };
+
     const setCategory = (slug, pushUrl) => {
       activeCategory = slug || "all";
       if (bar) {
@@ -208,27 +286,37 @@ const filterCategories = (categories ?? []).filter((c) => usedCategoryIds.has(c.
           b.classList.toggle("text-stone-700", !on);
         });
       }
-      if (pushUrl) {
-        const url = new URL(window.location.href);
-        if (activeCategory === "all") url.searchParams.delete("categoria");
-        else url.searchParams.set("categoria", activeCategory);
-        window.history.replaceState({}, "", url.toString());
-      }
+      if (pushUrl) writeUrl();
       filter();
     };
 
-    // Wire chips.
+    const setSort = (value, pushUrl) => {
+      if (!comparators[value]) value = "recent";
+      activeSort = value;
+      if (sortEl && sortEl.value !== value) sortEl.value = value;
+      sortCards();
+      if (pushUrl) writeUrl();
+      filter();
+    };
+
     bar?.addEventListener("click", (e) => {
       const t = e.target instanceof Element ? e.target.closest("[data-cda-filter]") : null;
       if (!t) return;
       setCategory(t.getAttribute("data-cda-filter"), true);
     });
 
+    sortEl?.addEventListener("change", (e) => {
+      setSort(e.target.value, true);
+    });
+
     input.addEventListener("input", filter);
 
-    // Initialize from URL.
-    const fromUrl = new URL(window.location.href).searchParams.get("categoria");
-    if (fromUrl) setCategory(fromUrl, false);
+    // Init from URL.
+    const params = new URL(window.location.href).searchParams;
+    const fromCat = params.get("categoria");
+    const fromSort = params.get("orden");
+    if (fromCat) setCategory(fromCat, false);
+    if (fromSort) setSort(fromSort, false);
     else filter();
   })();
 </script>
