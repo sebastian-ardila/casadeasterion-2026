@@ -2,6 +2,7 @@
 import "~/styles/global.css";
 import Header from "~/components/Header.astro";
 import Footer from "~/components/Footer.astro";
+import ContactSection from "~/components/ContactSection.astro";
 import Breadcrumb from "~/components/Breadcrumb.astro";
 import SeoHead from "~/components/SeoHead.astro";
 import CartDrawer from "~/components/CartDrawer.astro";
@@ -116,6 +117,7 @@ const url = Astro.url.href;
     <main class="flex-1">
       <slot />
     </main>
+    <ContactSection />
     <Footer />
     <CartDrawer />
     <CartFloatingBubble />

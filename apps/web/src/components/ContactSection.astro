@@ -1,0 +1,397 @@
+---
+// Universal contact section — shown above the footer on every page.
+// Used to live at /contacto as a standalone page, but the section is
+// short and gets more visibility wedged between the subscribe form
+// and the footer. Anchor id="contacto" so old links can deep-link.
+import { Icon } from "astro-icon/components";
+import {
+  loadSiteConfig,
+  buildWhatsappUrl,
+  type ContactEmail,
+  type ContactPhone,
+  type ContactAddress,
+  type SocialAccount,
+} from "~/lib/site-config";
+
+const config = await loadSiteConfig();
+
+const primaryEmail = (config.contact_email ?? "").trim();
+const emails: ContactEmail[] = [
+  ...(primaryEmail ? [{ email: primaryEmail, label: "" }] : []),
+  ...((config.contact_emails_extra ?? []).filter((e) => (e?.email ?? "").trim())),
+];
+
+const primaryAddress = (config.contact_address ?? "").trim();
+const addresses: ContactAddress[] = [
+  ...(primaryAddress ? [{ address: primaryAddress, label: "" }] : []),
+  ...((config.contact_addresses_extra ?? []).filter((a) => (a?.address ?? "").trim())),
+];
+
+const phones: ContactPhone[] = (config.contact_phones ?? []).filter(
+  (p) => (p?.phone ?? "").trim(),
+);
+
+const hours = (config.contact_hours ?? "").trim();
+
+const commerceWhatsapp = (config.whatsapp_phone ?? "").trim();
+const commerceWhatsappLink = commerceWhatsapp
+  ? buildWhatsappUrl(
+      commerceWhatsapp,
+      "Hola, me gustaría contactar con Casa de Asterión.",
+      {},
+    )
+  : "";
+
+const legacySocial = config.social_links ?? { facebook: "", instagram: "", twitter: "" };
+const legacyAsArray: SocialAccount[] = [
+  { platform: "instagram", url: legacySocial.instagram ?? "" },
+  { platform: "facebook",  url: legacySocial.facebook ?? "" },
+  { platform: "twitter",   url: legacySocial.twitter ?? "" },
+].filter((s) => s.url.trim());
+const socials: SocialAccount[] = [
+  ...legacyAsArray,
+  ...((config.social_accounts ?? []).filter((s) => (s?.url ?? "").trim())),
+];
+
+const SOCIAL_ICONS: Record<string, string> = {
+  instagram: "lucide:instagram",
+  facebook: "lucide:facebook",
+  twitter: "lucide:twitter",
+  youtube: "lucide:youtube",
+  linkedin: "lucide:linkedin",
+  tiktok: "lucide:music",
+  website: "lucide:globe",
+  threads: "lucide:at-sign",
+  bluesky: "lucide:cloud",
+  other: "lucide:link",
+};
+const SOCIAL_LABELS: Record<string, string> = {
+  instagram: "Instagram",
+  facebook: "Facebook",
+  twitter: "Twitter / X",
+  youtube: "YouTube",
+  linkedin: "LinkedIn",
+  tiktok: "TikTok",
+  website: "Sitio web",
+  threads: "Threads",
+  bluesky: "Bluesky",
+  other: "Enlace",
+};
+
+const buildPhoneLink = (p: ContactPhone) =>
+  p.whatsapp
+    ? buildWhatsappUrl(p.phone, "Hola, me gustaría contactar con Casa de Asterión.", {})
+    : `tel:${p.phone.replace(/[^\d+]/g, "")}`;
+
+const hasEmails = emails.length > 0;
+const hasPhones = commerceWhatsapp || phones.length > 0;
+const hasPlace = addresses.length > 0 || hours;
+const hasAny = hasEmails || hasPhones || hasPlace || socials.length > 0;
+---
+
+{hasAny && (
+  <section id="contacto" class="contact-section border-t border-[color:var(--border)]">
+    <div class="contact-section-inner">
+      <header class="contact-section-head">
+        <p class="uppercase text-[10px] sm:text-xs tracking-[0.22em] text-[color:var(--fg-muted)] mb-2 sm:mb-3">
+          Casa de Asterión
+        </p>
+        <h2 class="font-serif text-3xl sm:text-4xl md:text-5xl leading-[1.05] mb-3 sm:mb-4">
+          Contacto
+        </h2>
+        <p class="text-[color:var(--fg-muted)] leading-relaxed text-sm sm:text-base max-w-prose">
+          Para envíos editoriales, manuscritos, derechos, prensa o
+          consultas generales, escríbenos por el medio que prefieras.
+        </p>
+      </header>
+
+      <div class="contact-methods">
+        {hasEmails && (
+          <section class="contact-group">
+            <h3 class="contact-eyebrow">{emails.length === 1 ? "Email" : "Emails"}</h3>
+            <ul class="contact-list">
+              {emails.map((e) => (
+                <li>
+                  <a href={`mailto:${e.email}`} class="contact-item">
+                    <span class="contact-item-main">
+                      <span class="contact-item-value">{e.email}</span>
+                      {e.label && <span class="contact-item-sub">{e.label}</span>}
+                    </span>
+                    <span class="contact-item-cta">Escribir<span class="contact-arrow" aria-hidden="true"> →</span></span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {hasPhones && (
+          <section class="contact-group">
+            <h3 class="contact-eyebrow">Teléfonos</h3>
+            <ul class="contact-list">
+              {commerceWhatsapp && (
+                <li>
+                  <a href={commerceWhatsappLink} target="_blank" rel="noopener noreferrer" class="contact-item">
+                    <span class="contact-item-main">
+                      <span class="contact-item-value contact-item-value-num">{commerceWhatsapp}</span>
+                      <span class="contact-item-sub"><Icon name="lucide:message-circle" class="w-3 h-3 inline-block -mt-0.5 mr-1" aria-hidden="true" />WhatsApp · ventas</span>
+                    </span>
+                    <span class="contact-item-cta">Abrir chat<span class="contact-arrow" aria-hidden="true"> →</span></span>
+                  </a>
+                </li>
+              )}
+              {phones.map((p) => (
+                <li>
+                  <a
+                    href={buildPhoneLink(p)}
+                    target={p.whatsapp ? "_blank" : undefined}
+                    rel={p.whatsapp ? "noopener noreferrer" : undefined}
+                    class="contact-item"
+                  >
+                    <span class="contact-item-main">
+                      <span class="contact-item-value contact-item-value-num">{p.phone}</span>
+                      <span class="contact-item-sub">
+                        {p.whatsapp ? (
+                          <Icon name="lucide:message-circle" class="w-3 h-3 inline-block -mt-0.5 mr-1" aria-hidden="true" />
+                        ) : (
+                          <Icon name="lucide:phone" class="w-3 h-3 inline-block -mt-0.5 mr-1" aria-hidden="true" />
+                        )}
+                        {p.label || (p.whatsapp ? "WhatsApp" : "Teléfono")}
+                      </span>
+                    </span>
+                    <span class="contact-item-cta">{p.whatsapp ? "Abrir chat" : "Llamar"}<span class="contact-arrow" aria-hidden="true"> →</span></span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {hasPlace && (
+          <section class="contact-group">
+            <h3 class="contact-eyebrow">{addresses.length > 1 ? "Direcciones" : "Dirección"}{hours ? " y horario" : ""}</h3>
+            <ul class="contact-list">
+              {addresses.map((a) => (
+                <li>
+                  <div class="contact-item contact-item-static">
+                    <span class="contact-item-main">
+                      <span class="contact-item-value contact-item-value-multi">{a.address}</span>
+                      {a.label && <span class="contact-item-sub">{a.label}</span>}
+                    </span>
+                  </div>
+                </li>
+              ))}
+              {hours && (
+                <li>
+                  <div class="contact-item contact-item-static">
+                    <span class="contact-item-main">
+                      <span class="contact-item-value contact-item-value-multi">{hours}</span>
+                      <span class="contact-item-sub">Horario</span>
+                    </span>
+                  </div>
+                </li>
+              )}
+            </ul>
+          </section>
+        )}
+
+        {socials.length > 0 && (
+          <section class="contact-group contact-group-social">
+            <h3 class="contact-eyebrow">También en</h3>
+            <ul class="contact-social-rail">
+              {socials.map((s) => (
+                <li>
+                  <a href={s.url} target="_blank" rel="noopener noreferrer" class="contact-social-link">
+                    <Icon name={SOCIAL_ICONS[s.platform] ?? "lucide:link"} class="w-4 h-4" aria-hidden="true" />
+                    <span>{s.label || SOCIAL_LABELS[s.platform] || s.platform}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  /*
+   * Editorial-colophon contact strip. Lives between subscribe and the
+   * footer on every page. Two-column at md+: title/intro on the left,
+   * methods stacked on the right. No sticky tricks here — the section
+   * is short enough to flow naturally.
+   */
+  .contact-section {
+    background: var(--bg);
+  }
+  .contact-section-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 4rem 1.25rem 4.5rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  @media (min-width: 640px) {
+    .contact-section-inner { padding: 5rem 1.5rem 5.5rem; }
+  }
+  @media (min-width: 768px) {
+    .contact-section-inner {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      gap: 4rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .contact-section-inner {
+      padding: 6rem 3rem 6.5rem;
+      gap: 5rem;
+    }
+  }
+
+  .contact-section-head { min-width: 0; }
+
+  .contact-methods {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .contact-group {
+    padding: 1.5rem 0 1.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .contact-group:first-child { padding-top: 0; }
+  .contact-group:last-child { border-bottom: 0; }
+  @media (min-width: 768px) {
+    .contact-group { padding: 1.75rem 0 2rem; }
+  }
+
+  .contact-eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--fg-muted);
+    margin: 0 0 0.875rem;
+    font-weight: 500;
+  }
+
+  .contact-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.125rem;
+  }
+  .contact-list > li + li {
+    padding-top: 1.125rem;
+    border-top: 1px dashed var(--border);
+  }
+
+  .contact-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0.875rem 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.15s;
+  }
+  .contact-item-static { cursor: default; }
+
+  .contact-item-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+  .contact-item-value {
+    font-size: 1.0625rem;
+    line-height: 1.4;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    color: var(--fg);
+  }
+  @media (min-width: 768px) {
+    .contact-item-value { font-size: 1.15rem; }
+  }
+  .contact-item-value-num {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+  }
+  .contact-item-value-multi {
+    white-space: pre-line;
+    line-height: 1.5;
+  }
+
+  .contact-item-sub {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--fg-muted);
+  }
+
+  .contact-item-cta {
+    align-self: center;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--fg-muted);
+    white-space: nowrap;
+    transition: color 0.18s;
+  }
+  .contact-arrow {
+    display: inline-block;
+    transition: transform 0.2s ease;
+    margin-left: 0.125rem;
+  }
+  a.contact-item:hover .contact-item-value {
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--fg);
+  }
+  a.contact-item:hover .contact-item-cta { color: var(--fg); }
+  a.contact-item:hover .contact-arrow { transform: translateX(3px); }
+  a.contact-item:focus-visible {
+    outline: 2px solid var(--fg);
+    outline-offset: 6px;
+  }
+
+  @media (max-width: 520px) {
+    .contact-item {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+    .contact-item-cta {
+      align-self: flex-start;
+      justify-self: flex-start;
+    }
+  }
+
+  .contact-social-rail {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+  }
+  .contact-social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid var(--border);
+    color: var(--fg);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+  }
+  .contact-social-link:hover {
+    border-color: var(--fg);
+    background: var(--fg);
+    color: var(--bg);
+  }
+</style>
