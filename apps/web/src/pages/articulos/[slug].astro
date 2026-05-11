@@ -1,7 +1,7 @@
 ---
 import Layout from "~/layouts/Layout.astro";
 import { supabase } from "~/lib/supabase";
-import { renderMarkdown } from "~/lib/markdown";
+import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
 
 export async function getStaticPaths() {
   const { data } = await supabase
@@ -35,6 +35,14 @@ const [{ data: author }, { data: category }] = await Promise.all([
 
 const html = renderMarkdown(post.content_md);
 
+// Meta description: explicit meta_description → excerpt → cleaned
+// first ~155 chars of the body.
+const metaDescription =
+  post.meta_description?.trim() ||
+  post.excerpt?.trim() ||
+  clampText(mdToPlainText(post.content_md), 155) ||
+  `${post.title}. Artículo de Casa de Asterión Ediciones — Filosofía y Poesía.`;
+
 const formatted = post.published_at
   ? new Intl.DateTimeFormat("es-CO", {
       year: "numeric",
@@ -46,7 +54,7 @@ const formatted = post.published_at
 
 <Layout
   title={post.title}
-  description={post.meta_description ?? post.excerpt ?? undefined}
+  description={metaDescription}
   breadcrumbLabel={post.title}
   seoType="article"
   image={post.cover_image_url}

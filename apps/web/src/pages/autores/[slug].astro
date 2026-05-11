@@ -3,7 +3,7 @@ import Layout from "~/layouts/Layout.astro";
 import BookCard from "~/components/BookCard.astro";
 import { supabase } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
-import { renderMarkdown } from "~/lib/markdown";
+import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
 
 export async function getStaticPaths() {
   const { data } = await supabase.from("authors").select("slug");
@@ -33,12 +33,15 @@ const { data: books } = await supabase
 const bio = renderMarkdown(author.bio_md);
 const links = (author.links as Record<string, string> | null) ?? {};
 const sameAs = [links.web, links.twitter, links.instagram].filter(Boolean) as string[];
-const bioPlain = (author.bio_md ?? "").replace(/[#*_`>\-]/g, "").replace(/\s+/g, " ").trim().slice(0, 200);
+const bioPlain = clampText(mdToPlainText(author.bio_md), 160);
+const metaDescription =
+  bioPlain ||
+  `${author.name} — autor de Casa de Asterión Ediciones. Filosofía y poesía contemporáneas.`;
 ---
 
 <Layout
   title={author.name}
-  description={bioPlain || `Ficha del autor ${author.name} en Casa de Asterión Ediciones.`}
+  description={metaDescription}
   breadcrumbLabel={author.name}
   seoType="person"
   image={author.photo_url}

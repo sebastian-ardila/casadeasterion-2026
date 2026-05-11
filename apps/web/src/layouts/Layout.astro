@@ -53,7 +53,10 @@ const {
   breadcrumbItems,
 } = Astro.props;
 const config = await loadSiteConfig();
-const fullTitle = title ?? "Casa de Asterión Ediciones";
+// Empty title → SeoHead recognizes the home page and emits the
+// fully-branded "Casa de Asterión Ediciones — Filosofía y Poesía".
+// Any explicit title here is used as the page-specific prefix.
+const fullTitle = title ?? "";
 const desc = description ?? config.editorial_description;
 const url = Astro.url.href;
 ---
@@ -65,7 +68,6 @@ const url = Astro.url.href;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="robots" content="index,follow,noai,noimageai" />
 
     <SeoHead
       type={seoType}

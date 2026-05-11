@@ -4,7 +4,7 @@ import BookCard from "~/components/BookCard.astro";
 import AddToCartButton from "~/components/AddToCartButton.astro";
 import { supabase } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
-import { renderMarkdown } from "~/lib/markdown";
+import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
 
 export async function getStaticPaths() {
   const { data } = await supabase
@@ -57,6 +57,13 @@ const { count: authorBookTotal } = author
 
 const description = renderMarkdown(book.description_md);
 
+// Meta description: prefer subtitle, fall back to a cleaned excerpt
+// of the description (markdown stripped, ~155 chars at word boundary).
+const metaDescription =
+  book.subtitle?.trim() ||
+  clampText(mdToPlainText(book.description_md), 155) ||
+  `${book.title}${author ? " — " + author.name : ""}. Casa de Asterión Ediciones — Filosofía y Poesía.`;
+
 const formattedPrice =
   book.price_amount != null
     ? new Intl.NumberFormat("es-CO", {
@@ -77,7 +84,7 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
 
 <Layout
   title={book.title}
-  description={book.subtitle ?? book.description_md?.slice(0, 160) ?? undefined}
+  description={metaDescription}
   breadcrumbLabel={book.title}
   seoType="book"
   image={book.cover_image_url}

@@ -50,28 +50,79 @@ const {
   breadcrumb,
 } = Astro.props as Props;
 
+// Branding strings. The full site name (with tagline) lives in the
+// <title> for the home page and as the og:site_name everywhere — it's
+// how the brand should appear on SERPs alongside the URL.
 const siteName = "Casa de Asterión Ediciones";
-const fullTitle = title.includes("Casa de Asterión") ? title : `${title} — Casa de Asterión`;
+const siteTagline = "Filosofía y Poesía";
+const siteFullName = `${siteName} — ${siteTagline}`;
+
+// Title strategy:
+//  - Home page (type=website with the bare site name) → use the full
+//    branded title to lead the SERP listing.
+//  - All other pages append the short site name as a suffix so users
+//    still see the brand without truncating the page-specific part.
+const isHomeTitle =
+  type === "website" &&
+  (title === siteName || title === siteFullName || title === "");
+const fullTitle = isHomeTitle
+  ? siteFullName
+  : title.includes(siteName)
+    ? title
+    : `${title} · ${siteName}`;
+
 const ogImage = image || config.og_image_default || "";
-const ogImageAlt = imageAlt || title;
+const ogImageAlt = imageAlt || title || siteFullName;
 const canonicalUrl = canonical || url;
-const mergedKeywords = [
+
+// Keywords ordering matters: page-specific terms first, then global
+// defaults. Deduplicate to keep the meta tag honest.
+const mergedKeywordsRaw = [
   ...(keywords ?? []),
   ...(config.default_keywords ?? []),
-].filter(Boolean);
+].filter(Boolean) as string[];
+const seenKw = new Set<string>();
+const mergedKeywords: string[] = [];
+for (const k of mergedKeywordsRaw) {
+  const norm = k.trim().toLowerCase();
+  if (!norm || seenKw.has(norm)) continue;
+  seenKw.add(norm);
+  mergedKeywords.push(k.trim());
+}
+
 const twitterHandle = config.twitter_handle?.startsWith("@")
   ? config.twitter_handle
   : config.twitter_handle ? `@${config.twitter_handle}` : "";
 
 const siteOrigin = new URL("/", url).href;
+
+// Organization schema — beefed up with slogan + knowsAbout so the
+// knowledge panel has more substance than just a name.
 const organization: Record<string, unknown> = {
   "@type": "Organization",
   "@id": `${siteOrigin}#organization`,
   name: siteName,
+  alternateName: ["Casa de Asterión", "Casa de Asterion Ediciones"],
   url: siteOrigin,
+  slogan: siteTagline,
+  description: config.editorial_description,
+  knowsAbout: [
+    "Filosofía",
+    "Poesía",
+    "Ensayo filosófico",
+    "Filosofía contemporánea",
+    "Poesía contemporánea",
+    "Literatura latinoamericana",
+    "Edición independiente",
+  ],
+  inLanguage: "es",
+  areaServed: "CO",
 };
 if (config.organization_logo_url) {
   organization.logo = { "@type": "ImageObject", url: config.organization_logo_url };
+}
+if (config.contact_email) {
+  organization.email = config.contact_email;
 }
 const sameAsLinks = [
   config.social_links?.facebook,
@@ -80,6 +131,7 @@ const sameAsLinks = [
 ].filter(Boolean);
 if (sameAsLinks.length) organization.sameAs = sameAsLinks;
 
+// Primary schema (per page type).
 let primary: Record<string, unknown> | null = null;
 
 if (type === "article") {
@@ -89,6 +141,7 @@ if (type === "article") {
     headline: title,
     description,
     url,
+    inLanguage: "es",
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     ...(ogImage ? { image: ogImage } : {}),
     ...(publishedAt ? { datePublished: publishedAt } : {}),
@@ -113,6 +166,7 @@ if (type === "article") {
     name: title,
     description,
     url,
+    inLanguage: "es",
     ...(ogImage ? { image: ogImage } : {}),
     ...(isbn ? { isbn } : {}),
     ...(authorName
@@ -125,6 +179,7 @@ if (type === "article") {
         }
       : {}),
     ...(publishedAt ? { datePublished: publishedAt } : {}),
+    bookFormat: "https://schema.org/Paperback",
     publisher: organization,
     ...(mergedKeywords.length ? { keywords: mergedKeywords.join(", ") } : {}),
   };
@@ -138,15 +193,29 @@ if (type === "article") {
     ...(ogImage ? { image: ogImage } : {}),
     ...(sameAs?.length ? { sameAs } : {}),
     ...(mergedKeywords.length ? { knowsAbout: mergedKeywords } : {}),
+    affiliation: organization,
   };
 } else {
+  // WebSite. The "@id" makes it referable from the Organization. The
+  // SearchAction lets Google offer a sitelinks search box for the home.
   primary = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: siteName,
+    "@id": `${siteOrigin}#website`,
+    name: siteFullName,
+    alternateName: siteName,
     description,
     url: siteOrigin,
-    publisher: organization,
+    inLanguage: "es",
+    publisher: { "@id": `${siteOrigin}#organization` },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${siteOrigin}catalogo?categoria={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
   };
 }
 
@@ -157,6 +226,19 @@ const ogType =
 <title>{fullTitle}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonicalUrl} />
+<link rel="alternate" hreflang="es" href={canonicalUrl} />
+<meta http-equiv="content-language" content="es" />
+<meta name="theme-color" content="#1c1917" />
+{/* index/follow plus the AI opt-out signals (noai/noimageai) some
+    crawlers honor. Single canonical robots meta — avoids the
+    conflicting-tag ambiguity browsers/bots have when there are two. */}
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,noai,noimageai" />
+{authorName && type !== "person" && (
+  <meta name="author" content={authorName} />
+)}
+{!authorName && (
+  <meta name="author" content={siteName} />
+)}
 {mergedKeywords.length > 0 && (
   <meta name="keywords" content={mergedKeywords.join(", ")} />
 )}
@@ -166,8 +248,12 @@ const ogType =
 <meta property="og:title" content={fullTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={url} />
+<meta property="og:locale" content="es_CO" />
+<meta property="og:locale:alternate" content="es_ES" />
 {ogImage && <meta property="og:image" content={ogImage} />}
 {ogImage && <meta property="og:image:alt" content={ogImageAlt} />}
+{ogImage && <meta property="og:image:width" content="1200" />}
+{ogImage && <meta property="og:image:height" content="630" />}
 
 {type === "article" && publishedAt && (
   <meta property="article:published_time" content={publishedAt} />
@@ -178,14 +264,27 @@ const ogType =
 {type === "article" && authorName && (
   <meta property="article:author" content={authorName} />
 )}
+{type === "article" && section && (
+  <meta property="article:section" content={section} />
+)}
 {type === "article" && (tags ?? []).map((t) => (
   <meta property="article:tag" content={t} />
 ))}
+{type === "book" && isbn && (
+  <meta property="book:isbn" content={isbn} />
+)}
+{type === "book" && authorName && (
+  <meta property="book:author" content={authorName} />
+)}
+{type === "book" && publishedAt && (
+  <meta property="book:release_date" content={publishedAt} />
+)}
 
 <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
 <meta name="twitter:title" content={fullTitle} />
 <meta name="twitter:description" content={description} />
 {ogImage && <meta name="twitter:image" content={ogImage} />}
+{ogImage && <meta name="twitter:image:alt" content={ogImageAlt} />}
 {twitterHandle && <meta name="twitter:site" content={twitterHandle} />}
 {twitterHandle && <meta name="twitter:creator" content={twitterHandle} />}
 

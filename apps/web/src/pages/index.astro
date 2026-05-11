@@ -52,7 +52,10 @@ const heroCardContent = resolveHeroContent(heroCardCfg, {
 const heroCardCss = buildHeroCardCss(heroCardCfg);
 ---
 
-<Layout>
+<Layout
+  description="Casa de Asterión Ediciones — editorial independiente dedicada a la filosofía y la poesía contemporáneas. Catálogo, autores y artículos."
+  keywords={["Casa de Asterión Ediciones","Casa de Asterión","editorial filosofía","editorial poesía","filosofía contemporánea","poesía contemporánea","editorial independiente Colombia","libros de filosofía","libros de poesía","filosofía y poesía"]}
+>
   {/* Hero — exactly one viewport tall on desktop. The right-half image is
       fixed-positioned so it visually stays in place while the page scrolls
       past it; JS fades it to 0 by ~0.6vh of scroll, after which the (now
