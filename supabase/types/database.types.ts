@@ -490,6 +490,7 @@ export type Database = {
           status: string
           total_amount: number
           updated_at: string
+          updated_by: string | null
           whatsapp_message: string
         }
         Insert: {
@@ -504,6 +505,7 @@ export type Database = {
           status?: string
           total_amount?: number
           updated_at?: string
+          updated_by?: string | null
           whatsapp_message: string
         }
         Update: {
@@ -518,12 +520,20 @@ export type Database = {
           status?: string
           total_amount?: number
           updated_at?: string
+          updated_by?: string | null
           whatsapp_message?: string
         }
         Relationships: [
           {
             foreignKeyName: "purchase_intents_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_intents_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
