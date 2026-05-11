@@ -260,7 +260,11 @@
 
     drawer.addEventListener("click", (e) => {
       const t = e.target as HTMLElement;
-      if (t.id === "cda-cart-backdrop" || t.id === "cda-cart-close" || t.closest("[data-cda-close-on-click]")) {
+      if (
+        t.id === "cda-cart-backdrop" ||
+        t.closest("#cda-cart-close") ||
+        t.closest("[data-cda-close-on-click]")
+      ) {
         close();
         return;
       }

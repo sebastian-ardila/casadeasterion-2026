@@ -255,10 +255,12 @@ const hasAny = hasEmails || hasPhones || hasPlace || socials.length > 0;
   .contacto-intro { min-width: 0; }
   @media (min-width: 768px) {
     /* Sticky-ish intro so the title hangs in place while the right
-       column scrolls past it on a tall page. */
+       column scrolls past it on a tall page. The offset clears the
+       sticky header (80px) + sticky breadcrumb (~40px) so the title
+       doesn't get clipped behind them as the user scrolls. */
     .contacto-intro {
       position: sticky;
-      top: 6rem;
+      top: 8rem;
       align-self: start;
     }
   }
