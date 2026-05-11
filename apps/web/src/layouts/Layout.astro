@@ -26,6 +26,7 @@ interface Props {
   updatedAt?: string | null;
   authorName?: string | null;
   authorUrl?: string | null;
+  authors?: { name: string; url?: string | null }[] | null;
   section?: string | null;
   tags?: string[] | null;
   isbn?: string | null;
@@ -46,6 +47,7 @@ const {
   updatedAt,
   authorName,
   authorUrl,
+  authors,
   section,
   tags,
   isbn,
@@ -83,6 +85,7 @@ const url = Astro.url.href;
       updatedAt={updatedAt}
       authorName={authorName}
       authorUrl={authorUrl}
+      authors={authors}
       section={section}
       tags={tags}
       isbn={isbn}

@@ -122,6 +122,42 @@ export type Database = {
           },
         ]
       }
+      book_authors: {
+        Row: {
+          author_id: string
+          book_id: string
+          created_at: string
+          sort_order: number
+        }
+        Insert: {
+          author_id: string
+          book_id: string
+          created_at?: string
+          sort_order?: number
+        }
+        Update: {
+          author_id?: string
+          book_id?: string
+          created_at?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_authors_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "authors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "book_authors_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       books: {
         Row: {
           author_id: string | null
@@ -292,6 +328,42 @@ export type Database = {
           requested_at?: string
         }
         Relationships: []
+      }
+      post_authors: {
+        Row: {
+          author_id: string
+          created_at: string
+          post_id: string
+          sort_order: number
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          post_id: string
+          sort_order?: number
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          post_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_authors_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "authors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_authors_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       posts: {
         Row: {

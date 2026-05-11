@@ -23,12 +23,21 @@ if (!author) {
   return Astro.redirect("/autores");
 }
 
-const { data: books } = await supabase
-  .from("books")
-  .select("*")
-  .eq("status", "published")
-  .eq("author_id", author.id)
-  .order("publication_date", { ascending: false });
+// Find all books where this author appears in the junction (not only
+// where they're the primary). Order by publication_date desc.
+const { data: junctionBooks } = await supabase
+  .from("book_authors")
+  .select("book_id")
+  .eq("author_id", author.id);
+const linkedBookIds = (junctionBooks ?? []).map((r) => r.book_id);
+const { data: books } = linkedBookIds.length > 0
+  ? await supabase
+      .from("books")
+      .select("*")
+      .eq("status", "published")
+      .in("id", linkedBookIds)
+      .order("publication_date", { ascending: false })
+  : { data: [] };
 
 const bio = renderMarkdown(author.bio_md);
 const links = (author.links as Record<string, string> | null) ?? {};

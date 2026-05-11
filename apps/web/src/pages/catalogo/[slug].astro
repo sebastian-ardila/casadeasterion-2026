@@ -2,9 +2,10 @@
 import Layout from "~/layouts/Layout.astro";
 import BookCard from "~/components/BookCard.astro";
 import AddToCartButton from "~/components/AddToCartButton.astro";
-import { supabase } from "~/lib/supabase";
+import { supabase, type Author } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
 import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
+import { extractAuthors, joinAuthorNames } from "~/lib/multi-author";
 
 export async function getStaticPaths() {
   const { data } = await supabase
@@ -17,52 +18,61 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 const config = await loadSiteConfig();
 
-const { data: book } = await supabase
+// Fetch book + every author via the book_authors junction in a single
+// round-trip. The junction guarantees order via sort_order.
+const { data: bookRaw } = await supabase
   .from("books")
-  .select("*")
+  .select("*, book_authors(sort_order, author:authors(*))")
   .eq("slug", slug!)
   .eq("status", "published")
   .maybeSingle();
 
-if (!book) {
+if (!bookRaw) {
   return Astro.redirect("/catalogo");
 }
 
-const { data: author } = book.author_id
-  ? await supabase.from("authors").select("*").eq("id", book.author_id).maybeSingle()
-  : { data: null };
+const { book_authors: rawJunction, ...book } = bookRaw as typeof bookRaw & {
+  book_authors: { sort_order: number; author: Author | null }[];
+};
+const authors = extractAuthors(rawJunction);
+const primaryAuthor = authors[0] ?? null;
 
-// Other published books by the same author (max 4) for the bottom rail.
-const { data: otherBooksRaw } = author
-  ? await supabase
+// "More from these authors" rail: books co-written by any of this book's
+// authors, ranked by recency. Fetched via the junction so a book counts
+// even if this author isn't the primary one on it.
+const authorIds = authors.map((a) => a.id);
+let otherBooks: Awaited<ReturnType<typeof supabase.from<"books">["select"]>>["data"] = [];
+let authorBookTotal = 0;
+if (authorIds.length > 0) {
+  const { data: junctionRows } = await supabase
+    .from("book_authors")
+    .select("book_id")
+    .in("author_id", authorIds);
+  const otherBookIds = Array.from(
+    new Set((junctionRows ?? []).map((r) => r.book_id).filter((id) => id !== book.id)),
+  );
+  if (otherBookIds.length > 0) {
+    const { data: otherBooksRaw, count } = await supabase
       .from("books")
-      .select("*")
+      .select("*", { count: "exact" })
       .eq("status", "published")
-      .eq("author_id", author.id)
-      .neq("id", book.id)
+      .in("id", otherBookIds)
       .order("publication_date", { ascending: false })
-      .limit(5)
-  : { data: null };
-
-const otherBooks = (otherBooksRaw ?? []).slice(0, 4);
-
-// Total count by this author (so we can decide whether to show "ver todos").
-const { count: authorBookTotal } = author
-  ? await supabase
-      .from("books")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "published")
-      .eq("author_id", author.id)
-  : { count: 0 };
+      .limit(4);
+    otherBooks = otherBooksRaw ?? [];
+    authorBookTotal = count ?? 0;
+  }
+}
 
 const description = renderMarkdown(book.description_md);
+const authorListLabel = joinAuthorNames(authors.map((a) => a.name));
 
 // Meta description: prefer subtitle, fall back to a cleaned excerpt
 // of the description (markdown stripped, ~155 chars at word boundary).
 const metaDescription =
   book.subtitle?.trim() ||
   clampText(mdToPlainText(book.description_md), 155) ||
-  `${book.title}${author ? " — " + author.name : ""}. Casa de Asterión Ediciones — Filosofía y Poesía.`;
+  `${book.title}${authorListLabel ? " — " + authorListLabel : ""}. Casa de Asterión Ediciones — Filosofía y Poesía.`;
 
 const formattedPrice =
   book.price_amount != null
@@ -92,8 +102,10 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
   keywords={book.keywords}
   canonical={book.canonical_url}
   isbn={book.isbn}
-  authorName={author?.name}
-  authorUrl={author ? new URL(`/autores/${author.slug}`, Astro.site).href : null}
+  authors={authors.map((a) => ({
+    name: a.name,
+    url: new URL(`/autores/${a.slug}`, Astro.site).href,
+  }))}
   publishedAt={book.publication_date}
   breadcrumbItems={[
     { name: "Inicio", url: new URL("/", Astro.site).href },
@@ -117,35 +129,41 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
         )}
       </div>
 
-      {/* Author card — clickable. Photo + name. */}
-      {author && (
-        <a
-          href={`/autores/${author.slug}`}
-          class="group flex items-center gap-3 sm:gap-4 max-w-[320px] mx-auto lg:mx-0 w-full hover:opacity-85 transition-opacity"
-        >
-          <div class="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 shrink-0 overflow-hidden bg-[color:var(--bg-alt)] ring-1 ring-stone-900/[0.06]">
-            {author.photo_url ? (
-              <img
-                src={author.photo_url}
-                alt={author.name}
-                loading="lazy"
-                class="w-full h-full object-cover"
-              />
-            ) : (
-              <div class="w-full h-full flex items-center justify-center text-[color:var(--fg-muted)] font-serif text-xl">
-                {author.name.charAt(0)}
+      {/* Author cards — one per author in the junction. The eyebrow
+          singularizes/pluralizes; only the first card gets the eyebrow
+          to keep the visual rhythm tight when there are several. */}
+      {authors.length > 0 && (
+        <div class="space-y-3 sm:space-y-4 max-w-[320px] mx-auto lg:mx-0 w-full">
+          <p class="uppercase text-[10px] tracking-[0.18em] text-[color:var(--fg-muted)] mb-0.5">
+            {authors.length > 1 ? "Autores" : "Autor"}
+          </p>
+          {authors.map((a) => (
+            <a
+              href={`/autores/${a.slug}`}
+              class="group flex items-center gap-3 sm:gap-4 hover:opacity-85 transition-opacity"
+            >
+              <div class="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 shrink-0 overflow-hidden bg-[color:var(--bg-alt)] ring-1 ring-stone-900/[0.06]">
+                {a.photo_url ? (
+                  <img
+                    src={a.photo_url}
+                    alt={a.name}
+                    loading="lazy"
+                    class="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div class="w-full h-full flex items-center justify-center text-[color:var(--fg-muted)] font-serif text-xl">
+                    {a.name.charAt(0)}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <div class="min-w-0">
-            <p class="uppercase text-[10px] tracking-[0.18em] text-[color:var(--fg-muted)] mb-0.5">
-              Autor
-            </p>
-            <p class="font-serif text-base sm:text-lg leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)] truncate">
-              {author.name}
-            </p>
-          </div>
-        </a>
+              <div class="min-w-0">
+                <p class="font-serif text-base sm:text-lg leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)] truncate">
+                  {a.name}
+                </p>
+              </div>
+            </a>
+          ))}
+        </div>
       )}
 
       {/* Technical info — single column, sits under cover on desktop. */}
@@ -202,25 +220,30 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
     </div>
   </article>
 
-  {/* Otros libros del autor */}
-  {author && otherBooks.length > 0 && (
+  {/* Otros libros: cualquier libro escrito por al menos uno de los
+      autores de éste. Cuando hay un solo autor, el "Ver todos" lleva a
+      su ficha; con varios omitimos el link porque no apunta a una sola
+      página. */}
+  {primaryAuthor && otherBooks.length > 0 && (
     <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
       <div class="flex items-end justify-between gap-4 mb-8 sm:mb-10 md:mb-12 border-b border-[color:var(--border)] pb-6 sm:pb-7 md:pb-8">
         <div class="min-w-0">
           <p class="uppercase text-[10px] sm:text-xs tracking-[0.2em] text-[color:var(--fg-muted)] mb-1.5 sm:mb-2">
-            Más del autor
+            {authors.length > 1 ? "Más de estos autores" : "Más del autor"}
           </p>
           <h2 class="font-serif text-xl sm:text-2xl md:text-3xl leading-tight">
-            Otros libros de {author.name}
+            {authors.length > 1
+              ? `Otros libros de ${authorListLabel}`
+              : `Otros libros de ${primaryAuthor.name}`}
           </h2>
         </div>
-        {(authorBookTotal ?? 0) > otherBooks.length + 1 && (
-          <a href={`/autores/${author.slug}`} class="nav-link shrink-0 pb-1">Ver todos</a>
+        {authors.length === 1 && authorBookTotal > otherBooks.length + 1 && (
+          <a href={`/autores/${primaryAuthor.slug}`} class="nav-link shrink-0 pb-1">Ver todos</a>
         )}
       </div>
       <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4">
         {otherBooks.map((b) => (
-          <BookCard book={b} author={author} config={config} />
+          <BookCard book={b} author={primaryAuthor} config={config} />
         ))}
       </div>
     </section>

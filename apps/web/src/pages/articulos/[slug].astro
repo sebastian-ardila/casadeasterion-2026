@@ -1,7 +1,8 @@
 ---
 import Layout from "~/layouts/Layout.astro";
-import { supabase } from "~/lib/supabase";
+import { supabase, type Author } from "~/lib/supabase";
 import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
+import { extractAuthors, joinAuthorNames } from "~/lib/multi-author";
 
 export async function getStaticPaths() {
   const { data } = await supabase
@@ -13,25 +14,26 @@ export async function getStaticPaths() {
 
 const { slug } = Astro.params;
 
-const { data: post } = await supabase
+const { data: postRaw } = await supabase
   .from("posts")
-  .select("*")
+  .select("*, post_authors(sort_order, author:authors(*))")
   .eq("slug", slug!)
   .eq("status", "published")
   .maybeSingle();
 
-if (!post) {
+if (!postRaw) {
   return Astro.redirect("/");
 }
 
-const [{ data: author }, { data: category }] = await Promise.all([
-  post.author_id
-    ? supabase.from("authors").select("*").eq("id", post.author_id).maybeSingle()
-    : { data: null },
-  post.category_id
-    ? supabase.from("categories").select("*").eq("id", post.category_id).maybeSingle()
-    : { data: null },
-]);
+const { post_authors: rawJunction, ...post } = postRaw as typeof postRaw & {
+  post_authors: { sort_order: number; author: Author | null }[];
+};
+const authors = extractAuthors(rawJunction);
+const authorListLabel = joinAuthorNames(authors.map((a) => a.name));
+
+const { data: category } = post.category_id
+  ? await supabase.from("categories").select("*").eq("id", post.category_id).maybeSingle()
+  : { data: null };
 
 const html = renderMarkdown(post.content_md);
 
@@ -63,8 +65,10 @@ const formatted = post.published_at
   canonical={post.canonical_url}
   publishedAt={post.published_at}
   updatedAt={post.updated_at}
-  authorName={author?.name}
-  authorUrl={author ? new URL(`/autores/${author.slug}`, Astro.site).href : null}
+  authors={authors.map((a) => ({
+    name: a.name,
+    url: new URL(`/autores/${a.slug}`, Astro.site).href,
+  }))}
   section={category?.name}
   tags={post.tags}
   breadcrumbItems={[
@@ -95,7 +99,16 @@ const formatted = post.published_at
     )}
 
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] sm:text-xs uppercase tracking-[0.12em] text-[color:var(--fg-muted)] mb-8 sm:mb-12 border-y border-[color:var(--border)] py-3 sm:py-4">
-      {author && <span>{author.name}</span>}
+      {authors.length > 0 && (
+        <span>
+          {authors.map((a, i) => (
+            <>
+              {i > 0 && (i === authors.length - 1 ? " y " : ", ")}
+              <a href={`/autores/${a.slug}`} class="hover:underline underline-offset-4">{a.name}</a>
+            </>
+          ))}
+        </span>
+      )}
       {formatted && <span>{formatted}</span>}
       {post.reading_time_minutes && <span>{post.reading_time_minutes} min</span>}
     </div>

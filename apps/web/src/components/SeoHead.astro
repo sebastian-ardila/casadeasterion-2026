@@ -3,6 +3,11 @@ import type { SiteConfigMap } from "~/lib/site-config";
 
 type SeoType = "website" | "article" | "book" | "person";
 
+interface AuthorRef {
+  name: string;
+  url?: string | null;
+}
+
 interface Props {
   type: SeoType;
   title: string;
@@ -13,11 +18,15 @@ interface Props {
   keywords?: string[] | null;
   canonical?: string | null;
   config: SiteConfigMap;
-  // Article + Book
+  // Article + Book — support either the legacy single-author props
+  // (authorName/authorUrl) or the new multi-author array. The array
+  // wins if provided; otherwise the legacy fields are normalized into
+  // a one-element array internally.
   publishedAt?: string | null;
   updatedAt?: string | null;
   authorName?: string | null;
   authorUrl?: string | null;
+  authors?: AuthorRef[] | null;
   // Article only
   section?: string | null;
   tags?: string[] | null;
@@ -43,12 +52,24 @@ const {
   updatedAt,
   authorName,
   authorUrl,
+  authors: authorsProp,
   section,
   tags,
   isbn,
   sameAs,
   breadcrumb,
 } = Astro.props as Props;
+
+// Normalize authors into one consistent shape regardless of how the
+// caller passed them in. The first entry is treated as the primary
+// author for tags that only fit one name (e.g. og:book:author, meta
+// name=author, twitter:creator fallback).
+const authorList: AuthorRef[] = (authorsProp && authorsProp.length > 0)
+  ? authorsProp.filter((a) => a && a.name)
+  : authorName
+    ? [{ name: authorName, url: authorUrl ?? null }]
+    : [];
+const primaryAuthorName = authorList[0]?.name ?? null;
 
 // Branding strings. The full site name (with tagline) lives in the
 // <title> for the home page and as the og:site_name everywhere — it's
@@ -97,7 +118,9 @@ const twitterHandle = config.twitter_handle?.startsWith("@")
 const siteOrigin = new URL("/", url).href;
 
 // Organization schema — beefed up with slogan + knowsAbout so the
-// knowledge panel has more substance than just a name.
+// knowledge panel has more substance than just a name. Note: schema.org
+// does NOT define `inLanguage` on Organization (it's a CreativeWork
+// property), so we omit it here — the WebSite schema below carries it.
 const organization: Record<string, unknown> = {
   "@type": "Organization",
   "@id": `${siteOrigin}#organization`,
@@ -115,7 +138,6 @@ const organization: Record<string, unknown> = {
     "Literatura latinoamericana",
     "Edición independiente",
   ],
-  inLanguage: "es",
   areaServed: "CO",
 };
 if (config.organization_logo_url) {
@@ -134,6 +156,21 @@ if (sameAsLinks.length) organization.sameAs = sameAsLinks;
 // Primary schema (per page type).
 let primary: Record<string, unknown> | null = null;
 
+// Schema.org `author` accepts a single object or an array of them, so
+// we always emit an array when there are multiple authors and a single
+// object when there's exactly one (cleaner JSON for the common case).
+const authorSchemaList = authorList.map((a) => ({
+  "@type": "Person",
+  name: a.name,
+  ...(a.url ? { url: a.url } : {}),
+}));
+const authorSchemaValue =
+  authorSchemaList.length === 0
+    ? null
+    : authorSchemaList.length === 1
+      ? authorSchemaList[0]
+      : authorSchemaList;
+
 if (type === "article") {
   primary = {
     "@context": "https://schema.org",
@@ -146,15 +183,7 @@ if (type === "article") {
     ...(ogImage ? { image: ogImage } : {}),
     ...(publishedAt ? { datePublished: publishedAt } : {}),
     ...(updatedAt ? { dateModified: updatedAt } : {}),
-    ...(authorName
-      ? {
-          author: {
-            "@type": "Person",
-            name: authorName,
-            ...(authorUrl ? { url: authorUrl } : {}),
-          },
-        }
-      : {}),
+    ...(authorSchemaValue ? { author: authorSchemaValue } : {}),
     publisher: organization,
     ...(section ? { articleSection: section } : {}),
     ...(mergedKeywords.length ? { keywords: mergedKeywords.join(", ") } : {}),
@@ -169,15 +198,7 @@ if (type === "article") {
     inLanguage: "es",
     ...(ogImage ? { image: ogImage } : {}),
     ...(isbn ? { isbn } : {}),
-    ...(authorName
-      ? {
-          author: {
-            "@type": "Person",
-            name: authorName,
-            ...(authorUrl ? { url: authorUrl } : {}),
-          },
-        }
-      : {}),
+    ...(authorSchemaValue ? { author: authorSchemaValue } : {}),
     ...(publishedAt ? { datePublished: publishedAt } : {}),
     bookFormat: "https://schema.org/Paperback",
     publisher: organization,
@@ -233,10 +254,10 @@ const ogType =
     crawlers honor. Single canonical robots meta — avoids the
     conflicting-tag ambiguity browsers/bots have when there are two. */}
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,noai,noimageai" />
-{authorName && type !== "person" && (
-  <meta name="author" content={authorName} />
+{primaryAuthorName && type !== "person" && (
+  <meta name="author" content={primaryAuthorName} />
 )}
-{!authorName && (
+{!primaryAuthorName && (
   <meta name="author" content={siteName} />
 )}
 {mergedKeywords.length > 0 && (
@@ -261,9 +282,9 @@ const ogType =
 {type === "article" && updatedAt && (
   <meta property="article:modified_time" content={updatedAt} />
 )}
-{type === "article" && authorName && (
-  <meta property="article:author" content={authorName} />
-)}
+{type === "article" && authorList.map((a) => (
+  <meta property="article:author" content={a.name} />
+))}
 {type === "article" && section && (
   <meta property="article:section" content={section} />
 )}
@@ -273,9 +294,9 @@ const ogType =
 {type === "book" && isbn && (
   <meta property="book:isbn" content={isbn} />
 )}
-{type === "book" && authorName && (
-  <meta property="book:author" content={authorName} />
-)}
+{type === "book" && authorList.map((a) => (
+  <meta property="book:author" content={a.name} />
+))}
 {type === "book" && publishedAt && (
   <meta property="book:release_date" content={publishedAt} />
 )}
