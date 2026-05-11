@@ -35,6 +35,7 @@ const sortOptions = [
   { value: "price-asc",  label: "Precio: menor a mayor" },
   { value: "price-desc", label: "Precio: mayor a menor" },
 ];
+const defaultSort = sortOptions[0];
 ---
 
 <Layout title="Catálogo" description="Todos los libros publicados por Casa de Asterión.">
@@ -67,62 +68,104 @@ const sortOptions = [
     {totalBooks > 0 ? (
       <>
         <div class="mb-8 sm:mb-10 space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-            <label for="catalogo-search" class="sr-only">Buscar en el catálogo</label>
-            <div class="relative flex-1 max-w-xl">
-              <svg
-                class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"
-                width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-              <input
-                id="catalogo-search"
-                type="search"
-                placeholder="Buscar por título, autor o categoría…"
-                class="w-full pl-10 pr-3 py-3 border border-[color:var(--border)] bg-[color:var(--bg)] text-sm focus:outline-none focus:border-stone-900 transition-colors"
-                autocomplete="off"
-              />
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
-              <label for="catalogo-sort" class="text-[10px] sm:text-xs uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">
-                Ordenar
-              </label>
-              <select
-                id="catalogo-sort"
-                class="py-2 pl-3 pr-8 border border-[color:var(--border)] bg-[color:var(--bg)] text-sm focus:outline-none focus:border-stone-900 transition-colors cursor-pointer"
-              >
-                {sortOptions.map((o) => (
-                  <option value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
+          <label for="catalogo-search" class="sr-only">Buscar en el catálogo</label>
+          <div class="relative">
+            <svg
+              class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"
+              width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              id="catalogo-search"
+              type="search"
+              placeholder="Buscar por título, autor o categoría…"
+              class="w-full pl-10 pr-3 py-3 border border-[color:var(--border)] bg-[color:var(--bg)] text-sm focus:outline-none focus:border-stone-900 transition-colors"
+              autocomplete="off"
+            />
           </div>
 
-          {filterCategories.length > 0 && (
-            <div class="flex flex-wrap gap-2" data-cda-filter-bar>
+          {/* Refinement row: filter chips on the left, sort dropdown
+              on the right. Chips wrap onto multiple lines if needed;
+              the sort stays anchored at the end with shrink-0. */}
+          <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+            <div class="flex flex-wrap gap-2 min-w-0" data-cda-filter-bar>
+              {filterCategories.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    data-cda-filter="all"
+                    class="cda-filter-chip cda-filter-active inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] px-3 py-1.5 border cursor-pointer transition-colors border-stone-900 bg-stone-900 text-white"
+                  >
+                    Todos
+                  </button>
+                  {filterCategories.map((c) => (
+                    <button
+                      type="button"
+                      data-cda-filter={c.slug}
+                      class="cda-filter-chip inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] px-3 py-1.5 border cursor-pointer transition-colors border-stone-300 text-stone-700 hover:border-stone-900 hover:text-stone-900"
+                    >
+                      {c.icon && (
+                        <Icon name={`lucide:${c.icon}`} class="w-3.5 h-3.5" aria-hidden="true" />
+                      )}
+                      <span>{c.name}</span>
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+
+            <div class="cda-sort relative shrink-0" data-cda-sort>
               <button
                 type="button"
-                data-cda-filter="all"
-                class="cda-filter-chip cda-filter-active inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] px-3 py-1.5 border cursor-pointer transition-colors border-stone-900 bg-stone-900 text-white"
+                data-cda-sort-btn
+                aria-haspopup="listbox"
+                aria-expanded="false"
+                class="cda-sort-btn inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] px-3 py-1.5 border border-stone-300 bg-white text-stone-700 hover:border-stone-900 hover:text-stone-900 cursor-pointer transition-colors"
               >
-                Todos
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 7h13" />
+                  <path d="M3 12h9" />
+                  <path d="M3 17h5" />
+                  <path d="M17 4v16" />
+                  <path d="m13 16 4 4 4-4" />
+                </svg>
+                <span class="text-stone-500 normal-case tracking-normal text-xs">Ordenar:</span>
+                <span data-cda-sort-current class="normal-case tracking-normal text-xs font-medium text-stone-900">{defaultSort.label}</span>
+                <svg class="cda-sort-caret transition-transform" width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
+                  <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
               </button>
-              {filterCategories.map((c) => (
-                <button
-                  type="button"
-                  data-cda-filter={c.slug}
-                  class="cda-filter-chip inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] px-3 py-1.5 border cursor-pointer transition-colors border-stone-300 text-stone-700 hover:border-stone-900 hover:text-stone-900"
-                >
-                  {c.icon && (
-                    <Icon name={`lucide:${c.icon}`} class="w-3.5 h-3.5" aria-hidden="true" />
-                  )}
-                  <span>{c.name}</span>
-                </button>
-              ))}
+              <ul
+                role="listbox"
+                aria-label="Ordenar resultados"
+                data-cda-sort-menu
+                hidden
+                class="cda-sort-menu absolute right-0 top-full mt-1 z-20 min-w-[15rem] bg-white border border-stone-300 shadow-lg py-1"
+              >
+                {sortOptions.map((o) => (
+                  <li>
+                    <button
+                      type="button"
+                      role="option"
+                      data-cda-sort-value={o.value}
+                      data-active={o.value === defaultSort.value ? "1" : "0"}
+                      aria-selected={o.value === defaultSort.value ? "true" : "false"}
+                      class="cda-sort-option w-full text-left text-sm px-3 py-2 cursor-pointer flex items-center gap-2 hover:bg-stone-50 transition-colors"
+                    >
+                      <span class="cda-sort-check inline-flex items-center justify-center w-4 h-4 shrink-0 text-stone-900">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M5 12l5 5L20 7" />
+                        </svg>
+                      </span>
+                      <span>{o.label}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
-          )}
+          </div>
 
           <p
             id="catalogo-empty"
@@ -147,9 +190,6 @@ const sortOptions = [
               .filter(Boolean)
               .join(" ")
               .toLowerCase();
-            // Best-effort publication timestamp: prefer the printed
-            // publication date the editor sets, fall back to the
-            // status-flip timestamp, then 0.
             const pubMs = book.publication_date
               ? new Date(book.publication_date).getTime()
               : book.published_at
@@ -187,6 +227,25 @@ const sortOptions = [
     color: #fafaf9;
     border-color: #1c1917;
   }
+  .cda-sort-btn[aria-expanded="true"] {
+    border-color: #1c1917;
+    color: #1c1917;
+  }
+  .cda-sort-btn[aria-expanded="true"] .cda-sort-caret {
+    transform: rotate(180deg);
+  }
+  /* Check icon: visible only on the active option. */
+  .cda-sort-option .cda-sort-check {
+    opacity: 0;
+  }
+  .cda-sort-option[data-active="1"] .cda-sort-check {
+    opacity: 1;
+  }
+  .cda-sort-option[data-active="1"] {
+    background: #fafaf9;
+    font-weight: 500;
+    color: #1c1917;
+  }
 </style>
 
 <script is:inline>
@@ -196,7 +255,10 @@ const sortOptions = [
     const empty = document.getElementById("catalogo-empty");
     const countEl = document.getElementById("catalogo-count");
     const bar = document.querySelector("[data-cda-filter-bar]");
-    const sortEl = document.getElementById("catalogo-sort");
+    const sortRoot = document.querySelector("[data-cda-sort]");
+    const sortBtn = sortRoot?.querySelector("[data-cda-sort-btn]");
+    const sortMenu = sortRoot?.querySelector("[data-cda-sort-menu]");
+    const sortCurrent = sortRoot?.querySelector("[data-cda-sort-current]");
     if (!input || !grid) return;
 
     const norm = (s) =>
@@ -208,9 +270,6 @@ const sortOptions = [
     let activeCategory = "all";
     let activeSort = "recent";
 
-    // Comparators per sort key. Cards with missing values (e.g. no
-    // price) sort to the end regardless of direction so they don't
-    // crowd out the top of a relevant ordering.
     const numAttr = (card, name) => {
       const v = card.getAttribute(name);
       if (v === null || v === "") return null;
@@ -290,10 +349,34 @@ const sortOptions = [
       filter();
     };
 
+    const closeSortMenu = () => {
+      if (!sortBtn || !sortMenu) return;
+      sortBtn.setAttribute("aria-expanded", "false");
+      sortMenu.hidden = true;
+    };
+    const openSortMenu = () => {
+      if (!sortBtn || !sortMenu) return;
+      sortBtn.setAttribute("aria-expanded", "true");
+      sortMenu.hidden = false;
+    };
+
     const setSort = (value, pushUrl) => {
       if (!comparators[value]) value = "recent";
       activeSort = value;
-      if (sortEl && sortEl.value !== value) sortEl.value = value;
+      // Update menu state + button label.
+      if (sortMenu) {
+        let labelText = "";
+        sortMenu.querySelectorAll("[data-cda-sort-value]").forEach((b) => {
+          const on = b.getAttribute("data-cda-sort-value") === value;
+          b.setAttribute("data-active", on ? "1" : "0");
+          b.setAttribute("aria-selected", on ? "true" : "false");
+          if (on) {
+            const span = b.querySelector("span:last-child");
+            labelText = span?.textContent || "";
+          }
+        });
+        if (sortCurrent && labelText) sortCurrent.textContent = labelText;
+      }
       sortCards();
       if (pushUrl) writeUrl();
       filter();
@@ -305,8 +388,25 @@ const sortOptions = [
       setCategory(t.getAttribute("data-cda-filter"), true);
     });
 
-    sortEl?.addEventListener("change", (e) => {
-      setSort(e.target.value, true);
+    sortBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const open = sortBtn.getAttribute("aria-expanded") === "true";
+      if (open) closeSortMenu();
+      else openSortMenu();
+    });
+    sortMenu?.addEventListener("click", (e) => {
+      const t = e.target instanceof Element ? e.target.closest("[data-cda-sort-value]") : null;
+      if (!t) return;
+      setSort(t.getAttribute("data-cda-sort-value"), true);
+      closeSortMenu();
+    });
+    document.addEventListener("click", (e) => {
+      if (!sortRoot) return;
+      if (e.target instanceof Node && sortRoot.contains(e.target)) return;
+      closeSortMenu();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeSortMenu();
     });
 
     input.addEventListener("input", filter);
