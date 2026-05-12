@@ -128,14 +128,24 @@
   let panel: HTMLElement | null = null;
 
   function open() {
+    // Re-resolve from the DOM every time. After a page navigation the
+    // module-scope variables can point to detached nodes; reading
+    // them fresh keeps the drawer in sync with whatever's mounted.
+    drawer = document.getElementById("cda-cart-drawer");
+    panel = document.getElementById("cda-cart-panel");
     if (!drawer || !panel) return;
     drawer.classList.remove("hidden");
     drawer.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
-    // Animate in.
-    requestAnimationFrame(() => {
-      panel.classList.remove("translate-x-full");
-    });
+    // Force a synchronous layout pass so the browser registers the
+    // panel's start position (translate-x-full) before we remove it.
+    // Reading offsetWidth flushes pending style mutations; without
+    // this, removing the transform in the same tick skips the
+    // transition AND — when the tab loses rAF priority — leaves the
+    // panel parked off-screen forever (the previous rAF-based
+    // implementation hit this case in throttled tabs).
+    void panel.offsetWidth;
+    panel.classList.remove("translate-x-full");
   }
 
   function close() {

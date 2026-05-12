@@ -1,0 +1,119 @@
+---
+import Layout from "~/layouts/Layout.astro";
+import PostCard from "~/components/PostCard.astro";
+import { supabase, type Author, type Category } from "~/lib/supabase";
+import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
+
+export async function getStaticPaths() {
+  const { data } = await supabase.from("collaborators").select("slug");
+  return (data ?? []).map((c) => ({ params: { slug: c.slug } }));
+}
+
+const { slug } = Astro.params;
+
+const { data: collaborator } = await supabase
+  .from("collaborators")
+  .select("*")
+  .eq("slug", slug!)
+  .maybeSingle();
+
+if (!collaborator) {
+  return Astro.redirect("/");
+}
+
+// Toda publicación donde el colaborador aparece en post_collaborators.
+// Incluimos el primer autor por embed para que PostCard pueda mostrar
+// nombre + foto. La categoría se resuelve más abajo en un map.
+const { data: junctionRows } = await supabase
+  .from("post_collaborators")
+  .select("post_id")
+  .eq("collaborator_id", collaborator.id);
+const linkedPostIds = (junctionRows ?? []).map((r) => r.post_id);
+
+const { data: posts } = linkedPostIds.length > 0
+  ? await supabase
+      .from("posts")
+      .select("*, post_authors(sort_order, author:authors(*))")
+      .eq("status", "published")
+      .in("id", linkedPostIds)
+      .order("published_at", { ascending: false })
+  : { data: [] };
+
+// Mapa de categorías para los posts, en una sola consulta.
+const categoryIds = Array.from(
+  new Set(((posts ?? []).map((p) => p.category_id).filter(Boolean) as string[])),
+);
+const { data: categories } = categoryIds.length > 0
+  ? await supabase.from("categories").select("*").in("id", categoryIds)
+  : { data: [] as Category[] };
+const categoryMap = new Map((categories ?? []).map((c) => [c.id, c]));
+
+// Primer autor por post para la meta-row de PostCard.
+function firstAuthor(p: any): Author | null {
+  const rows = (p.post_authors ?? []) as { sort_order: number; author: Author | null }[];
+  const sorted = [...rows].sort((a, b) => a.sort_order - b.sort_order);
+  return sorted[0]?.author ?? null;
+}
+
+const bio = renderMarkdown(collaborator.bio_md);
+const links = (collaborator.links as Record<string, string> | null) ?? {};
+const sameAs = [links.web, links.twitter, links.instagram].filter(Boolean) as string[];
+const bioPlain = clampText(mdToPlainText(collaborator.bio_md), 160);
+const metaDescription =
+  bioPlain ||
+  `${collaborator.name} — colaborador de Casa de Asterión Ediciones.`;
+---
+
+<Layout
+  title={collaborator.name}
+  description={metaDescription}
+  breadcrumbLabel={collaborator.name}
+  seoType="person"
+  image={collaborator.photo_url}
+  imageAlt={`Foto de ${collaborator.name}`}
+  keywords={collaborator.keywords}
+  sameAs={sameAs}
+  breadcrumbItems={[
+    { name: "Inicio", url: new URL("/", Astro.site).href },
+    { name: "Publicaciones", url: new URL("/articulos", Astro.site).href },
+    { name: collaborator.name, url: Astro.url.href },
+  ]}
+>
+  <section class="mx-auto max-w-[1100px] px-5 sm:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-20 pb-10 sm:pb-12 grid grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[260px_1fr] gap-6 md:gap-10 lg:gap-12 items-start">
+    <div class="max-w-[220px] sm:max-w-[280px] mx-auto md:mx-0 w-full">
+      {collaborator.photo_url ? (
+        <img
+          src={collaborator.photo_url}
+          alt={collaborator.name}
+          class="w-full aspect-square object-cover grayscale"
+        />
+      ) : (
+        <div class="w-full aspect-square bg-[color:var(--bg-alt)]"></div>
+      )}
+    </div>
+    <div>
+      <p class="uppercase text-[11px] sm:text-xs tracking-[0.2em] text-[color:var(--fg-muted)] mb-3 sm:mb-4">
+        Colaborador
+      </p>
+      <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl mb-5 sm:mb-6">{collaborator.name}</h1>
+      <div class="cas-md max-w-none" set:html={bio}></div>
+    </div>
+  </section>
+
+  {posts && posts.length > 0 && (
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
+      <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
+        Publicaciones en las que ha colaborado
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16">
+        {posts.map((p) => (
+          <PostCard
+            post={p}
+            author={firstAuthor(p)}
+            category={p.category_id ? categoryMap.get(p.category_id) : null}
+          />
+        ))}
+      </div>
+    </section>
+  )}
+</Layout>

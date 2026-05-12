@@ -97,16 +97,16 @@
      class makes all of those legible on the public site without pulling in
      @tailwindcss/typography. */
   .cas-md {
-    line-height: 1.7;
+    line-height: 1.75;
     color: var(--fg);
-    font-size: 1rem;
+    font-size: 1.35rem;
   }
   .cas-md > * + * { margin-top: 1em; }
   /* Tighter rhythm on mobile so long descriptions don't feel airy. */
   @media (max-width: 640px) {
     .cas-md {
-      line-height: 1.6;
-      font-size: 0.95rem;
+      line-height: 1.65;
+      font-size: 1.15rem;
     }
     .cas-md > * + * { margin-top: 0.75em; }
     .cas-md p + p { margin-top: 0.75em; }
@@ -132,10 +132,10 @@
     margin-top: 1.6em;
     margin-bottom: 0.5em;
   }
-  .cas-md h1 { font-size: 2rem; }
-  .cas-md h2 { font-size: 1.6rem; }
-  .cas-md h3 { font-size: 1.3rem; }
-  .cas-md h4 { font-size: 1.1rem; }
+  .cas-md h1 { font-size: 2.3rem; }
+  .cas-md h2 { font-size: 1.8rem; }
+  .cas-md h3 { font-size: 1.45rem; }
+  .cas-md h4 { font-size: 1.2rem; }
   .cas-md ul, .cas-md ol {
     margin: 1em 0;
     padding-left: 1.6em;

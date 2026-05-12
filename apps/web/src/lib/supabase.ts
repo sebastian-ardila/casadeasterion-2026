@@ -18,5 +18,6 @@ export type Tables = Database["public"]["Tables"];
 export type Post = Tables["posts"]["Row"];
 export type Book = Tables["books"]["Row"];
 export type Author = Tables["authors"]["Row"];
+export type Collaborator = Tables["collaborators"]["Row"];
 export type Category = Tables["categories"]["Row"];
 export type SiteConfig = Tables["site_configuration"]["Row"];

@@ -1,6 +1,9 @@
 ---
 import Layout from "~/layouts/Layout.astro";
-import { supabase, type Author } from "~/lib/supabase";
+import PostCard from "~/components/PostCard.astro";
+import BookCard from "~/components/BookCard.astro";
+import { Icon } from "astro-icon/components";
+import { supabase, type Author, type Collaborator, type Category } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
 import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
 import { extractAuthors, joinAuthorNames } from "~/lib/multi-author";
@@ -34,14 +37,15 @@ if (!postRaw) {
 
 const { post_authors: rawJunction, post_collaborators: rawCollabJunction, ...post } = postRaw as typeof postRaw & {
   post_authors: { sort_order: number; author: Author | null }[];
-  post_collaborators: { sort_order: number; collaborator: Author | null }[];
+  post_collaborators: { sort_order: number; collaborator: Collaborator | null }[];
 };
 const authors = extractAuthors(rawJunction);
 const collaborators = [...(rawCollabJunction ?? [])]
   .sort((a, b) => a.sort_order - b.sort_order)
   .map((r) => r.collaborator)
-  .filter(Boolean) as Author[];
+  .filter(Boolean) as Collaborator[];
 const authorListLabel = joinAuthorNames(authors.map((a) => a.name));
+const primaryAuthor = authors[0] ?? null;
 
 const [{ data: category }, { data: parentBook }] = await Promise.all([
   post.category_id
@@ -51,6 +55,74 @@ const [{ data: category }, { data: parentBook }] = await Promise.all([
     ? supabase.from("books").select("id, title, slug, cover_image_url").eq("id", post.book_id).eq("status", "published").maybeSingle()
     : Promise.resolve({ data: null }),
 ]);
+
+// "Más publicaciones de" + "Libros de" — usan los IDs de los autores
+// de esta publicación (no colaboradores). Excluyen la publicación
+// actual y el libro padre actual para no repetir.
+const authorIds = authors.map((a) => a.id);
+let relatedPosts: any[] = [];
+let relatedBooks: any[] = [];
+let relatedCategoryMap = new Map<string, Category>();
+
+if (authorIds.length > 0) {
+  // Otras publicaciones del/los mismo(s) autor(es).
+  const { data: paJunction } = await supabase
+    .from("post_authors")
+    .select("post_id")
+    .in("author_id", authorIds);
+  const otherPostIds = Array.from(
+    new Set((paJunction ?? []).map((r) => r.post_id).filter((id) => id !== post.id)),
+  );
+  if (otherPostIds.length > 0) {
+    const { data } = await supabase
+      .from("posts")
+      .select("*, post_authors(sort_order, author:authors(*))")
+      .eq("status", "published")
+      .in("id", otherPostIds)
+      .order("published_at", { ascending: false })
+      .limit(3);
+    relatedPosts = data ?? [];
+
+    // Resolver categorías de los related posts en una sola consulta.
+    const catIds = Array.from(
+      new Set(relatedPosts.map((p) => p.category_id).filter(Boolean) as string[]),
+    );
+    if (catIds.length > 0) {
+      const { data: cats } = await supabase.from("categories").select("*").in("id", catIds);
+      relatedCategoryMap = new Map((cats ?? []).map((c) => [c.id, c]));
+    }
+  }
+
+  // Libros de los mismo(s) autor(es) — excluye el libro padre actual.
+  const { data: baJunction } = await supabase
+    .from("book_authors")
+    .select("book_id")
+    .in("author_id", authorIds);
+  const bookIds = Array.from(
+    new Set(
+      (baJunction ?? [])
+        .map((r) => r.book_id)
+        .filter((id) => !post.book_id || id !== post.book_id),
+    ),
+  );
+  if (bookIds.length > 0) {
+    const { data } = await supabase
+      .from("books")
+      .select("*")
+      .eq("status", "published")
+      .in("id", bookIds)
+      .order("publication_date", { ascending: false })
+      .limit(4);
+    relatedBooks = data ?? [];
+  }
+}
+
+// Helper: primer autor de un post relacionado (para PostCard).
+function firstAuthor(p: any): Author | null {
+  const rows = (p.post_authors ?? []) as { sort_order: number; author: Author | null }[];
+  const sorted = [...rows].sort((a, b) => a.sort_order - b.sort_order);
+  return sorted[0]?.author ?? null;
+}
 
 // Site-wide typography for the article detail page. Same pattern as
 // /catalogo/[slug] — see book_detail_typography for context.
@@ -101,101 +173,230 @@ const formatted = post.published_at
     { name: post.title, url: Astro.url.href },
   ]}
 >
-  <article class="mx-auto max-w-[760px] px-5 sm:px-6 lg:px-12 py-12 sm:py-16 md:py-20">
-    {post.cover_image_url && (
-      <img
-        src={post.cover_image_url}
-        alt=""
-        class="w-full aspect-[16/9] object-cover mb-8 sm:mb-10 md:mb-12"
-      />
-    )}
-
-    {category && (
-      <p class="uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg-muted)] mb-3 sm:mb-4">
-        {category.name}
-      </p>
-    )}
-
-    <h1 class="cas-article-title font-serif text-3xl sm:text-4xl md:text-5xl leading-[1.1] mb-5 sm:mb-6">{post.title}</h1>
-
-    {post.subtitle && (
-      <p class="text-base sm:text-xl text-[color:var(--fg-muted)] italic mb-6 sm:mb-8">{post.subtitle}</p>
-    )}
-
-    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] sm:text-xs uppercase tracking-[0.12em] text-[color:var(--fg-muted)] mb-8 sm:mb-12 border-y border-[color:var(--border)] py-3 sm:py-4">
-      {authors.length > 0 && (
-        <span>
-          {authors.map((a, i) => (
-            <>
-              {i > 0 && (i === authors.length - 1 ? " y " : ", ")}
-              <a href={`/autores/${a.slug}`} class="hover:underline underline-offset-4">{a.name}</a>
-            </>
-          ))}
-        </span>
-      )}
-      {formatted && <span>{formatted}</span>}
-      {post.reading_time_minutes && <span>{post.reading_time_minutes} min</span>}
-    </div>
-
-    {/* Banner del libro al que pertenece la publicación, si aplica.
-        Discreto, antes del contenido, con enlace a la ficha del libro
-        en /catalogo/[slug]. */}
-    {parentBook && (
-      <a
-        href={`/catalogo/${parentBook.slug}`}
-        class="group flex items-center gap-3 sm:gap-4 mb-8 sm:mb-10 p-3 sm:p-4 border border-[color:var(--border)] hover:bg-[color:var(--bg-alt)] transition-colors"
-      >
-        {parentBook.cover_image_url && (
-          <img
-            src={parentBook.cover_image_url}
-            alt=""
-            class="w-12 h-16 sm:w-14 sm:h-[4.6rem] object-cover bg-[color:var(--bg-alt)] shrink-0"
-            loading="lazy"
-          />
-        )}
-        <div class="min-w-0">
-          <p class="uppercase text-[10px] tracking-[0.18em] text-[color:var(--fg-muted)] mb-1">
-            Parte del libro
-          </p>
-          <p class="font-serif text-base sm:text-lg leading-tight group-hover:underline underline-offset-4 truncate">
-            {parentBook.title}
-          </p>
-        </div>
-      </a>
-    )}
-
-    <div class="cas-article-body cas-md max-w-none" set:html={html}></div>
-
-    {/* Colaboradores — al pie del contenido. Sólo se renderiza la
-        sección si la publicación tiene al menos uno; el orden viene
-        de la junction (sort_order). */}
-    {collaborators.length > 0 && (
-      <section class="mt-12 sm:mt-16 pt-8 sm:pt-10 border-t border-[color:var(--border)]">
-        <p class="uppercase text-[10px] sm:text-xs tracking-[0.22em] text-[color:var(--fg-muted)] mb-4 sm:mb-6">
-          {collaborators.length > 1 ? "Colaboradores" : "Colaborador"}
+  {/* Header full-width: eyebrow + título + subtítulo viven encima
+      del grid, alineados al inicio de la columna del contenido.
+      Esto da al título toda la prominencia editorial sin meterlo
+      en el aside. Para que no se pierda al hacer scroll, abajo hay
+      un sticky-bar JS-controlled que aparece cuando el h1 sale del
+      viewport. */}
+  <header class="mx-auto max-w-[1180px] px-5 sm:px-6 lg:px-12 pt-6 sm:pt-8 md:pt-10 mb-6 sm:mb-8 lg:grid lg:grid-cols-[minmax(0,320px)_1fr] lg:gap-x-14">
+    <div class="lg:col-start-2 min-w-0">
+      {category && (
+        <p class="inline-flex items-center gap-2 uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-3">
+          {category.icon && (
+            <Icon name={`lucide:${category.icon}`} class="w-3.5 h-3.5" aria-hidden="true" />
+          )}
+          <span>{category.name}</span>
         </p>
-        <ul class="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
-          {collaborators.map((c) => (
-            <li class="flex items-center gap-3">
-              {c.photo_url ? (
-                <img
-                  src={c.photo_url}
-                  alt={c.name}
-                  class="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover bg-[color:var(--bg-alt)] shrink-0"
-                  loading="lazy"
-                />
-              ) : (
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[color:var(--bg-alt)] flex items-center justify-center font-serif text-[color:var(--fg-muted)] shrink-0">
-                  {c.name.charAt(0)}
-                </div>
-              )}
-              <p class="font-serif text-sm sm:text-base leading-tight min-w-0 truncate">{c.name}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )}
+      )}
+      <h1 class="cas-article-title font-serif text-[2rem] sm:text-4xl md:text-5xl leading-[1.08]">
+        {post.title}
+      </h1>
+      {post.subtitle && (
+        <p class="text-base sm:text-lg md:text-xl text-[color:var(--fg-muted)] italic mt-3 sm:mt-4">{post.subtitle}</p>
+      )}
+    </div>
+  </header>
+
+
+  {/* Layout 2-columnas para el cuerpo. Aside izquierdo (sticky en
+      desktop) lleva cover + metadatos. Columna derecha lleva
+      excerpt + cuerpo. El título ya fue rendereado arriba.
+
+      Resiliencia: N autores y N colaboradores se acomodan, libro
+      padre es opcional. */}
+  <article class="mx-auto max-w-[1180px] px-5 sm:px-6 lg:px-12 pb-14 sm:pb-16 md:pb-20 grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_1fr] gap-8 sm:gap-10 lg:gap-14">
+    <aside class="lg:sticky lg:top-32 self-start space-y-5 sm:space-y-6">
+      {post.cover_image_url && (
+        <img
+          src={post.cover_image_url}
+          alt=""
+          class="w-full aspect-[4/5] object-cover bg-[color:var(--bg-alt)] ring-1 ring-stone-900/[0.04]"
+        />
+      )}
+
+      {(authors.length > 0 || collaborators.length > 0) && (
+        <div class="space-y-4">
+          {authors.length > 0 && (
+            <div class="space-y-4">
+              <p class="uppercase text-[10px] tracking-[0.2em] text-[color:var(--fg-muted)]">
+                {authors.length > 1 ? "Autores" : "Autor"}
+              </p>
+              {authors.map((a) => (
+                <a href={`/autores/${a.slug}`} class="group block hover:opacity-85 transition-opacity">
+                  <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 sm:w-12 sm:h-12 shrink-0 overflow-hidden bg-[color:var(--bg-alt)] ring-1 ring-stone-900/[0.06]">
+                      {a.photo_url ? (
+                        <img src={a.photo_url} alt={a.name} loading="lazy" class="w-full h-full object-cover" />
+                      ) : (
+                        <div class="w-full h-full flex items-center justify-center text-[color:var(--fg-muted)] font-serif">
+                          {a.name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <p class="font-serif text-[15px] sm:text-base leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)] min-w-0 truncate">
+                      {a.name}
+                    </p>
+                  </div>
+                  {a.bio_md && (
+                    <p class="text-[13px] text-[color:var(--fg-muted)] leading-snug line-clamp-3 mt-2">
+                      {clampText(mdToPlainText(a.bio_md), 160)}
+                    </p>
+                  )}
+                </a>
+              ))}
+            </div>
+          )}
+          {collaborators.length > 0 && (
+            <div class="space-y-4 pt-1">
+              <p class="uppercase text-[10px] tracking-[0.2em] text-[color:var(--fg-muted)]">
+                {collaborators.length > 1 ? "Colaboradores" : "Colaborador"}
+              </p>
+              {collaborators.map((c) => (
+                <a href={`/colaboradores/${c.slug}`} class="group block hover:opacity-85 transition-opacity">
+                  <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 sm:w-12 sm:h-12 shrink-0 overflow-hidden bg-[color:var(--bg-alt)] ring-1 ring-stone-900/[0.06]">
+                      {c.photo_url ? (
+                        <img src={c.photo_url} alt={c.name} loading="lazy" class="w-full h-full object-cover" />
+                      ) : (
+                        <div class="w-full h-full flex items-center justify-center text-[color:var(--fg-muted)] font-serif">
+                          {c.name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <p class="font-serif text-[15px] sm:text-base leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)] min-w-0 truncate">
+                      {c.name}
+                    </p>
+                  </div>
+                  {c.bio_md && (
+                    <p class="text-[13px] text-[color:var(--fg-muted)] leading-snug line-clamp-3 mt-2">
+                      {clampText(mdToPlainText(c.bio_md), 160)}
+                    </p>
+                  )}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {(formatted || post.reading_time_minutes) && (
+        <dl class="border-t border-[color:var(--border)] pt-4 text-sm space-y-2">
+          {formatted && (
+            <div class="grid grid-cols-[max-content_1fr] gap-x-4">
+              <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-[11px] self-baseline">
+                Fecha
+              </dt>
+              <dd>{formatted}</dd>
+            </div>
+          )}
+          {post.reading_time_minutes && (
+            <div class="grid grid-cols-[max-content_1fr] gap-x-4">
+              <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-[11px] self-baseline">
+                Lectura
+              </dt>
+              <dd>{post.reading_time_minutes} min</dd>
+            </div>
+          )}
+        </dl>
+      )}
+
+      {parentBook && (
+        <a
+          href={`/catalogo/${parentBook.slug}`}
+          class="group flex items-center gap-3 p-3 border border-[color:var(--border)] hover:bg-[color:var(--bg-alt)] transition-colors"
+        >
+          {parentBook.cover_image_url && (
+            <img
+              src={parentBook.cover_image_url}
+              alt=""
+              class="w-11 h-14 sm:w-12 sm:h-[4rem] object-cover bg-[color:var(--bg-alt)] shrink-0"
+              loading="lazy"
+            />
+          )}
+          <div class="min-w-0">
+            <p class="uppercase text-[10px] tracking-[0.18em] text-[color:var(--fg-muted)] mb-1">
+              Parte del libro
+            </p>
+            <p class="font-serif text-sm sm:text-base leading-tight group-hover:underline underline-offset-4 truncate">
+              {parentBook.title}
+            </p>
+          </div>
+        </a>
+      )}
+    </aside>
+
+    <div class="min-w-0">
+      {post.excerpt && (
+        <p class="text-base sm:text-lg leading-snug text-[color:var(--fg)] opacity-85 mb-7 sm:mb-9 pb-7 sm:pb-9 border-b border-[color:var(--border)]">
+          {post.excerpt}
+        </p>
+      )}
+
+      <div class="cas-article-body cas-md max-w-none" set:html={html}></div>
+    </div>
   </article>
+
+
+  {/* Riel "Más publicaciones de [autor]": otras publicaciones donde
+      cualquiera de los autores actuales aparece en post_authors.
+      Ordenado por fecha desc, limitado a 3. */}
+  {primaryAuthor && relatedPosts.length > 0 && (
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-12 sm:pb-16 md:pb-20">
+      <div class="flex items-end justify-between gap-4 mb-8 sm:mb-10 md:mb-12 border-b border-[color:var(--border)] pb-6 sm:pb-7 md:pb-8">
+        <div class="min-w-0">
+          <p class="uppercase text-[10px] sm:text-xs tracking-[0.2em] text-[color:var(--fg-muted)] mb-1.5 sm:mb-2">
+            {authors.length > 1 ? "Más de estos autores" : "Más del autor"}
+          </p>
+          <h2 class="font-serif text-xl sm:text-2xl md:text-3xl leading-tight">
+            {authors.length > 1
+              ? `Otras publicaciones de ${authorListLabel}`
+              : `Otras publicaciones de ${primaryAuthor.name}`}
+          </h2>
+        </div>
+        {authors.length === 1 && (
+          <a href={`/autores/${primaryAuthor.slug}`} class="nav-link shrink-0 pb-1">Ver autor</a>
+        )}
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16">
+        {relatedPosts.map((p) => (
+          <PostCard
+            post={p}
+            author={firstAuthor(p)}
+            category={p.category_id ? relatedCategoryMap.get(p.category_id) : null}
+          />
+        ))}
+      </div>
+    </section>
+  )}
+
+  {/* Riel "Libros de [autor]": libros donde cualquiera de los autores
+      actuales aparece en book_authors. Excluye el libro padre actual
+      para no repetir el banner del inicio. */}
+  {primaryAuthor && relatedBooks.length > 0 && (
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
+      <div class="flex items-end justify-between gap-4 mb-8 sm:mb-10 md:mb-12 border-b border-[color:var(--border)] pb-6 sm:pb-7 md:pb-8">
+        <div class="min-w-0">
+          <p class="uppercase text-[10px] sm:text-xs tracking-[0.2em] text-[color:var(--fg-muted)] mb-1.5 sm:mb-2">
+            En el catálogo
+          </p>
+          <h2 class="font-serif text-xl sm:text-2xl md:text-3xl leading-tight">
+            {authors.length > 1
+              ? `Libros de ${authorListLabel}`
+              : `Libros de ${primaryAuthor.name}`}
+          </h2>
+        </div>
+        {authors.length === 1 && (
+          <a href={`/autores/${primaryAuthor.slug}`} class="nav-link shrink-0 pb-1">Ver todos</a>
+        )}
+      </div>
+      <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4">
+        {relatedBooks.map((b) => (
+          <BookCard book={b} author={primaryAuthor} config={config} />
+        ))}
+      </div>
+    </section>
+  )}
 
   {/* Site-wide typography (read from site_configuration). */}
   <style is:inline set:html={`

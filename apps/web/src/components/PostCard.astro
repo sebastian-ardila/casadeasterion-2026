@@ -21,37 +21,43 @@ const formatted = post.published_at
   : "";
 
 // Vistazo al cuerpo de la publicación: primeras líneas del contenido
-// con markdown stripped y clampeo en frontera de palabra. Se renderiza
-// debajo del excerpt como un "fragmento" en cursiva. Cuando no hay
-// excerpt, el teaser ocupa el rol principal de descripción.
+// con markdown stripped y clampeo en frontera de palabra. Es el
+// "fragmento" en cursiva del cuerpo. Cuando no hay excerpt, este
+// teaser hace de descripción principal.
 const contentTeaser = clampText(mdToPlainText(post.content_md), 180);
 const hasExcerpt = Boolean(post.excerpt?.trim());
 ---
 
-<article class="group flex flex-col h-full">
-  {/* Cover area — full-width image or editorial-mark placeholder.
-      The whole image is a link to the publication so the user can
-      tap the card itself; the title below is also a link for
-      keyboard / accessibility access. Subtle shadow lifts on hover
-      to give the card a sense of depth. */}
+{/* La tarjeta entera es un solo enlace via overlay absoluto. Todo lo
+    visible (imagen, título, meta) está envuelto en un <article
+    class="relative">; un <a class="absolute inset-0"> queda detrás
+    del contenido haciendo que cualquier click — fuera de selección de
+    texto — navegue a la publicación. El título también tiene su <a>
+    propio para que sea el enlace "real" que ven lectores de pantalla
+    y herramientas de SEO. */}
+<article class="group relative flex flex-col h-full">
   <a
     href={link}
-    class="block aspect-[16/10] overflow-hidden bg-[color:var(--bg-alt)] ring-1 ring-stone-900/[0.04] mb-5 sm:mb-6 shadow-sm shadow-stone-900/5 transition-shadow duration-300 group-hover:shadow-md group-hover:shadow-stone-900/15"
+    class="absolute inset-0 z-0 rounded-sm"
     aria-label={post.title}
-  >
+    tabindex="-1"
+  ></a>
+
+  {/* Cover area — imagen ocupa el ancho completo o placeholder
+      editorial. La categoría se rinderiza como chip sobre la imagen
+      en la esquina superior izquierda para liberar espacio en el
+      cuerpo y dar jerarquía visual. */}
+  <div class="relative aspect-[16/10] overflow-hidden bg-[color:var(--bg-alt)] ring-1 ring-stone-900/[0.04] mb-5 sm:mb-6 shadow-sm shadow-stone-900/5 transition-shadow duration-300 group-hover:shadow-lg group-hover:shadow-stone-900/15">
     {post.cover_image_url ? (
       <img
         src={post.cover_image_url}
         alt={post.cover_image_alt ?? post.title}
         loading="lazy"
         decoding="async"
-        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
       />
     ) : (
       <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[color:var(--bg-alt)] to-stone-100">
-        {/* Placeholder: silueta de hoja de notas / libro como marca de
-            la editorial. Bajo contraste para no competir con tarjetas
-            que sí tienen portada. */}
         <svg
           class="w-20 h-20 sm:w-24 sm:h-24 text-stone-300 group-hover:text-stone-400 transition-colors"
           viewBox="0 0 24 24"
@@ -67,76 +73,82 @@ const hasExcerpt = Boolean(post.excerpt?.trim());
         </svg>
       </div>
     )}
-  </a>
-
-  <div class="flex flex-col flex-1 min-w-0">
     {category && (
-      <p class="uppercase text-[11px] sm:text-xs tracking-[0.2em] text-[color:var(--fg-muted)] mb-3">
+      <span class="absolute top-3 left-3 sm:top-4 sm:left-4 inline-flex items-center px-2.5 py-1 bg-white/95 backdrop-blur-sm uppercase text-[10px] sm:text-[11px] tracking-[0.18em] text-[color:var(--fg)]">
         {category.name}
-      </p>
+      </span>
     )}
-    <h3 class="font-serif text-xl sm:text-2xl md:text-[1.75rem] leading-[1.15] mb-3 sm:mb-4 line-clamp-3">
-      <a href={link} class="hover:opacity-70 transition-opacity">{post.title}</a>
+  </div>
+
+  <div class="relative z-10 flex flex-col flex-1 min-w-0 pointer-events-none [&_a]:pointer-events-auto">
+    {/* Título prominente. Hover dispara una pseudo-underline que crece
+        desde la izquierda — patrón editorial. */}
+    <h3 class="font-serif text-2xl sm:text-[1.6rem] md:text-[1.85rem] leading-[1.15] mb-3 line-clamp-3">
+      <a
+        href={link}
+        class="bg-[linear-gradient(currentColor,currentColor)] bg-no-repeat bg-[length:0_1px] bg-[position:0_100%] hover:bg-[length:100%_1px] transition-[background-size] duration-500"
+      >
+        {post.title}
+      </a>
     </h3>
+
     {hasExcerpt && (
-      <p class="text-[15px] sm:text-base text-[color:var(--fg-muted)] leading-relaxed line-clamp-2 mb-4">
+      <p class="text-base sm:text-lg text-[color:var(--fg)] opacity-85 leading-snug mb-3 line-clamp-2">
         {post.excerpt}
       </p>
     )}
+
     {contentTeaser && (
       <p
         class:list={[
-          "font-serif italic text-[color:var(--fg)] opacity-75 leading-[1.55] mb-5 sm:mb-6",
-          // Más grande cuando es la única descripción (sin excerpt arriba)
+          "font-serif italic text-[color:var(--fg-muted)] leading-[1.55] mb-5",
           hasExcerpt
-            ? "text-[15px] sm:text-base line-clamp-3"
-            : "text-base sm:text-lg line-clamp-4",
+            ? "text-base sm:text-lg line-clamp-3"
+            : "text-lg sm:text-xl line-clamp-4",
         ]}
       >
         {contentTeaser}
       </p>
     )}
-    {/* Meta row pinned to the bottom of the card so cards line up
-        evenly even when titles / excerpts have different lengths.
-        Bumped from text-[10px] to text-xs for readability, with the
-        "Leer →" affordance on the right to invite a click. */}
-    <div class="mt-auto pt-4 border-t border-[color:var(--border)] flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-xs sm:text-[13px] tracking-[0.06em] text-[color:var(--fg-muted)]">
-      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+
+    {/* Pie de la tarjeta. Dos líneas estables (autor arriba, fecha ·
+        minutos abajo) evitan el wrap caótico cuando el nombre del
+        autor es largo. La flecha se ancla a la derecha, centrada
+        verticalmente con el bloque. */}
+    <div class="mt-auto pt-4 border-t border-[color:var(--border)] flex items-center justify-between gap-4">
+      <div class="min-w-0 flex-1">
         {author && (
-          <span class="truncate max-w-[180px] text-[color:var(--fg)] opacity-80">{author.name}</span>
+          <p class="font-medium text-[color:var(--fg)] text-sm sm:text-[15px] truncate leading-tight">
+            {author.name}
+          </p>
         )}
-        {formatted && (
-          <>
-            {author && <span aria-hidden="true" class="opacity-40">·</span>}
-            <span>{formatted}</span>
-          </>
-        )}
-        {post.reading_time_minutes && (
-          <>
-            <span aria-hidden="true" class="opacity-40">·</span>
-            <span>{post.reading_time_minutes} min</span>
-          </>
+        {(formatted || post.reading_time_minutes) && (
+          <p class:list={[
+            "text-[color:var(--fg-muted)] text-xs sm:text-[13px] leading-tight",
+            author ? "mt-1" : "",
+          ]}>
+            {formatted}
+            {formatted && post.reading_time_minutes && (
+              <span aria-hidden="true" class="mx-1.5 opacity-50">·</span>
+            )}
+            {post.reading_time_minutes && (
+              <span>{post.reading_time_minutes} min</span>
+            )}
+          </p>
         )}
       </div>
-      <a
-        href={link}
-        class="inline-flex items-center gap-1.5 uppercase text-[11px] sm:text-xs tracking-[0.18em] text-[color:var(--fg)] hover:opacity-70 transition-opacity shrink-0"
-        aria-label={`Leer ${post.title}`}
+      <svg
+        class="w-5 h-5 text-[color:var(--fg)] shrink-0 transition-transform duration-300 group-hover:translate-x-1"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.4"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
       >
-        Leer
-        <svg
-          class="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M5 12h14M13 5l7 7-7 7"/>
-        </svg>
-      </a>
+        <path d="M5 12h14M13 5l7 7-7 7"/>
+      </svg>
     </div>
   </div>
 </article>
