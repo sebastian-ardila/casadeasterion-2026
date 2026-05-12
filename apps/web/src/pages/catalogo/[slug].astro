@@ -176,16 +176,16 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
 
       {/* Technical info — single column, sits under cover on desktop. */}
       {techRows.length > 0 && (
-        <dl class="hidden lg:block border-t border-[color:var(--border)] pt-5 text-sm space-y-2">
+        <dl class="hidden lg:grid border-t border-[color:var(--border)] pt-5 text-sm grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
           {techRows.map(({ label, value }) => (
-            <div class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-0">
+            <>
               <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-[11px] self-baseline">
                 {label}
               </dt>
               <dd class:list={["min-w-0 break-words", label === "Precio" && "font-medium"]}>
                 {label === "Formato" ? <span class="capitalize">{value}</span> : value}
               </dd>
-            </div>
+            </>
           ))}
         </dl>
       )}
