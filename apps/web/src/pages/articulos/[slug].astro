@@ -281,22 +281,22 @@ const formatted = post.published_at
       )}
 
       {(formatted || post.reading_time_minutes) && (
-        <dl class="border-t border-[color:var(--border)] pt-4 text-sm space-y-2">
+        <dl class="border-t border-[color:var(--border)] pt-4 text-sm grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
           {formatted && (
-            <div class="grid grid-cols-[max-content_1fr] gap-x-4">
+            <>
               <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-[11px] self-baseline">
                 Fecha
               </dt>
               <dd>{formatted}</dd>
-            </div>
+            </>
           )}
           {post.reading_time_minutes && (
-            <div class="grid grid-cols-[max-content_1fr] gap-x-4">
+            <>
               <dt class="text-[color:var(--fg-muted)] uppercase tracking-[0.12em] text-[11px] self-baseline">
                 Lectura
               </dt>
               <dd>{post.reading_time_minutes} min</dd>
-            </div>
+            </>
           )}
         </dl>
       )}
