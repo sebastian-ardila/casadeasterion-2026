@@ -195,7 +195,7 @@ export function resolveHeroContent(
       eyebrow: ctx.categoryMap.get(ctx.lead.category_id ?? "")?.name ?? "Editorial",
       title: ctx.lead.title,
       body,
-      cta_label: "Leer artículo",
+      cta_label: "Leer publicación",
       cta_href: `/articulos/${ctx.lead.slug}`,
     };
   }

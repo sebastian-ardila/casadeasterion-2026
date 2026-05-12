@@ -16,9 +16,14 @@ export async function getStaticPaths() {
 
 const { slug } = Astro.params;
 
+// Fetch the publication + its author junction AND its collaborator
+// junction in one round-trip. Both junctions return ordered arrays
+// that we flatten into Author[] / Collaborator[] for rendering.
 const { data: postRaw } = await supabase
   .from("posts")
-  .select("*, post_authors(sort_order, author:authors(*))")
+  .select(
+    "*, post_authors(sort_order, author:authors(*)), post_collaborators(sort_order, collaborator:collaborators(*))",
+  )
   .eq("slug", slug!)
   .eq("status", "published")
   .maybeSingle();
@@ -27,15 +32,25 @@ if (!postRaw) {
   return Astro.redirect("/");
 }
 
-const { post_authors: rawJunction, ...post } = postRaw as typeof postRaw & {
+const { post_authors: rawJunction, post_collaborators: rawCollabJunction, ...post } = postRaw as typeof postRaw & {
   post_authors: { sort_order: number; author: Author | null }[];
+  post_collaborators: { sort_order: number; collaborator: Author | null }[];
 };
 const authors = extractAuthors(rawJunction);
+const collaborators = [...(rawCollabJunction ?? [])]
+  .sort((a, b) => a.sort_order - b.sort_order)
+  .map((r) => r.collaborator)
+  .filter(Boolean) as Author[];
 const authorListLabel = joinAuthorNames(authors.map((a) => a.name));
 
-const { data: category } = post.category_id
-  ? await supabase.from("categories").select("*").eq("id", post.category_id).maybeSingle()
-  : { data: null };
+const [{ data: category }, { data: parentBook }] = await Promise.all([
+  post.category_id
+    ? supabase.from("categories").select("*").eq("id", post.category_id).maybeSingle()
+    : Promise.resolve({ data: null }),
+  post.book_id
+    ? supabase.from("books").select("id, title, slug, cover_image_url").eq("id", post.book_id).eq("status", "published").maybeSingle()
+    : Promise.resolve({ data: null }),
+]);
 
 // Site-wide typography for the article detail page. Same pattern as
 // /catalogo/[slug] — see book_detail_typography for context.
@@ -52,7 +67,7 @@ const metaDescription =
   post.meta_description?.trim() ||
   post.excerpt?.trim() ||
   clampText(mdToPlainText(post.content_md), 155) ||
-  `${post.title}. Artículo de Casa de Asterión Ediciones — Filosofía y Poesía.`;
+  `${post.title}. Publicación de Casa de Asterión Ediciones — Filosofía y Poesía.`;
 
 const formatted = post.published_at
   ? new Intl.DateTimeFormat("es-CO", {
@@ -82,7 +97,7 @@ const formatted = post.published_at
   tags={post.tags}
   breadcrumbItems={[
     { name: "Inicio", url: new URL("/", Astro.site).href },
-    { name: "Artículos", url: new URL("/articulos", Astro.site).href },
+    { name: "Publicaciones", url: new URL("/articulos", Astro.site).href },
     { name: post.title, url: Astro.url.href },
   ]}
 >
@@ -122,7 +137,64 @@ const formatted = post.published_at
       {post.reading_time_minutes && <span>{post.reading_time_minutes} min</span>}
     </div>
 
+    {/* Banner del libro al que pertenece la publicación, si aplica.
+        Discreto, antes del contenido, con enlace a la ficha del libro
+        en /catalogo/[slug]. */}
+    {parentBook && (
+      <a
+        href={`/catalogo/${parentBook.slug}`}
+        class="group flex items-center gap-3 sm:gap-4 mb-8 sm:mb-10 p-3 sm:p-4 border border-[color:var(--border)] hover:bg-[color:var(--bg-alt)] transition-colors"
+      >
+        {parentBook.cover_image_url && (
+          <img
+            src={parentBook.cover_image_url}
+            alt=""
+            class="w-12 h-16 sm:w-14 sm:h-[4.6rem] object-cover bg-[color:var(--bg-alt)] shrink-0"
+            loading="lazy"
+          />
+        )}
+        <div class="min-w-0">
+          <p class="uppercase text-[10px] tracking-[0.18em] text-[color:var(--fg-muted)] mb-1">
+            Parte del libro
+          </p>
+          <p class="font-serif text-base sm:text-lg leading-tight group-hover:underline underline-offset-4 truncate">
+            {parentBook.title}
+          </p>
+        </div>
+      </a>
+    )}
+
     <div class="cas-article-body cas-md max-w-none" set:html={html}></div>
+
+    {/* Colaboradores — al pie del contenido. Sólo se renderiza la
+        sección si la publicación tiene al menos uno; el orden viene
+        de la junction (sort_order). */}
+    {collaborators.length > 0 && (
+      <section class="mt-12 sm:mt-16 pt-8 sm:pt-10 border-t border-[color:var(--border)]">
+        <p class="uppercase text-[10px] sm:text-xs tracking-[0.22em] text-[color:var(--fg-muted)] mb-4 sm:mb-6">
+          {collaborators.length > 1 ? "Colaboradores" : "Colaborador"}
+        </p>
+        <ul class="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
+          {collaborators.map((c) => (
+            <li class="flex items-center gap-3">
+              {c.photo_url ? (
+                <img
+                  src={c.photo_url}
+                  alt={c.name}
+                  class="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover bg-[color:var(--bg-alt)] shrink-0"
+                  loading="lazy"
+                />
+              ) : (
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[color:var(--bg-alt)] flex items-center justify-center font-serif text-[color:var(--fg-muted)] shrink-0">
+                  {c.name.charAt(0)}
+                </div>
+              )}
+              <p class="font-serif text-sm sm:text-base leading-tight min-w-0 truncate">{c.name}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
   </article>
 
   {/* Site-wide typography (read from site_configuration). */}
