@@ -61,7 +61,7 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
         class="hidden md:flex items-center gap-0.5 px-1 py-1 border border-[color:var(--border)] text-[10px] tracking-[0.18em] uppercase"
         aria-label="Hero variant preview (temporal)"
       >
-        {(["v1", "v2", "v3", "v4", "v5"] as const).map((v) => (
+        {(["v1", "v2", "v3", "v4", "v5", "v6", "v7"] as const).map((v) => (
           <button
             type="button"
             data-cas-hero-pick={v}

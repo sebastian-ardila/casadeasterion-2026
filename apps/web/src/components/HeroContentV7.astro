@@ -1,0 +1,106 @@
+---
+// Static hero variant V7 — Colophon / index page.
+// Treats the hero as if it were the first page of one of the books
+// the editorial publishes. Roman numeral marks the section, a serif
+// statement holds the center, and a list of editorial commitments
+// reads like a colophon. Mono spans evoke a manuscript ledger
+// without leaving the editorial typography system.
+---
+
+<div class="relative z-10 w-full md:w-1/2 px-5 sm:px-8 md:px-12 lg:px-16 xl:px-20 py-12 md:py-0 max-w-2xl">
+  {/* Section marker: roman numeral + tiny label, like a chapter head */}
+  <div class="flex items-baseline gap-4 mb-7 sm:mb-9">
+    <span class="font-serif text-3xl sm:text-4xl text-[color:var(--fg)] leading-none">
+      I.
+    </span>
+    <span class="block flex-1 h-px bg-[color:var(--fg)]/30 mb-2"></span>
+    <span class="uppercase text-[10px] sm:text-[11px] tracking-[0.32em] text-[color:var(--fg-muted)]">
+      Frontispicio
+    </span>
+  </div>
+
+  <h1 class="font-serif text-[2rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.6rem] xl:text-[4rem] leading-[1.06] text-[color:var(--fg)] mb-6 sm:mb-8">
+    Una editorial pequeña
+    <span class="italic">para libros que envejecen bien</span>.
+  </h1>
+
+  <p class="font-serif italic text-base sm:text-lg lg:text-xl text-[color:var(--fg-muted)] leading-relaxed mb-9 sm:mb-11 max-w-xl">
+    Tomamos en serio el verbo "editar": cortar, pulir, dejar respirar,
+    devolverle al texto su forma más exacta.
+  </p>
+
+  {/* Colophon-style commitments: hanging asterisks + monospace label
+      + serif description. Each line is a typographic vow. */}
+  <ul class="border-t border-[color:var(--border)] divide-y divide-[color:var(--border)] mb-9 sm:mb-11">
+    {[
+      {
+        n: "i",
+        title: "Filosofía",
+        body: "Traducciones cuidadas y autoría nueva en pensamiento contemporáneo.",
+      },
+      {
+        n: "ii",
+        title: "Poesía",
+        body: "Voces vivas en español, en ediciones que se conservan.",
+      },
+      {
+        n: "iii",
+        title: "Tiempo",
+        body: "Ningún libro sale antes de que esté listo. Imprimir despacio.",
+      },
+    ].map((row) => (
+      <li class="grid grid-cols-[2.5rem_minmax(0,1fr)] sm:grid-cols-[3rem_minmax(0,1fr)] gap-x-4 sm:gap-x-5 py-3.5 sm:py-4 items-baseline">
+        <span class="font-serif italic text-sm sm:text-base text-[color:var(--fg-muted)] tabular-nums">
+          {row.n}.
+        </span>
+        <div class="min-w-0">
+          <span class="font-serif text-base sm:text-lg text-[color:var(--fg)] mr-2">
+            {row.title}.
+          </span>
+          <span class="text-[13px] sm:text-sm text-[color:var(--fg-muted)] leading-relaxed">
+            {row.body}
+          </span>
+        </div>
+      </li>
+    ))}
+  </ul>
+
+  {/* CTAs as a colophon footer: very thin rule above, two actions
+      separated by an em-dash, reads like the printer's mark line. */}
+  <div class="border-t border-[color:var(--fg)]/20 pt-5 sm:pt-6 flex flex-wrap items-baseline gap-x-3 gap-y-3">
+    <a
+      href="/catalogo"
+      class="group inline-flex items-baseline gap-2 text-[12px] sm:text-[13px] uppercase tracking-[0.26em] text-[color:var(--fg)]"
+    >
+      <span class="font-serif italic normal-case tracking-normal text-base text-[color:var(--fg-muted)]">
+        Léase:
+      </span>
+      <span class="border-b border-[color:var(--fg)] pb-1">Catálogo</span>
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="self-center transition-transform group-hover:translate-x-1"
+        aria-hidden="true"
+      >
+        <path d="M5 12h14" />
+        <path d="m13 5 7 7-7 7" />
+      </svg>
+    </a>
+    <span class="font-serif italic text-[color:var(--fg-muted)]">—</span>
+    <a
+      href="/articulos"
+      class="group inline-flex items-baseline gap-2 text-[12px] sm:text-[13px] uppercase tracking-[0.26em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition-colors"
+    >
+      <span class="font-serif italic normal-case tracking-normal text-base">
+        Y también:
+      </span>
+      <span class="pb-1">Publicaciones</span>
+    </a>
+  </div>
+</div>
