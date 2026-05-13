@@ -1,0 +1,145 @@
+---
+import Layout from "~/layouts/Layout.astro";
+import { supabase } from "~/lib/supabase";
+import { renderMarkdown } from "~/lib/markdown";
+
+// "Nosotros" — equipo de Casa de Asterión Ediciones.
+//
+// Dos secciones:
+//   1. Equipo: filas de la tabla `staff` (status='published'), ordenadas
+//      por sort_order. Son los perfiles empresariales — quienes hacen
+//      la editorial. Tarjetas grandes con foto, cargo y bio.
+//   2. Colaboradores: filas de la tabla `collaborators`, una galería más
+//      compacta con menos relevancia visual. Son las personas que han
+//      participado en publicaciones puntuales.
+//
+// Página SSG: se reconstruye automáticamente vía Amplify cuando cambia
+// staff o collaborators (triggers en migrations 0040 y 0043).
+
+const [{ data: staff }, { data: collaborators }] = await Promise.all([
+  supabase
+    .from("staff")
+    .select("id, slug, name, role, photo_url, bio_md, email, links, sort_order")
+    .eq("status", "published")
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true }),
+  supabase
+    .from("collaborators")
+    .select("id, slug, name, photo_url, bio_md")
+    .order("name", { ascending: true }),
+]);
+
+const renderedStaff = (staff ?? []).map((s) => ({
+  ...s,
+  bio_html: s.bio_md ? renderMarkdown(s.bio_md) : "",
+}));
+---
+
+<Layout
+  title="Nosotros"
+  description="El equipo detrás de Casa de Asterión Ediciones: editores, diseñadores y colaboradores que sostienen el oficio de hacer libros despacio."
+  keywords={["equipo Casa de Asterión", "editorial filosofía", "editorial poesía", "Pereira", "editores Colombia"]}
+>
+  <section class="mx-auto max-w-[1180px] px-5 sm:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-20 pb-6 sm:pb-8">
+    <h1 class="font-serif text-3xl sm:text-4xl md:text-6xl mb-3 sm:mb-4">Nosotros</h1>
+    <p class="text-[color:var(--fg-muted)] max-w-prose text-base sm:text-lg leading-relaxed">
+      El equipo de Casa de Asterión Ediciones — quienes leen, editan, diseñan e impulsan los libros que publicamos.
+    </p>
+  </section>
+
+  {/* === Equipo principal === */}
+  {renderedStaff.length > 0 && (
+    <section class="mx-auto max-w-[1180px] px-5 sm:px-6 lg:px-12 pb-12 sm:pb-16 md:pb-20">
+      <h2 class="font-serif text-2xl sm:text-3xl mb-8 sm:mb-10 pb-3 border-b border-[color:var(--border)]">
+        Equipo
+      </h2>
+      <ul class="grid gap-10 sm:gap-12 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        {renderedStaff.map((s) => (
+          <li class="flex flex-col">
+            {s.photo_url ? (
+              <img
+                src={s.photo_url}
+                alt={s.name}
+                loading="lazy"
+                class="w-full aspect-[4/5] object-cover bg-[color:var(--bg-alt)] mb-5 sm:mb-6"
+              />
+            ) : (
+              <div class="w-full aspect-[4/5] bg-[color:var(--bg-alt)] mb-5 sm:mb-6 flex items-center justify-center font-serif text-5xl text-[color:var(--fg-muted)]">
+                {s.name.charAt(0)}
+              </div>
+            )}
+            <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-2">
+              {s.role}
+            </p>
+            <h3 class="font-serif text-xl sm:text-2xl mb-3 sm:mb-4 leading-tight">{s.name}</h3>
+            {s.bio_html && (
+              <div class="cas-md text-sm sm:text-base text-[color:var(--fg)] leading-relaxed line-clamp-6" set:html={s.bio_html}></div>
+            )}
+            {s.email && (
+              <a
+                href={`mailto:${s.email}`}
+                class="mt-4 inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <span>Escribir</span>
+              </a>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {/* === Colaboradores — sección secundaria === */}
+  {collaborators && collaborators.length > 0 && (
+    <section class="mx-auto max-w-[1180px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
+      <header class="mb-8 sm:mb-10 pb-3 border-b border-[color:var(--border)]">
+        <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-1.5">
+          También han colaborado
+        </p>
+        <h2 class="font-serif text-xl sm:text-2xl leading-tight">Colaboradores</h2>
+        <p class="text-sm sm:text-base text-[color:var(--fg-muted)] mt-2 max-w-prose">
+          Personas que han participado en publicaciones puntuales — traducciones, ilustraciones, prólogos, lecturas críticas.
+        </p>
+      </header>
+      <ul class="grid gap-6 sm:gap-7 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        {collaborators.map((c) => (
+          <li>
+            <a
+              href={`/colaboradores/${c.slug}`}
+              class="group block"
+            >
+              {c.photo_url ? (
+                <img
+                  src={c.photo_url}
+                  alt={c.name}
+                  loading="lazy"
+                  class="w-full aspect-square object-cover bg-[color:var(--bg-alt)] grayscale group-hover:grayscale-0 transition"
+                />
+              ) : (
+                <div class="w-full aspect-square bg-[color:var(--bg-alt)] flex items-center justify-center font-serif text-2xl text-[color:var(--fg-muted)]">
+                  {c.name.charAt(0)}
+                </div>
+              )}
+              <p class="font-serif text-sm sm:text-base mt-3 leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
+                {c.name}
+              </p>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {/* Empty state: no hay staff publicado todavía */}
+  {renderedStaff.length === 0 && (!collaborators || collaborators.length === 0) && (
+    <section class="mx-auto max-w-[1180px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
+      <div class="border border-dashed border-[color:var(--border)] py-16 px-8 text-center text-[color:var(--fg-muted)]">
+        <p>Pronto publicaremos al equipo aquí.</p>
+      </div>
+    </section>
+  )}
+</Layout>

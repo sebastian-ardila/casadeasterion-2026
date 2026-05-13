@@ -755,6 +755,83 @@ export type Database = {
           },
         ]
       }
+      staff: {
+        Row: {
+          bio_md: string | null
+          created_at: string
+          email: string | null
+          id: string
+          links: Json
+          name: string
+          photo_url: string | null
+          role: string
+          slug: string
+          sort_order: number
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          bio_md?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          links?: Json
+          name: string
+          photo_url?: string | null
+          role: string
+          slug: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          bio_md?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          links?: Json
+          name?: string
+          photo_url?: string | null
+          role?: string
+          slug?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_roles: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           confirmed_at: string | null

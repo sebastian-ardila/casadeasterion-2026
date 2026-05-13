@@ -6,6 +6,7 @@ const STATIC_PATHS = [
   { path: "/articulos", priority: 0.8, changefreq: "daily" },
   { path: "/catalogo", priority: 0.9, changefreq: "weekly" },
   { path: "/autores", priority: 0.7, changefreq: "weekly" },
+  { path: "/nosotros", priority: 0.6, changefreq: "monthly" },
 ];
 
 const escapeXml = (str: string) =>
