@@ -1,113 +1,74 @@
 ---
-// Static hero content variant #3. Numbered manifesto-style hero — three
-// editorial promises arranged as a typographic list. The serial number
-// pattern (01 / 02 / 03) echoes how the catalog and the editorial
-// archive are organized. Not connected to the CMS — only the right-half
-// image and the section background color come from site_configuration.
+// Static hero variant V3 — Editorial diptych.
+// Two editorial areas (Filosofía / Poesía) presented as parallel columns
+// that describe the editorial's scope across both books and writings.
+// Categories are areas, not section links — they apply to the whole
+// catalog. Single CTA to the catalog.
 ---
 
 <div class="relative z-10 w-full md:w-1/2 px-5 sm:px-8 md:px-12 lg:px-16 xl:px-20 py-12 md:py-0 max-w-2xl">
-  {/* Brand line: short, archival */}
   <div class="flex items-center gap-3 mb-7 sm:mb-9">
     <span class="block w-8 h-px bg-[color:var(--fg-muted)]"></span>
     <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.32em] text-[color:var(--fg-muted)]">
-      Casa de Asterión Ediciones · Desde 2018
+      Casa de Asterión Ediciones
     </p>
   </div>
 
-  <h1 class="font-serif text-[2rem] sm:text-[2.6rem] md:text-5xl lg:text-[3.4rem] xl:text-6xl leading-[1.08] text-[color:var(--fg)] mb-5 sm:mb-7">
+  <h1 class="font-serif text-[2.1rem] sm:text-[2.7rem] md:text-5xl lg:text-[3.4rem] xl:text-[3.8rem] leading-[1.06] text-[color:var(--fg)] mb-5 sm:mb-7">
     Una editorial dedicada a las preguntas que <span class="italic">persisten</span>.
   </h1>
 
-  <p class="font-serif text-lg sm:text-xl md:text-lg lg:text-xl italic text-[color:var(--fg-muted)] leading-relaxed mb-10 sm:mb-12 max-w-xl">
-    Tres líneas, una misma búsqueda: libros que reabren conversaciones que
+  <p class="font-serif text-lg sm:text-xl lg:text-2xl italic text-[color:var(--fg-muted)] leading-relaxed mb-10 sm:mb-12 max-w-xl">
+    Dos áreas, una misma búsqueda: libros que reabren conversaciones que
     creíamos cerradas.
   </p>
 
-  {/* Numbered editorial promises */}
-  <ol class="border-t border-[color:var(--border)] mb-10 sm:mb-12">
-    {[
-      {
-        n: "01",
-        title: "Filosofía contemporánea",
-        body: "Pensamiento que se hace cargo de su tiempo, en traducciones cuidadosas y autoría nueva.",
-        href: "/filosofia",
-      },
-      {
-        n: "02",
-        title: "Poesía actual",
-        body: "Voces vivas en español, con énfasis en la poesía colombiana de hoy.",
-        href: "/poesia",
-      },
-      {
-        n: "03",
-        title: "Crítica y archivo",
-        body: "Publicaciones que abren el archivo: lecturas, entrevistas y ensayos.",
-        href: "/articulos",
-      },
-    ].map((row) => (
-      <li class="border-b border-[color:var(--border)]">
-        <a href={row.href} class="group block py-4 sm:py-5">
-          <div class="flex items-baseline gap-4 sm:gap-6">
-            <span class="font-serif text-xs sm:text-sm tracking-[0.18em] text-[color:var(--fg-muted)] tabular-nums shrink-0 mt-0.5">
-              {row.n}
-            </span>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-1">
-                <h2 class="font-serif text-base sm:text-lg text-[color:var(--fg)]">{row.title}</h2>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  class="text-[color:var(--fg-muted)] opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all"
-                  aria-hidden="true"
-                >
-                  <path d="M5 12h14" />
-                  <path d="m13 5 7 7-7 7" />
-                </svg>
-              </div>
-              <p class="text-[12.5px] sm:text-sm text-[color:var(--fg-muted)] leading-relaxed">
-                {row.body}
-              </p>
-            </div>
-          </div>
-        </a>
-      </li>
-    ))}
-  </ol>
-
-  <div class="flex flex-wrap items-center gap-x-7 gap-y-3 sm:gap-x-9">
-    <a
-      href="/catalogo"
-      class="group inline-flex items-center gap-2.5 text-[12px] sm:text-[13px] uppercase tracking-[0.24em] text-[color:var(--fg)] border-b border-[color:var(--fg)] pb-1.5"
-    >
-      Ver el catálogo
-      <svg
-        width="15"
-        height="15"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.6"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="transition-transform group-hover:translate-x-1"
-        aria-hidden="true"
-      >
-        <path d="M5 12h14" />
-        <path d="m13 5 7 7-7 7" />
-      </svg>
-    </a>
-    <a
-      href="/articulos"
-      class="inline-flex items-center text-[12px] sm:text-[13px] uppercase tracking-[0.24em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition-colors pb-1.5"
-    >
-      Leer publicaciones
-    </a>
+  {/* Editorial areas — presented as a diptych. These are scope
+      descriptors of the whole catalog, not nav links. */}
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-7 sm:gap-x-10 border-t border-[color:var(--border)] pt-8 sm:pt-10 mb-10 sm:mb-12">
+    <div>
+      <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.24em] text-[color:var(--fg-muted)] mb-2.5">
+        Área 01
+      </p>
+      <h2 class="font-serif text-xl sm:text-2xl text-[color:var(--fg)] mb-2">
+        Filosofía
+      </h2>
+      <p class="text-[13px] sm:text-sm text-[color:var(--fg-muted)] leading-relaxed">
+        Pensamiento contemporáneo en traducciones cuidadosas y autoría nueva.
+      </p>
+    </div>
+    <div>
+      <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.24em] text-[color:var(--fg-muted)] mb-2.5">
+        Área 02
+      </p>
+      <h2 class="font-serif text-xl sm:text-2xl text-[color:var(--fg)] mb-2">
+        Poesía
+      </h2>
+      <p class="text-[13px] sm:text-sm text-[color:var(--fg-muted)] leading-relaxed">
+        Voces vivas en español, con énfasis en la poesía colombiana de hoy.
+      </p>
+    </div>
   </div>
+
+  <a
+    href="/catalogo"
+    class="group inline-flex items-center gap-3 text-[12px] sm:text-[13px] uppercase tracking-[0.26em] text-[color:var(--fg)] border-b border-[color:var(--fg)] pb-2"
+  >
+    Ver el catálogo
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.6"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="transition-transform group-hover:translate-x-1"
+      aria-hidden="true"
+    >
+      <path d="M5 12h14" />
+      <path d="m13 5 7 7-7 7" />
+    </svg>
+  </a>
 </div>

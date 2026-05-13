@@ -6,15 +6,19 @@ import BookCard from "~/components/BookCard.astro";
 import AuthorsCarousel from "~/components/AuthorsCarousel.astro";
 import HeroContentV2 from "~/components/HeroContentV2.astro";
 import HeroContentV3 from "~/components/HeroContentV3.astro";
+import HeroContentV4 from "~/components/HeroContentV4.astro";
 import { supabase } from "~/lib/supabase";
 import { loadSiteConfig, DEFAULT_HERO_CARD_CONFIG } from "~/lib/site-config";
 import { mergeHeroCardConfig, resolveHeroContent, buildHeroCardCss } from "~/lib/hero-card";
 
-// Hero variant switch. "v1" is the CMS-driven card; "v2" and "v3" are
-// static editorial layouts (see HeroContentV2 / HeroContentV3). Only the
-// right-half image and the section background color still come from the
-// CMS in v2 / v3.
-const HERO_VARIANT: "v1" | "v2" | "v3" = "v2";
+// Default hero variant — what is shown if the user has no preview
+// override stored in localStorage. "v1" is the CMS-driven card; "v2",
+// "v3" and "v4" are static editorial layouts. The temporary Header
+// switcher lets the client flip between variants for review without a
+// rebuild (see Header.astro and the inline script at the bottom of the
+// hero section below). Only the right-half image and the section
+// background color come from the CMS in v2 / v3 / v4.
+const HERO_VARIANT: "v1" | "v2" | "v3" | "v4" = "v3";
 
 const config = await loadSiteConfig();
 
@@ -73,6 +77,7 @@ const heroCardCss = buildHeroCardCss(heroCardCfg);
       over the fixed right-half image. */}
   <section
     class="hero-section relative overflow-x-clip md:h-screen flex flex-col md:flex-row md:items-center bg-[color:var(--bg-alt)]"
+    data-cas-hero-active={HERO_VARIANT}
     style={config.hero_bg_color?.trim() ? `background-color: ${config.hero_bg_color}` : undefined}
   >
     {/* Right-half fixed image (desktop only). z-0 so it sits below the
@@ -84,44 +89,73 @@ const heroCardCss = buildHeroCardCss(heroCardCfg);
     >
     </div>
 
-    {/* V1: CMS-driven card (default for HERO_VARIANT === "v1").
-        All visual properties (bg, color, radius, size, position) come
-        from site_configuration.hero_card_config. CSS emitted below as
-        inline <style>. */}
-    {HERO_VARIANT === "v1" && (
-      <>
-        <a
-          href={heroCardContent.cta_href}
-          class="hero-card-cms group relative z-10 block transition-shadow hover:shadow-2xl flex flex-col justify-between"
-        >
-          <div>
-            {heroCardContent.eyebrow && (
-              <p class="hcc-eyebrow uppercase text-[10px] sm:text-xs tracking-[0.2em] opacity-70 mb-3 sm:mb-5">
-                {heroCardContent.eyebrow}
-              </p>
-            )}
-            <h1 class="hcc-title text-[1.4rem] sm:text-2xl md:text-5xl leading-[1.1] mb-3 sm:mb-5 line-clamp-3 md:line-clamp-4">
-              {heroCardContent.title}
-            </h1>
-            {heroCardContent.body && (
-              <p class="hcc-body text-xs sm:text-sm md:text-base opacity-80 leading-relaxed line-clamp-2 md:line-clamp-3">
-                {heroCardContent.body}
-              </p>
-            )}
-          </div>
-          <span class="hcc-cta uppercase text-[11px] sm:text-xs tracking-[0.18em] border-b border-current/60 pb-1 group-hover:border-current self-start mt-4">
-            {heroCardContent.cta_label}
-          </span>
-        </a>
-        <style is:inline set:html={heroCardCss}></style>
-      </>
-    )}
+    {/* All four hero variants are rendered into the DOM so the temporary
+        Header switcher can flip between them on the client without a
+        rebuild. Visibility is controlled by [data-cas-hero] vs the
+        section's [data-cas-hero-active] via the inline <style> below. */}
 
-    {/* V2: editorial manifesto + 3 pillars (static). */}
-    {HERO_VARIANT === "v2" && <HeroContentV2 />}
+    {/* V1: CMS-driven card. */}
+    <div data-cas-hero="v1" class="contents">
+      <a
+        href={heroCardContent.cta_href}
+        class="hero-card-cms group relative z-10 block transition-shadow hover:shadow-2xl flex flex-col justify-between"
+      >
+        <div>
+          {heroCardContent.eyebrow && (
+            <p class="hcc-eyebrow uppercase text-[10px] sm:text-xs tracking-[0.2em] opacity-70 mb-3 sm:mb-5">
+              {heroCardContent.eyebrow}
+            </p>
+          )}
+          <h1 class="hcc-title text-[1.4rem] sm:text-2xl md:text-5xl leading-[1.1] mb-3 sm:mb-5 line-clamp-3 md:line-clamp-4">
+            {heroCardContent.title}
+          </h1>
+          {heroCardContent.body && (
+            <p class="hcc-body text-xs sm:text-sm md:text-base opacity-80 leading-relaxed line-clamp-2 md:line-clamp-3">
+              {heroCardContent.body}
+            </p>
+          )}
+        </div>
+        <span class="hcc-cta uppercase text-[11px] sm:text-xs tracking-[0.18em] border-b border-current/60 pb-1 group-hover:border-current self-start mt-4">
+          {heroCardContent.cta_label}
+        </span>
+      </a>
+      <style is:inline set:html={heroCardCss}></style>
+    </div>
 
-    {/* V3: numbered manifesto-style hero (static). */}
-    {HERO_VARIANT === "v3" && <HeroContentV3 />}
+    {/* V2: editorial statement (static). */}
+    <div data-cas-hero="v2" class="contents"><HeroContentV2 /></div>
+
+    {/* V3: editorial diptych (static). */}
+    <div data-cas-hero="v3" class="contents"><HeroContentV3 /></div>
+
+    {/* V4: typographic monolith (static). */}
+    <div data-cas-hero="v4" class="contents"><HeroContentV4 /></div>
+
+    {/* Toggle: hide all variants whose [data-cas-hero] doesn't match
+        the section's [data-cas-hero-active]. Uses display:none because
+        the variants use `contents` so their inner elements participate
+        directly in the section's flex layout. */}
+    <style is:inline>
+      .hero-section[data-cas-hero-active="v1"] > [data-cas-hero]:not([data-cas-hero="v1"]) { display: none !important; }
+      .hero-section[data-cas-hero-active="v2"] > [data-cas-hero]:not([data-cas-hero="v2"]) { display: none !important; }
+      .hero-section[data-cas-hero-active="v3"] > [data-cas-hero]:not([data-cas-hero="v3"]) { display: none !important; }
+      .hero-section[data-cas-hero-active="v4"] > [data-cas-hero]:not([data-cas-hero="v4"]) { display: none !important; }
+    </style>
+
+    {/* Client preview override: read localStorage and flip the active
+        attribute on this section before paint. Cleared when the user
+        clicks "Reset" in the Header switcher. */}
+    <script is:inline>
+      (() => {
+        try {
+          const v = localStorage.getItem("cas:hero-variant");
+          if (v && /^v[1-4]$/.test(v)) {
+            const sec = document.currentScript?.closest(".hero-section");
+            if (sec) sec.setAttribute("data-cas-hero-active", v);
+          }
+        } catch {}
+      })();
+    </script>
 
     {/* Mobile photo — stacked below the card. Hidden on md+ where the
         fixed right-half image takes over. */}
