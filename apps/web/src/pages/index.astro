@@ -7,6 +7,7 @@ import AuthorsCarousel from "~/components/AuthorsCarousel.astro";
 import HeroContentV2 from "~/components/HeroContentV2.astro";
 import HeroContentV3 from "~/components/HeroContentV3.astro";
 import HeroContentV4 from "~/components/HeroContentV4.astro";
+import HeroContentV5 from "~/components/HeroContentV5.astro";
 import { supabase } from "~/lib/supabase";
 import { loadSiteConfig, DEFAULT_HERO_CARD_CONFIG } from "~/lib/site-config";
 import { mergeHeroCardConfig, resolveHeroContent, buildHeroCardCss } from "~/lib/hero-card";
@@ -18,7 +19,7 @@ import { mergeHeroCardConfig, resolveHeroContent, buildHeroCardCss } from "~/lib
 // rebuild (see Header.astro and the inline script at the bottom of the
 // hero section below). Only the right-half image and the section
 // background color come from the CMS in v2 / v3 / v4.
-const HERO_VARIANT: "v1" | "v2" | "v3" | "v4" = "v3";
+const HERO_VARIANT: "v1" | "v2" | "v3" | "v4" | "v5" = "v3";
 
 const config = await loadSiteConfig();
 
@@ -131,6 +132,9 @@ const heroCardCss = buildHeroCardCss(heroCardCfg);
     {/* V4: typographic monolith (static). */}
     <div data-cas-hero="v4" class="contents"><HeroContentV4 /></div>
 
+    {/* V5: editorial broadsheet (static). */}
+    <div data-cas-hero="v5" class="contents"><HeroContentV5 /></div>
+
     {/* Toggle: hide all variants whose [data-cas-hero] doesn't match
         the section's [data-cas-hero-active]. Uses display:none because
         the variants use `contents` so their inner elements participate
@@ -140,6 +144,7 @@ const heroCardCss = buildHeroCardCss(heroCardCfg);
       .hero-section[data-cas-hero-active="v2"] > [data-cas-hero]:not([data-cas-hero="v2"]) { display: none !important; }
       .hero-section[data-cas-hero-active="v3"] > [data-cas-hero]:not([data-cas-hero="v3"]) { display: none !important; }
       .hero-section[data-cas-hero-active="v4"] > [data-cas-hero]:not([data-cas-hero="v4"]) { display: none !important; }
+      .hero-section[data-cas-hero-active="v5"] > [data-cas-hero]:not([data-cas-hero="v5"]) { display: none !important; }
     </style>
 
     {/* Client preview override: read localStorage and flip the active
@@ -149,7 +154,7 @@ const heroCardCss = buildHeroCardCss(heroCardCfg);
       (() => {
         try {
           const v = localStorage.getItem("cas:hero-variant");
-          if (v && /^v[1-4]$/.test(v)) {
+          if (v && /^v[1-5]$/.test(v)) {
             const sec = document.currentScript?.closest(".hero-section");
             if (sec) sec.setAttribute("data-cas-hero-active", v);
           }

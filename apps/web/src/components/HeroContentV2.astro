@@ -20,43 +20,48 @@
     y voces vivas en español, en ediciones que se conservan.
   </p>
 
-  <div class="flex flex-wrap items-center gap-x-7 gap-y-4">
+  {/* Paired CTAs: solid primary + ghost secondary, same height + same
+      horizontal padding so they read as a balanced pair without the
+      secondary trying to be a button on its own. */}
+  <div class="flex flex-wrap items-stretch gap-3">
     <a
       href="/catalogo"
-      class="group inline-flex items-center gap-3 bg-[color:var(--fg)] text-[color:var(--bg)] px-7 py-4 sm:px-9 sm:py-[1.1rem] text-[11px] sm:text-xs uppercase tracking-[0.24em] hover:bg-[color:var(--fg-muted)] transition-colors"
+      class="group inline-flex items-center gap-3 bg-[color:var(--fg)] text-[color:var(--bg)] px-7 sm:px-9 h-12 sm:h-14 text-[11px] sm:text-xs uppercase tracking-[0.24em] hover:bg-[color:var(--fg-muted)] transition-colors"
     >
       Ver el catálogo
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.6"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="transition-transform group-hover:translate-x-1"
-        aria-hidden="true"
-      >
-        <path d="M5 12h14" />
-        <path d="m13 5 7 7-7 7" />
-      </svg>
+      <span class="flex items-center justify-center w-6 h-6 rounded-full bg-[color:var(--bg)]/15 group-hover:bg-[color:var(--bg)]/25 transition-colors">
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="transition-transform group-hover:translate-x-0.5"
+          aria-hidden="true"
+        >
+          <path d="M5 12h14" />
+          <path d="m13 5 7 7-7 7" />
+        </svg>
+      </span>
     </a>
     <a
       href="/articulos"
-      class="group inline-flex items-center gap-1.5 text-[12px] sm:text-[13px] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition-colors"
+      class="group inline-flex items-center gap-3 border border-[color:var(--fg)]/25 hover:border-[color:var(--fg)] text-[color:var(--fg)] px-6 sm:px-7 h-12 sm:h-14 text-[11px] sm:text-xs uppercase tracking-[0.24em] transition-colors"
     >
       Leer publicaciones
       <svg
-        width="13"
-        height="13"
+        width="14"
+        height="14"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        stroke-width="1.6"
+        stroke-width="1.5"
         stroke-linecap="round"
         stroke-linejoin="round"
-        class="transition-transform group-hover:translate-x-0.5"
+        class="text-[color:var(--fg-muted)] group-hover:text-[color:var(--fg)] transition-all group-hover:translate-x-0.5"
         aria-hidden="true"
       >
         <path d="M5 12h14" />

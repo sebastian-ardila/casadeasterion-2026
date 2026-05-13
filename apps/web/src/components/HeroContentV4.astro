@@ -23,48 +23,42 @@
     actuales.
   </p>
 
-  <div class="flex flex-wrap items-center gap-x-8 gap-y-3">
+  {/* Split button: label cell + arrow cell are clearly two halves of
+      one composition. The whole thing acts like a single link. Below,
+      a thin secondary text-link to publicaciones, kept very quiet so
+      it doesn't compete with the monolith. */}
+  <div class="space-y-5 sm:space-y-6">
     <a
       href="/catalogo"
-      class="group inline-flex items-center gap-3 text-[12px] sm:text-[13px] uppercase tracking-[0.26em] text-[color:var(--fg)]"
+      class="group inline-flex items-stretch border border-[color:var(--fg)] text-[color:var(--fg)] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors"
     >
-      <span class="border-b border-[color:var(--fg)] pb-1.5">Entrar al catálogo</span>
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.4"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="transition-transform group-hover:translate-x-1"
-        aria-hidden="true"
-      >
-        <path d="M5 12h14" />
-        <path d="m13 5 7 7-7 7" />
-      </svg>
+      <span class="px-6 sm:px-8 h-12 sm:h-14 inline-flex items-center text-[11px] sm:text-xs uppercase tracking-[0.26em]">
+        Entrar al catálogo
+      </span>
+      <span class="border-l border-current/40 group-hover:border-current/60 w-12 sm:w-14 h-12 sm:h-14 inline-flex items-center justify-center transition-colors">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="transition-transform duration-300 group-hover:translate-x-1"
+          aria-hidden="true"
+        >
+          <path d="M5 12h14" />
+          <path d="m13 5 7 7-7 7" />
+        </svg>
+      </span>
     </a>
     <a
       href="/articulos"
-      class="group inline-flex items-center gap-1.5 text-[12px] sm:text-[13px] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition-colors pb-1.5"
+      class="group inline-flex items-center gap-2 text-[11px] sm:text-xs uppercase tracking-[0.22em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition-colors"
     >
+      <span class="block w-5 h-px bg-current"></span>
       Leer publicaciones
-      <svg
-        width="13"
-        height="13"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.6"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="transition-transform group-hover:translate-x-0.5"
-        aria-hidden="true"
-      >
-        <path d="M5 12h14" />
-        <path d="m13 5 7 7-7 7" />
-      </svg>
     </a>
   </div>
 </div>
