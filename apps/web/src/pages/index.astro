@@ -5,6 +5,7 @@ import PostCard from "~/components/PostCard.astro";
 import BookCard from "~/components/BookCard.astro";
 import AuthorsCarousel from "~/components/AuthorsCarousel.astro";
 import Hero from "~/components/Hero.astro";
+import { Icon } from "astro-icon/components";
 import { supabase } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
 
@@ -169,6 +170,40 @@ const heroImageMobile = config.hero_image_url?.trim()
       </div>
     </section>
   )}
+
+  {/* Invitación a calificar en Google — sección dedicada con buen
+      contraste (estrellas amber sólidas, fondo claro, texto serif).
+      Vive justo antes del SubscribeForm, en la zona donde el lector
+      ya recorrió la home y conoce el catálogo. */}
+  <section class="bg-[color:var(--bg-alt)] border-y border-[color:var(--border)]">
+    <div class="mx-auto max-w-3xl px-5 sm:px-6 lg:px-12 py-16 sm:py-20 md:py-24 text-center">
+      <div class="inline-flex items-center gap-1 text-amber-500 mb-5 sm:mb-6" aria-hidden="true">
+        <Icon name="lucide:star" class="w-6 h-6 sm:w-7 sm:h-7 fill-current" />
+        <Icon name="lucide:star" class="w-6 h-6 sm:w-7 sm:h-7 fill-current" />
+        <Icon name="lucide:star" class="w-6 h-6 sm:w-7 sm:h-7 fill-current" />
+        <Icon name="lucide:star" class="w-6 h-6 sm:w-7 sm:h-7 fill-current" />
+        <Icon name="lucide:star" class="w-6 h-6 sm:w-7 sm:h-7 fill-current" />
+      </div>
+      <h2 class="font-serif text-2xl sm:text-3xl md:text-4xl leading-tight mb-3 sm:mb-4 text-[color:var(--fg)]">
+        ¿Te ha acompañado alguno de nuestros libros?
+      </h2>
+      <p class="text-sm sm:text-base text-[color:var(--fg-muted)] max-w-xl mx-auto mb-8 sm:mb-10 leading-relaxed">
+        Una reseña en Google nos ayuda a llegar a otros lectores que valoran los libros editados con tiempo y oficio.
+      </p>
+      <a
+        href="https://g.page/r/CRj_mQ274MryEAI/review"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="group inline-flex items-center gap-3 bg-[color:var(--fg)] text-[color:var(--bg)] px-7 py-3.5 sm:px-9 sm:py-4 text-xs sm:text-sm uppercase tracking-[0.2em] hover:opacity-90 transition-opacity"
+      >
+        <span>Dejar reseña en Google</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="transition-transform group-hover:translate-x-1">
+          <path d="M5 12h14"/>
+          <path d="m13 5 7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  </section>
 
   {config.subscribe_enabled !== false && <SubscribeForm />}
 </Layout>
