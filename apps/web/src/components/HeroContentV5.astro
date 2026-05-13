@@ -20,7 +20,7 @@
   </div>
 
   {/* Statement — large pull-quote style */}
-  <p class="font-serif text-[1.85rem] sm:text-[2.4rem] md:text-[2.7rem] lg:text-[3.2rem] xl:text-[3.6rem] leading-[1.08] text-[color:var(--fg)] mb-7 sm:mb-9">
+  <p class="font-serif text-[1.6rem] sm:text-[2.2rem] md:text-[2.7rem] lg:text-[3.2rem] xl:text-[3.6rem] leading-[1.1] sm:leading-[1.08] text-[color:var(--fg)] mb-6 sm:mb-9">
     Libros que no se apuran:
     <span class="italic"> filosofía y poesía</span> editadas con
     <span class="italic"> tiempo</span> y oficio.
@@ -28,15 +28,16 @@
 
   {/* Three short editorial principles, inline & comma-separated, like
       a masthead would render its tagline. */}
-  <p class="text-[13px] sm:text-sm uppercase tracking-[0.22em] text-[color:var(--fg-muted)] mb-10 sm:mb-12">
+  <p class="text-[11px] sm:text-sm uppercase tracking-[0.2em] sm:tracking-[0.22em] text-[color:var(--fg-muted)] mb-8 sm:mb-12 leading-relaxed">
     Traducir bien · Editar despacio · Imprimir bonito
   </p>
 
-  {/* CTA bar — two cells separated by a thin rule, reads as one unit. */}
-  <div class="inline-flex items-stretch border-y border-[color:var(--fg)]/20">
+  {/* CTA bar — two cells separated by a thin rule on md+. On mobile
+      stacks vertically so each cell keeps its full label legible. */}
+  <div class="flex flex-col sm:inline-flex sm:flex-row sm:items-stretch border-y border-[color:var(--fg)]/20 divide-y sm:divide-y-0 sm:divide-x divide-[color:var(--fg)]/20">
     <a
       href="/catalogo"
-      class="group inline-flex items-center gap-3 pr-6 sm:pr-8 py-4 sm:py-5 text-[11px] sm:text-xs uppercase tracking-[0.26em] text-[color:var(--fg)] hover:text-[color:var(--fg-muted)] transition-colors"
+      class="group inline-flex items-center gap-3 sm:pr-6 md:pr-8 py-4 sm:py-5 text-[11px] sm:text-xs uppercase tracking-[0.24em] sm:tracking-[0.26em] text-[color:var(--fg)] hover:text-[color:var(--fg-muted)] transition-colors"
     >
       <span class="font-serif italic text-[color:var(--fg-muted)] text-sm normal-case tracking-normal mr-1">
         Catálogo
@@ -52,17 +53,16 @@
         stroke-width="1.6"
         stroke-linecap="round"
         stroke-linejoin="round"
-        class="transition-transform group-hover:translate-x-1"
+        class="transition-transform group-hover:translate-x-1 ml-auto sm:ml-0"
         aria-hidden="true"
       >
         <path d="M5 12h14" />
         <path d="m13 5 7 7-7 7" />
       </svg>
     </a>
-    <span class="w-px bg-[color:var(--fg)]/20"></span>
     <a
       href="/articulos"
-      class="group inline-flex items-center gap-3 px-6 sm:px-8 py-4 sm:py-5 text-[11px] sm:text-xs uppercase tracking-[0.26em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition-colors"
+      class="group inline-flex items-center gap-3 sm:px-6 md:px-8 py-4 sm:py-5 text-[11px] sm:text-xs uppercase tracking-[0.24em] sm:tracking-[0.26em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition-colors"
     >
       <span class="font-serif italic text-sm normal-case tracking-normal mr-1">
         Archivo

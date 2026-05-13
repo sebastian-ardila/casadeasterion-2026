@@ -19,12 +19,12 @@
     </span>
   </div>
 
-  <h1 class="font-serif text-[2rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.6rem] xl:text-[4rem] leading-[1.06] text-[color:var(--fg)] mb-6 sm:mb-8">
+  <h1 class="font-serif text-[1.8rem] sm:text-[2.6rem] md:text-[3.1rem] lg:text-[3.6rem] xl:text-[4rem] leading-[1.1] sm:leading-[1.06] text-[color:var(--fg)] mb-5 sm:mb-8">
     Una editorial pequeña
-    <span class="italic">para libros que envejecen bien</span>.
+    <span class="italic"> para libros que envejecen bien</span>.
   </h1>
 
-  <p class="font-serif italic text-base sm:text-lg lg:text-xl text-[color:var(--fg-muted)] leading-relaxed mb-9 sm:mb-11 max-w-xl">
+  <p class="font-serif italic text-[0.95rem] sm:text-lg lg:text-xl text-[color:var(--fg-muted)] leading-relaxed mb-8 sm:mb-11 max-w-xl">
     Tomamos en serio el verbo "editar": cortar, pulir, dejar respirar,
     devolverle al texto su forma más exacta.
   </p>
@@ -65,14 +65,15 @@
     ))}
   </ul>
 
-  {/* CTAs as a colophon footer: very thin rule above, two actions
-      separated by an em-dash, reads like the printer's mark line. */}
-  <div class="border-t border-[color:var(--fg)]/20 pt-5 sm:pt-6 flex flex-wrap items-baseline gap-x-3 gap-y-3">
+  {/* CTAs as a colophon footer: thin rule, two actions separated by an
+      em-dash on sm+, stacked on xs. The em-dash hides on mobile so the
+      stack doesn't pick up a stray "—" line. */}
+  <div class="border-t border-[color:var(--fg)]/20 pt-5 sm:pt-6 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-baseline gap-y-3 sm:gap-x-3">
     <a
       href="/catalogo"
-      class="group inline-flex items-baseline gap-2 text-[12px] sm:text-[13px] uppercase tracking-[0.26em] text-[color:var(--fg)]"
+      class="group inline-flex items-baseline gap-2 text-[11px] sm:text-[13px] uppercase tracking-[0.22em] sm:tracking-[0.26em] text-[color:var(--fg)]"
     >
-      <span class="font-serif italic normal-case tracking-normal text-base text-[color:var(--fg-muted)]">
+      <span class="font-serif italic normal-case tracking-normal text-[15px] sm:text-base text-[color:var(--fg-muted)]">
         Léase:
       </span>
       <span class="border-b border-[color:var(--fg)] pb-1">Catálogo</span>
@@ -92,12 +93,12 @@
         <path d="m13 5 7 7-7 7" />
       </svg>
     </a>
-    <span class="font-serif italic text-[color:var(--fg-muted)]">—</span>
+    <span class="hidden sm:inline font-serif italic text-[color:var(--fg-muted)]">—</span>
     <a
       href="/articulos"
-      class="group inline-flex items-baseline gap-2 text-[12px] sm:text-[13px] uppercase tracking-[0.26em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition-colors"
+      class="group inline-flex items-baseline gap-2 text-[11px] sm:text-[13px] uppercase tracking-[0.22em] sm:tracking-[0.26em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition-colors"
     >
-      <span class="font-serif italic normal-case tracking-normal text-base">
+      <span class="font-serif italic normal-case tracking-normal text-[15px] sm:text-base">
         Y también:
       </span>
       <span class="pb-1">Publicaciones</span>

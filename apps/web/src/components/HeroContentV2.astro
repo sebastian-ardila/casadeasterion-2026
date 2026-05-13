@@ -10,20 +10,19 @@
     Editorial independiente
   </p>
 
-  <h1 class="font-serif text-[2.4rem] sm:text-5xl md:text-[3.4rem] lg:text-6xl xl:text-[4.4rem] leading-[1.04] text-[color:var(--fg)] mb-8 sm:mb-10">
+  <h1 class="font-serif text-[2rem] sm:text-[2.6rem] md:text-[3.4rem] lg:text-6xl xl:text-[4.4rem] leading-[1.08] sm:leading-[1.04] text-[color:var(--fg)] mb-7 sm:mb-10">
     Filosofía y poesía contemporáneas,
     <span class="italic font-normal"> en libros pensados para durar.</span>
   </h1>
 
-  <p class="text-base sm:text-lg lg:text-xl leading-relaxed text-[color:var(--fg-muted)] mb-10 sm:mb-12 max-w-xl">
+  <p class="text-[0.95rem] sm:text-lg lg:text-xl leading-relaxed text-[color:var(--fg-muted)] mb-9 sm:mb-12 max-w-xl">
     Publicamos a quienes piensan y escriben el presente: traducciones cuidadosas
     y voces vivas en español, en ediciones que se conservan.
   </p>
 
-  {/* Paired CTAs: solid primary + ghost secondary, same height + same
-      horizontal padding so they read as a balanced pair without the
-      secondary trying to be a button on its own. */}
-  <div class="flex flex-wrap items-stretch gap-3">
+  {/* Paired CTAs: solid primary + ghost secondary, same height. On a
+      narrow viewport the secondary wraps under the primary. */}
+  <div class="flex flex-wrap items-stretch gap-3 max-w-full">
     <a
       href="/catalogo"
       class="group inline-flex items-center gap-3 bg-[color:var(--fg)] text-[color:var(--bg)] px-7 sm:px-9 h-12 sm:h-14 text-[11px] sm:text-xs uppercase tracking-[0.24em] hover:bg-[color:var(--fg-muted)] transition-colors"
