@@ -83,10 +83,23 @@ export type SiteConfigMap = {
   og_image_default: string;
   organization_logo_url: string;
   hero_image_url: string;
-  /** Page background visible behind the hero card (the area around the
-   *  card and the right-half image). Empty means "use --bg-alt". */
+  /** Page background visible behind the hero (mobile photo + the area
+   *  around the right-half image). Empty means "use --bg-alt". */
   hero_bg_color: string;
-  hero_card_config: HeroCardConfig;
+  /** Multi-line wordmark — \n becomes a line break. */
+  hero_title: string;
+  /** Single italic tagline shown under the wordmark. */
+  hero_tagline: string;
+  /** Primary CTA — solid pill on mobile, split outline on md+. */
+  hero_cta_primary_label: string;
+  hero_cta_primary_href: string;
+  /** Secondary CTA — quiet text link below the primary. */
+  hero_cta_secondary_label: string;
+  hero_cta_secondary_href: string;
+  /** @deprecated Replaced by hero_title/tagline/cta_* columns. Kept
+   *  here only so legacy rows in site_configuration don't break the
+   *  type. Not read by the public site. */
+  hero_card_config?: HeroCardConfig;
   /** Site-wide typography for the book detail page. Applies to every
    *  book in the catalog — not per-row. */
   book_detail_typography: DetailTypography;
@@ -174,7 +187,13 @@ const DEFAULTS: SiteConfigMap = {
   organization_logo_url: "",
   hero_image_url: "",
   hero_bg_color: "",
-  hero_card_config: DEFAULT_HERO_CARD_CONFIG,
+  hero_title: "Casa de\nAsterión\nEdiciones",
+  hero_tagline:
+    "Libros que no se apuran: filosofía y poesía editadas con tiempo y oficio.",
+  hero_cta_primary_label: "Entrar al catálogo",
+  hero_cta_primary_href: "/catalogo",
+  hero_cta_secondary_label: "Leer publicaciones",
+  hero_cta_secondary_href: "/articulos",
   book_detail_typography: DEFAULT_DETAIL_TYPOGRAPHY,
   article_detail_typography: DEFAULT_DETAIL_TYPOGRAPHY,
 };
@@ -197,9 +216,27 @@ export async function loadSiteConfig(): Promise<SiteConfigMap> {
   for (const row of data ?? []) {
     out[row.key] = row.value;
   }
+  // Hero text fields are required at the public layout level — if the
+  // DB row was saved as an empty string (legacy migration, accidental
+  // wipe, etc.) fall back to the default so the hero never renders
+  // with a blank line or a button pointing to nowhere.
+  for (const k of HERO_TEXT_FALLBACK_KEYS) {
+    if (typeof out[k] === "string" && (out[k] as string).trim() === "") {
+      out[k] = DEFAULTS[k];
+    }
+  }
   cache = out as SiteConfigMap;
   return cache;
 }
+
+const HERO_TEXT_FALLBACK_KEYS: readonly (keyof SiteConfigMap)[] = [
+  "hero_title",
+  "hero_tagline",
+  "hero_cta_primary_label",
+  "hero_cta_primary_href",
+  "hero_cta_secondary_label",
+  "hero_cta_secondary_href",
+];
 
 export function buildWhatsappUrl(
   phone: string,
