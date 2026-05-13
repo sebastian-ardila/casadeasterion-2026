@@ -3,6 +3,7 @@ import Layout from "~/layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
 import { supabase } from "~/lib/supabase";
 import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
+import { expandRole } from "~/lib/staff";
 
 // Ficha individual de un miembro del equipo. Mismo patrón que
 // /autores/[slug] — pre-rendered via getStaticPaths a partir del slug
@@ -27,6 +28,7 @@ if (!member) {
 }
 
 const bio = renderMarkdown(member.bio_md);
+const roleParts = expandRole(member.role);
 const links = (member.links as Record<string, string> | null) ?? {};
 const sameAs = [links.web, links.linkedin, links.twitter, links.instagram].filter(Boolean) as string[];
 const bioPlain = clampText(mdToPlainText(member.bio_md), 160);
@@ -92,7 +94,10 @@ if (links.instagram) linkRows.push({ href: links.instagram, label: "Instagram", 
 
     <div class="min-w-0">
       <p class="uppercase text-[11px] sm:text-xs tracking-[0.22em] text-[color:var(--fg-muted)] mb-3">
-        {member.role}
+        <span class="text-[color:var(--fg)]">{roleParts.primary}</span>
+        {roleParts.expansion && (
+          <span class="ml-1.5 normal-case tracking-normal italic">— {roleParts.expansion}</span>
+        )}
       </p>
       <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl mb-6 sm:mb-8 leading-tight">{member.name}</h1>
       {bio ? (

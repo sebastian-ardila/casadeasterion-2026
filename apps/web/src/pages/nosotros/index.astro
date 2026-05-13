@@ -2,6 +2,7 @@
 import Layout from "~/layouts/Layout.astro";
 import { supabase } from "~/lib/supabase";
 import { renderMarkdown } from "~/lib/markdown";
+import { expandRole } from "~/lib/staff";
 
 // "Nosotros" — equipo de Casa de Asterión Ediciones.
 //
@@ -32,6 +33,7 @@ const [{ data: staff }, { data: collaborators }] = await Promise.all([
 const renderedStaff = (staff ?? []).map((s) => ({
   ...s,
   bio_html: s.bio_md ? renderMarkdown(s.bio_md) : "",
+  roleParts: expandRole(s.role),
 }));
 ---
 
@@ -70,7 +72,10 @@ const renderedStaff = (staff ?? []).map((s) => ({
                 </div>
               )}
               <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-2">
-                {s.role}
+                <span class="text-[color:var(--fg)]">{s.roleParts.primary}</span>
+                {s.roleParts.expansion && (
+                  <span class="ml-1.5 normal-case tracking-normal text-[color:var(--fg-muted)] italic">— {s.roleParts.expansion}</span>
+                )}
               </p>
               <h3 class="font-serif text-xl sm:text-2xl mb-3 sm:mb-4 leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">{s.name}</h3>
               {s.bio_html && (
