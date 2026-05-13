@@ -51,26 +51,6 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
     </nav>
 
     <div class="flex items-center gap-2 sm:gap-3">
-      {/* TEMPORARY — Hero variant switcher. Lets the team preview the
-          four hero designs in production without a rebuild. Persists the
-          chosen variant in localStorage; only affects "/" (the index
-          page reads this key in an inline script). REMOVE this block
-          and the matching <script> below once the hero design is final. */}
-      <div
-        id="cas-hero-switch"
-        class="hidden md:flex items-center gap-0.5 px-1 py-1 border border-[color:var(--border)] text-[10px] tracking-[0.18em] uppercase"
-        aria-label="Hero variant preview (temporal)"
-      >
-        {(["v1", "v2", "v3", "v4", "v5", "v6", "v7"] as const).map((v) => (
-          <button
-            type="button"
-            data-cas-hero-pick={v}
-            class="px-2 py-1 leading-none hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors"
-          >
-            {v}
-          </button>
-        ))}
-      </div>
       {showSubscribe && (
         <a href="/#suscribirse" class="btn-outline hidden sm:inline-block">Suscribirse</a>
       )}
@@ -158,51 +138,6 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
     // Auto-close if the user resizes up to desktop
     window.matchMedia("(min-width: 768px)").addEventListener("change", (e) => {
       if (e.matches) set(false);
-    });
-  })();
-</script>
-
-{/* TEMPORARY — Hero switcher behavior. Flips the active variant on the
-    home hero section in real time and persists the choice in
-    localStorage so reloads keep it. Remove together with the markup
-    above when the final hero is chosen. */}
-<script is:inline>
-  (() => {
-    const sw = document.getElementById("cas-hero-switch");
-    if (!sw) return;
-    const KEY = "cas:hero-variant";
-
-    const findHero = () =>
-      document.querySelector(".hero-section[data-cas-hero-active]");
-
-    const applyHighlight = (current) => {
-      sw.querySelectorAll("[data-cas-hero-pick]").forEach((b) => {
-        const isActive = b.getAttribute("data-cas-hero-pick") === current;
-        b.classList.toggle("bg-[color:var(--fg)]", isActive);
-        b.classList.toggle("text-[color:var(--bg)]", isActive);
-      });
-    };
-
-    // Sync the highlight with whatever the hero section currently shows.
-    const hero = findHero();
-    if (hero) applyHighlight(hero.getAttribute("data-cas-hero-active"));
-
-    sw.addEventListener("click", (e) => {
-      const target = e.target;
-      if (!(target instanceof Element)) return;
-      const btn = target.closest("[data-cas-hero-pick]");
-      if (!btn) return;
-      const variant = btn.getAttribute("data-cas-hero-pick");
-      if (!variant) return;
-      try { localStorage.setItem(KEY, variant); } catch {}
-      const sec = findHero();
-      if (sec) {
-        sec.setAttribute("data-cas-hero-active", variant);
-        applyHighlight(variant);
-      } else {
-        // Not on the index page — navigate home so the new variant shows.
-        location.href = "/";
-      }
     });
   })();
 </script>
