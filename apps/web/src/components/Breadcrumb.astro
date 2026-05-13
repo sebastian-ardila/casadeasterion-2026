@@ -1,4 +1,6 @@
 ---
+import { Icon } from "astro-icon/components";
+
 interface Props {
   // Override the last crumb's label (used by dynamic pages like
   // /articulos/[slug] to show the post title instead of the slug).
@@ -6,6 +8,8 @@ interface Props {
 }
 const { currentLabel } = Astro.props;
 
+// Segment → display label. The segment is the URL path part (e.g.
+// "articulos"); the label is what the user sees ("Publicaciones").
 const segmentLabels: Record<string, string> = {
   articulos: "Publicaciones",
   filosofia: "Filosofía",
@@ -13,6 +17,22 @@ const segmentLabels: Record<string, string> = {
   autores: "Autores",
   catalogo: "Catálogo",
   contacto: "Contacto",
+  nosotros: "Nosotros",
+  colaboradores: "Colaboradores",
+};
+
+// Segment → lucide icon shown at the left of each crumb. Picked to
+// mirror the icons used in the site Header (so navigating feels
+// coherent: same nav item, same glyph).
+const segmentIcons: Record<string, string> = {
+  articulos: "lucide:newspaper",
+  filosofia: "lucide:feather",
+  poesia: "lucide:feather",
+  autores: "lucide:users",
+  catalogo: "lucide:book-open",
+  contacto: "lucide:phone",
+  nosotros: "lucide:building",
+  colaboradores: "lucide:user-plus",
 };
 
 const path = Astro.url.pathname.replace(/\/$/, "");
@@ -21,10 +41,10 @@ const segments = path.split("/").filter(Boolean);
 // Don't render on the homepage — there's nowhere meaningful to crumb to.
 const showCrumbs = segments.length > 0;
 
-type Crumb = { label: string; href: string | null };
+type Crumb = { label: string; href: string | null; icon: string | null };
 const crumbs: Crumb[] = showCrumbs
   ? [
-      { label: "Inicio", href: "/" },
+      { label: "Inicio", href: "/", icon: "lucide:home" },
       ...segments.map((seg, idx) => {
         const isLast = idx === segments.length - 1;
         const href = isLast ? null : "/" + segments.slice(0, idx + 1).join("/");
@@ -32,7 +52,10 @@ const crumbs: Crumb[] = showCrumbs
         const label = isLast && currentLabel
           ? currentLabel
           : segmentLabels[seg] ?? decodeURIComponent(seg).replace(/-/g, " ");
-        return { label, href };
+        // Dynamic leaf segments (slugs, IDs) don't get an icon — they
+        // represent unique content rather than a section.
+        const icon = isLast && currentLabel ? null : (segmentIcons[seg] ?? null);
+        return { label, href, icon };
       }),
     ]
   : [];
@@ -49,16 +72,22 @@ const crumbs: Crumb[] = showCrumbs
         return (
           <li class:list={["flex items-center gap-1.5 sm:gap-2 min-w-0", last && "min-w-0 flex-1"]}>
             {crumb.href ? (
-              <a href={crumb.href} class="shrink-0 text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition">
-                {crumb.label}
+              <a href={crumb.href} class="shrink-0 inline-flex items-center gap-1.5 text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition">
+                {crumb.icon && (
+                  <Icon name={crumb.icon} class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" aria-hidden="true" />
+                )}
+                <span>{crumb.label}</span>
               </a>
             ) : (
               <span class:list={[
                 last ? "text-[color:var(--fg)]" : "text-[color:var(--fg-muted)]",
-                "first-letter:capitalize truncate",
+                "inline-flex items-center gap-1.5 first-letter:capitalize truncate",
                 last && "min-w-0",
               ]}>
-                {crumb.label}
+                {crumb.icon && (
+                  <Icon name={crumb.icon} class="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" aria-hidden="true" />
+                )}
+                <span class:list={[last && "truncate"]}>{crumb.label}</span>
               </span>
             )}
             {!last && (
