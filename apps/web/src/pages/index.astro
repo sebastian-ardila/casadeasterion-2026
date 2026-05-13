@@ -4,9 +4,17 @@ import SubscribeForm from "~/components/SubscribeForm.astro";
 import PostCard from "~/components/PostCard.astro";
 import BookCard from "~/components/BookCard.astro";
 import AuthorsCarousel from "~/components/AuthorsCarousel.astro";
+import HeroContentV2 from "~/components/HeroContentV2.astro";
+import HeroContentV3 from "~/components/HeroContentV3.astro";
 import { supabase } from "~/lib/supabase";
 import { loadSiteConfig, DEFAULT_HERO_CARD_CONFIG } from "~/lib/site-config";
 import { mergeHeroCardConfig, resolveHeroContent, buildHeroCardCss } from "~/lib/hero-card";
+
+// Hero variant switch. "v1" is the CMS-driven card; "v2" and "v3" are
+// static editorial layouts (see HeroContentV2 / HeroContentV3). Only the
+// right-half image and the section background color still come from the
+// CMS in v2 / v3.
+const HERO_VARIANT: "v1" | "v2" | "v3" = "v2";
 
 const config = await loadSiteConfig();
 
@@ -76,35 +84,44 @@ const heroCardCss = buildHeroCardCss(heroCardCfg);
     >
     </div>
 
-    {/* Card — all visual properties (bg, color, radius, size, position)
-        come from site_configuration.hero_card_config. CSS is emitted
-        below as an inline <style> block (heroCardCss) and applied via
-        the .hero-card-cms class. Per-platform overrides handled via
-        a media query inside heroCardCss. */}
-    <a
-      href={heroCardContent.cta_href}
-      class="hero-card-cms group relative z-10 block transition-shadow hover:shadow-2xl flex flex-col justify-between"
-    >
-      <div>
-        {heroCardContent.eyebrow && (
-          <p class="hcc-eyebrow uppercase text-[10px] sm:text-xs tracking-[0.2em] opacity-70 mb-3 sm:mb-5">
-            {heroCardContent.eyebrow}
-          </p>
-        )}
-        <h1 class="hcc-title text-[1.4rem] sm:text-2xl md:text-5xl leading-[1.1] mb-3 sm:mb-5 line-clamp-3 md:line-clamp-4">
-          {heroCardContent.title}
-        </h1>
-        {heroCardContent.body && (
-          <p class="hcc-body text-xs sm:text-sm md:text-base opacity-80 leading-relaxed line-clamp-2 md:line-clamp-3">
-            {heroCardContent.body}
-          </p>
-        )}
-      </div>
-      <span class="hcc-cta uppercase text-[11px] sm:text-xs tracking-[0.18em] border-b border-current/60 pb-1 group-hover:border-current self-start mt-4">
-        {heroCardContent.cta_label}
-      </span>
-    </a>
-    <style is:inline set:html={heroCardCss}></style>
+    {/* V1: CMS-driven card (default for HERO_VARIANT === "v1").
+        All visual properties (bg, color, radius, size, position) come
+        from site_configuration.hero_card_config. CSS emitted below as
+        inline <style>. */}
+    {HERO_VARIANT === "v1" && (
+      <>
+        <a
+          href={heroCardContent.cta_href}
+          class="hero-card-cms group relative z-10 block transition-shadow hover:shadow-2xl flex flex-col justify-between"
+        >
+          <div>
+            {heroCardContent.eyebrow && (
+              <p class="hcc-eyebrow uppercase text-[10px] sm:text-xs tracking-[0.2em] opacity-70 mb-3 sm:mb-5">
+                {heroCardContent.eyebrow}
+              </p>
+            )}
+            <h1 class="hcc-title text-[1.4rem] sm:text-2xl md:text-5xl leading-[1.1] mb-3 sm:mb-5 line-clamp-3 md:line-clamp-4">
+              {heroCardContent.title}
+            </h1>
+            {heroCardContent.body && (
+              <p class="hcc-body text-xs sm:text-sm md:text-base opacity-80 leading-relaxed line-clamp-2 md:line-clamp-3">
+                {heroCardContent.body}
+              </p>
+            )}
+          </div>
+          <span class="hcc-cta uppercase text-[11px] sm:text-xs tracking-[0.18em] border-b border-current/60 pb-1 group-hover:border-current self-start mt-4">
+            {heroCardContent.cta_label}
+          </span>
+        </a>
+        <style is:inline set:html={heroCardCss}></style>
+      </>
+    )}
+
+    {/* V2: editorial manifesto + 3 pillars (static). */}
+    {HERO_VARIANT === "v2" && <HeroContentV2 />}
+
+    {/* V3: numbered manifesto-style hero (static). */}
+    {HERO_VARIANT === "v3" && <HeroContentV3 />}
 
     {/* Mobile photo — stacked below the card. Hidden on md+ where the
         fixed right-half image takes over. */}
