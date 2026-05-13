@@ -55,38 +55,35 @@ const renderedStaff = (staff ?? []).map((s) => ({
       </h2>
       <ul class="grid gap-10 sm:gap-12 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {renderedStaff.map((s) => (
-          <li class="flex flex-col">
-            {s.photo_url ? (
-              <img
-                src={s.photo_url}
-                alt={s.name}
-                loading="lazy"
-                class="w-full aspect-[4/5] object-cover bg-[color:var(--bg-alt)] mb-5 sm:mb-6"
-              />
-            ) : (
-              <div class="w-full aspect-[4/5] bg-[color:var(--bg-alt)] mb-5 sm:mb-6 flex items-center justify-center font-serif text-5xl text-[color:var(--fg-muted)]">
-                {s.name.charAt(0)}
-              </div>
-            )}
-            <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-2">
-              {s.role}
-            </p>
-            <h3 class="font-serif text-xl sm:text-2xl mb-3 sm:mb-4 leading-tight">{s.name}</h3>
-            {s.bio_html && (
-              <div class="cas-md text-sm sm:text-base text-[color:var(--fg)] leading-relaxed line-clamp-6" set:html={s.bio_html}></div>
-            )}
-            {s.email && (
-              <a
-                href={`mailto:${s.email}`}
-                class="mt-4 inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
+          <li>
+            <a href={`/nosotros/${s.slug}`} class="group flex flex-col hover:opacity-95 transition-opacity">
+              {s.photo_url ? (
+                <img
+                  src={s.photo_url}
+                  alt={s.name}
+                  loading="lazy"
+                  class="w-full aspect-[4/5] object-cover bg-[color:var(--bg-alt)] mb-5 sm:mb-6"
+                />
+              ) : (
+                <div class="w-full aspect-[4/5] bg-[color:var(--bg-alt)] mb-5 sm:mb-6 flex items-center justify-center font-serif text-5xl text-[color:var(--fg-muted)]">
+                  {s.name.charAt(0)}
+                </div>
+              )}
+              <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-2">
+                {s.role}
+              </p>
+              <h3 class="font-serif text-xl sm:text-2xl mb-3 sm:mb-4 leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">{s.name}</h3>
+              {s.bio_html && (
+                <div class="cas-md text-sm sm:text-base text-[color:var(--fg)] leading-relaxed line-clamp-6" set:html={s.bio_html}></div>
+              )}
+              <span class="mt-4 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-[color:var(--fg-muted)] group-hover:text-[color:var(--fg)] transition">
+                Ver perfil
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+                  <path d="M5 12h14" />
+                  <path d="m13 5 7 7-7 7" />
                 </svg>
-                <span>Escribir</span>
-              </a>
-            )}
+              </span>
+            </a>
           </li>
         ))}
       </ul>

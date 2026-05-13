@@ -23,10 +23,11 @@ export const GET: APIRoute = async ({ site }) => {
     return new Response("Site URL not configured.", { status: 500 });
   }
 
-  const [postsRes, booksRes, authorsRes] = await Promise.all([
+  const [postsRes, booksRes, authorsRes, staffRes] = await Promise.all([
     supabase.from("posts").select("slug, updated_at, published_at").eq("status", "published"),
     supabase.from("books").select("slug, updated_at, publication_date").eq("status", "published"),
     supabase.from("authors").select("slug, updated_at"),
+    supabase.from("staff").select("slug, updated_at").eq("status", "published"),
   ]);
 
   type Entry = { url: string; lastmod?: string; priority: number; changefreq: string };
@@ -63,6 +64,15 @@ export const GET: APIRoute = async ({ site }) => {
       url: new URL(`/autores/${author.slug}`, site).href,
       lastmod: author.updated_at ?? undefined,
       priority: 0.5,
+      changefreq: "monthly",
+    });
+  }
+
+  for (const s of staffRes.data ?? []) {
+    entries.push({
+      url: new URL(`/nosotros/${s.slug}`, site).href,
+      lastmod: s.updated_at ?? undefined,
+      priority: 0.4,
       changefreq: "monthly",
     });
   }
