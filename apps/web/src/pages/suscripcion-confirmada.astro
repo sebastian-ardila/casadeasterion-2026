@@ -1,6 +1,7 @@
 ---
 import Layout from "~/layouts/Layout.astro";
 import { loadSiteConfig } from "~/lib/site-config";
+import GoogleReviewCTA from "~/components/GoogleReviewCTA.astro";
 const config = await loadSiteConfig();
 const subscribeEnabled = config.subscribe_enabled !== false;
 ---
@@ -44,6 +45,17 @@ const subscribeEnabled = config.subscribe_enabled !== false;
         <a href="/" class="inline-block px-5 py-2.5 border border-[color:var(--border)] hover:border-[color:var(--fg)] transition text-sm">
           Volver al inicio
         </a>
+
+        {/* Post-conversión: el lector acaba de mostrar interés real
+            suscribiéndose. Es el momento más alto de afinidad —
+            buen momento para invitarlo a dejar una reseña pública. */}
+        <div class="mt-10 sm:mt-12 text-left">
+          <GoogleReviewCTA
+            variant="card"
+            title="¿Ya conocías nuestros libros?"
+            description="Si alguno te ha acompañado, una reseña en Google nos ayuda a llegar a otros lectores que valoran lo mismo."
+          />
+        </div>
       </div>
 
       <div id="cda-sub-error" class="hidden">

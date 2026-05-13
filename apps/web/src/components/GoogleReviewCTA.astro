@@ -1,0 +1,76 @@
+---
+// Invitación a calificar Casa de Asterión en Google. La URL es el
+// enlace directo de Google Business Profile que abre la ficha en
+// modo "deja una reseña". Se usa en el footer (variant="inline") y
+// en pantallas post-conversión como /suscripcion-confirmada
+// (variant="card").
+//
+// Mantener la URL aquí (no en site_configuration) porque cambia
+// solo cuando se reemplaza la ficha de Google Business — algo que
+// ocurre una vez cada años. Si se reemplaza, basta cambiar la
+// constante y rebuildear.
+
+import { Icon } from "astro-icon/components";
+
+export const GOOGLE_REVIEW_URL = "https://g.page/r/CRj_mQ274MryEAI/review";
+
+interface Props {
+  /** "inline" → una sola línea, ideal para footer. "card" → bloque con
+   *  padding, ideal para pantallas post-conversión. */
+  variant?: "inline" | "card";
+  /** Override del título cuando variant="card". */
+  title?: string;
+  /** Override del subtítulo cuando variant="card". */
+  description?: string;
+}
+
+const {
+  variant = "inline",
+  title = "¿Te gustó lo que hacemos?",
+  description = "Tu reseña en Google nos ayuda a llegar a más lectores y autores que valoran los libros editados con tiempo.",
+} = Astro.props as Props;
+
+const stars = [0, 1, 2, 3, 4];
+---
+
+{variant === "inline" && (
+  <a
+    href={GOOGLE_REVIEW_URL}
+    target="_blank"
+    rel="noopener noreferrer"
+    class="cas-greview-inline group inline-flex items-center gap-2 hover:opacity-100"
+  >
+    <span class="cas-greview-stars inline-flex items-center gap-0.5" aria-hidden="true">
+      {stars.map(() => (
+        <Icon name="lucide:star" class="w-3.5 h-3.5 fill-current" />
+      ))}
+    </span>
+    <span>Califícanos en Google</span>
+  </a>
+)}
+
+{variant === "card" && (
+  <a
+    href={GOOGLE_REVIEW_URL}
+    target="_blank"
+    rel="noopener noreferrer"
+    class="cas-greview-card group block w-full"
+  >
+    <div class="cas-greview-card-inner border border-[color:var(--border)] hover:border-[color:var(--fg)] transition-colors p-5 sm:p-6">
+      <div class="flex items-center gap-1 mb-3" aria-hidden="true">
+        {stars.map(() => (
+          <Icon name="lucide:star" class="w-5 h-5 fill-current text-amber-500" />
+        ))}
+      </div>
+      <h3 class="font-serif text-xl sm:text-2xl mb-2 leading-tight">{title}</h3>
+      <p class="text-sm text-[color:var(--fg-muted)] leading-relaxed mb-4">{description}</p>
+      <span class="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-[color:var(--fg)] group-hover:gap-2.5 transition-all">
+        <span>Dejar reseña en Google</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14" />
+          <path d="m13 5 7 7-7 7" />
+        </svg>
+      </span>
+    </div>
+  </a>
+)}
