@@ -78,6 +78,10 @@ export type SiteConfigMap = {
   robots_block_ai: string[];
   /** Master switch for the newsletter subscription form + links. */
   subscribe_enabled: boolean;
+  /** Master switch for the /nosotros section (team page). When false,
+   *  the link is removed from the Header, /nosotros/* redirects to
+   *  home, and /nosotros/[slug] generates no static pages. */
+  nosotros_enabled: boolean;
   default_keywords: string[];
   twitter_handle: string;
   og_image_default: string;
@@ -181,6 +185,7 @@ const DEFAULTS: SiteConfigMap = {
   social_accounts: [],
   robots_block_ai: [],
   subscribe_enabled: true,
+  nosotros_enabled: true,
   default_keywords: [],
   twitter_handle: "",
   og_image_default: "",

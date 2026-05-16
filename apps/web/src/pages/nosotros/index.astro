@@ -3,6 +3,15 @@ import Layout from "~/layouts/Layout.astro";
 import { supabase } from "~/lib/supabase";
 import { renderMarkdown } from "~/lib/markdown";
 import { expandRole } from "~/lib/staff";
+import { loadSiteConfig } from "~/lib/site-config";
+
+// Si el CMS apagó la sección "Nosotros", redirigimos al home en vez
+// de servir esta página. El enlace del header tampoco aparece (ver
+// Header.astro).
+const _config = await loadSiteConfig();
+if (_config.nosotros_enabled === false) {
+  return Astro.redirect("/");
+}
 
 // "Nosotros" — equipo de Casa de Asterión Ediciones.
 //

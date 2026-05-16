@@ -10,6 +10,12 @@ import { expandRole } from "~/lib/staff";
 // que cada fila de `staff` ya guarda.
 
 export async function getStaticPaths() {
+  // Si la sección está apagada en site_configuration, no generamos
+  // páginas individuales. Importamos loadSiteConfig dinámicamente
+  // para evitar un ciclo en build cuando el módulo aún no se carga.
+  const { loadSiteConfig: load } = await import("~/lib/site-config");
+  const cfg = await load();
+  if (cfg.nosotros_enabled === false) return [];
   const { data } = await supabase.from("staff").select("slug").eq("status", "published");
   return (data ?? []).map((s) => ({ params: { slug: s.slug } }));
 }

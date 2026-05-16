@@ -2,27 +2,31 @@
 import Layout from "~/layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
 import { supabase } from "~/lib/supabase";
-import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
+import { mdToPlainText, clampText } from "~/lib/markdown";
 
-// "Colecciones" — agrupaciones temáticas de libros más allá del autor
-// y la categoría. Cada colección incluye un cover, descripción y
-// opcionalmente una categoría. El sitio público las muestra como un
-// grid filtrable y al hacer click se navega a /colecciones/[slug].
+// "Colecciones" — agrupaciones temáticas de libros. Cada colección
+// se renderiza como una fila independiente: a la izquierda los
+// metadatos y la lista completa de títulos; a la derecha un
+// carrusel horizontal con hasta 3 portadas visibles a la vez. Chips
+// arriba filtran client-side por categoría.
 
-const [{ data: collectionsRaw }, { data: bookCountsRaw }] = await Promise.all([
+// 1. Traer todas las colecciones publicadas + sus libros (todos, no
+//    solo 3 — el carrusel scrollea, pero también necesitamos los
+//    títulos para la lista lateral).
+const [{ data: collectionsRaw }, { data: booksRaw }] = await Promise.all([
   (supabase.from as any)("collections")
     .select("id, slug, name, description_md, cover_image_url, sort_order, category:categories(id, name, icon, slug)")
     .eq("status", "published")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true }),
-  // Conteo de libros publicados por colección — un solo round-trip.
   supabase
     .from("books")
-    .select("collection_id" as any)
-    .eq("status", "published"),
+    .select("id, slug, title, cover_image_url, publication_date, collection_id" as any)
+    .eq("status", "published")
+    .order("publication_date", { ascending: false }),
 ]);
 
-const collections = (collectionsRaw ?? []) as Array<{
+type Collection = {
   id: string;
   slug: string;
   name: string;
@@ -30,17 +34,42 @@ const collections = (collectionsRaw ?? []) as Array<{
   cover_image_url: string | null;
   sort_order: number;
   category: { id: string; name: string; icon: string | null; slug: string } | null;
-}>;
+};
 
-// Map collection_id → count.
-const counts = new Map<string, number>();
-for (const row of (bookCountsRaw ?? []) as Array<{ collection_id: string | null }>) {
-  if (row.collection_id) {
-    counts.set(row.collection_id, (counts.get(row.collection_id) ?? 0) + 1);
-  }
+type Book = {
+  id: string;
+  slug: string;
+  title: string;
+  cover_image_url: string | null;
+  publication_date: string | null;
+  collection_id: string | null;
+};
+
+const collections = (collectionsRaw ?? []) as Collection[];
+const books = (booksRaw ?? []) as Book[];
+
+// Agrupar libros por colección — pasada única, mantiene el orden
+// (desc por publication_date) que ya viene del query.
+const byCollection = new Map<string, Book[]>();
+for (const b of books) {
+  if (!b.collection_id) continue;
+  const list = byCollection.get(b.collection_id);
+  if (list) list.push(b);
+  else byCollection.set(b.collection_id, [b]);
 }
 
-// Categorías presentes para el filtro de chips.
+const collectionsView = collections.map((c) => {
+  const allBooks = byCollection.get(c.id) ?? [];
+  return {
+    ...c,
+    blurb: clampText(mdToPlainText(c.description_md ?? ""), 220),
+    allBooks,
+    carouselBooks: allBooks.slice(0, 6), // hasta 6 portadas en el carrusel; se ven ~3 a la vez
+    bookCount: allBooks.length,
+  };
+});
+
+// Chips de categoría para el filtro.
 type ChipCat = { id: string; name: string; icon: string | null; slug: string };
 const categoryChips: ChipCat[] = [];
 const seenCats = new Set<string>();
@@ -51,13 +80,6 @@ for (const c of collections) {
   }
 }
 categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
-
-// Render markdown clamp para el grid (90 chars).
-const collectionsView = collections.map((c) => ({
-  ...c,
-  blurb: clampText(mdToPlainText(c.description_md ?? ""), 120),
-  bookCount: counts.get(c.id) ?? 0,
-}));
 ---
 
 <Layout
@@ -81,7 +103,7 @@ const collectionsView = collections.map((c) => ({
   ) : (
     <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24" data-collections-section>
       {categoryChips.length > 0 && (
-        <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-8 sm:mb-10" data-collections-chips>
+        <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-10 sm:mb-12 md:mb-14" data-collections-chips>
           <button
             type="button"
             class="cas-chip cas-chip-active"
@@ -106,45 +128,142 @@ const collectionsView = collections.map((c) => ({
         </div>
       )}
 
-      <ul class="grid gap-10 sm:gap-12 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" data-collections-grid>
+      <div class="space-y-16 sm:space-y-20 md:space-y-24" data-collections-rows>
         {collectionsView.map((c) => (
-          <li data-collection-card data-category={c.category?.id ?? ""}>
-            <a href={`/colecciones/${c.slug}`} class="group flex flex-col hover:opacity-95 transition-opacity">
-              {c.cover_image_url ? (
-                <img
-                  src={c.cover_image_url}
-                  alt=""
-                  loading="lazy"
-                  class="w-full aspect-[4/5] object-cover bg-[color:var(--bg-alt)] mb-5 sm:mb-6"
-                />
-              ) : (
-                <div class="w-full aspect-[4/5] bg-[color:var(--bg-alt)] mb-5 sm:mb-6 flex items-center justify-center text-[color:var(--fg-muted)]">
-                  <Icon name="lucide:library" class="w-12 h-12" aria-hidden="true" />
-                </div>
-              )}
-              {c.category && (
-                <p class="inline-flex items-center gap-1.5 uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-2">
-                  {c.category.icon && (
-                    <Icon name={`lucide:${c.category.icon}`} class="w-3 h-3" aria-hidden="true" />
+          <article
+            class="cas-coll-row"
+            data-collection-row
+            data-category={c.category?.id ?? ""}
+          >
+            <header class="mb-6 sm:mb-8 border-b border-[color:var(--border)] pb-5 sm:pb-7">
+              <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+                <div class="min-w-0">
+                  {c.category && (
+                    <p class="inline-flex items-center gap-1.5 uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-2">
+                      {c.category.icon && (
+                        <Icon name={`lucide:${c.category.icon}`} class="w-3 h-3" aria-hidden="true" />
+                      )}
+                      <span>{c.category.name}</span>
+                    </p>
                   )}
-                  <span>{c.category.name}</span>
-                </p>
-              )}
-              <h3 class="font-serif text-xl sm:text-2xl mb-2 sm:mb-3 leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
-                {c.name}
-              </h3>
-              {c.blurb && (
-                <p class="text-sm sm:text-base text-[color:var(--fg-muted)] leading-relaxed mb-3 line-clamp-3">
-                  {c.blurb}
-                </p>
-              )}
-              <p class="text-xs uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">
-                {c.bookCount === 1 ? "1 libro" : `${c.bookCount} libros`}
-              </p>
-            </a>
-          </li>
+                  <h2 class="font-serif text-2xl sm:text-3xl md:text-4xl leading-tight">
+                    <a href={`/colecciones/${c.slug}`} class="hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
+                      {c.name}
+                    </a>
+                  </h2>
+                </div>
+                <a
+                  href={`/colecciones/${c.slug}`}
+                  class="shrink-0 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition"
+                >
+                  <span>{c.bookCount === 1 ? "Ver libro" : `Ver los ${c.bookCount} libros`}</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M5 12h14"/>
+                    <path d="m13 5 7 7-7 7"/>
+                  </svg>
+                </a>
+              </div>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_1fr] gap-8 sm:gap-10 lg:gap-14">
+              {/* Lado izquierdo: blurb + lista de títulos */}
+              <aside class="min-w-0">
+                {c.blurb && (
+                  <p class="text-sm sm:text-base text-[color:var(--fg-muted)] leading-relaxed mb-5 sm:mb-6">
+                    {c.blurb}
+                  </p>
+                )}
+                {c.allBooks.length > 0 ? (
+                  <div>
+                    <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-3">
+                      {c.allBooks.length === 1 ? "Libro" : "Libros"}
+                    </p>
+                    <ul class="space-y-2">
+                      {c.allBooks.map((b) => (
+                        <li>
+                          <a
+                            href={`/catalogo/${b.slug}`}
+                            class="group inline-flex items-baseline gap-2 text-sm sm:text-base leading-tight hover:text-[color:var(--fg)] text-[color:var(--fg)]"
+                          >
+                            <span class="text-[color:var(--fg-muted)] group-hover:text-[color:var(--fg)] transition">·</span>
+                            <span class="font-serif italic group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
+                              {b.title}
+                            </span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p class="text-sm text-[color:var(--fg-muted)] italic">
+                    Aún no hay libros publicados en esta colección.
+                  </p>
+                )}
+              </aside>
+
+              {/* Lado derecho: carrusel de portadas, hasta 3 visibles. */}
+              <div class="min-w-0">
+                {c.carouselBooks.length > 0 ? (
+                  <div class="cas-coll-carousel" data-coll-carousel>
+                    <button
+                      type="button"
+                      class="cas-coll-arrow cas-coll-arrow-left"
+                      data-coll-prev
+                      aria-label="Anterior"
+                      tabindex="-1"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="m15 18-6-6 6-6"/>
+                      </svg>
+                    </button>
+                    <ul class="cas-coll-track" data-coll-track>
+                      {c.carouselBooks.map((b) => (
+                        <li class="cas-coll-slide">
+                          <a href={`/catalogo/${b.slug}`} class="group block">
+                            {b.cover_image_url ? (
+                              <img
+                                src={b.cover_image_url}
+                                alt={b.title}
+                                loading="lazy"
+                                class="w-full aspect-[3/4] object-cover bg-[color:var(--bg-alt)] shadow-md shadow-stone-900/10 ring-1 ring-stone-900/[0.04] group-hover:opacity-95 transition-opacity"
+                              />
+                            ) : (
+                              <div class="w-full aspect-[3/4] bg-[color:var(--bg-alt)]"></div>
+                            )}
+                            <p class="font-serif text-sm sm:text-base mt-3 leading-tight line-clamp-2 group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
+                              {b.title}
+                            </p>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      type="button"
+                      class="cas-coll-arrow cas-coll-arrow-right"
+                      data-coll-next
+                      aria-label="Siguiente"
+                      tabindex="-1"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="m9 18 6-6-6-6"/>
+                      </svg>
+                    </button>
+                  </div>
+                ) : c.cover_image_url ? (
+                  <a href={`/colecciones/${c.slug}`} class="block max-w-[260px]">
+                    <img
+                      src={c.cover_image_url}
+                      alt={c.name}
+                      loading="lazy"
+                      class="w-full aspect-[4/5] object-cover bg-[color:var(--bg-alt)]"
+                    />
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          </article>
         ))}
-      </ul>
+      </div>
 
       <p class="text-[color:var(--fg-muted)] mt-12 hidden" data-collections-empty>
         No hay colecciones en esta categoría.
@@ -174,22 +293,96 @@ const collectionsView = collections.map((c) => ({
     background: var(--fg);
     border-color: var(--fg);
   }
+
+  /* Carrusel de portadas. Track scroll-snap horizontal con tres
+     slides visibles en desktop; las flechas hacen scrollBy del ancho
+     visible. En mobile se ve uno a la vez. */
+  .cas-coll-carousel {
+    position: relative;
+  }
+  .cas-coll-track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 2 * 1.25rem) / 3);
+    gap: 1.25rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--fg) 25%, transparent) transparent;
+  }
+  .cas-coll-track::-webkit-scrollbar { height: 4px; }
+  .cas-coll-track::-webkit-scrollbar-thumb {
+    background: color-mix(in oklch, var(--fg) 25%, transparent);
+    border-radius: 2px;
+  }
+  .cas-coll-slide {
+    scroll-snap-align: start;
+    min-width: 0;
+  }
+  @media (max-width: 640px) {
+    .cas-coll-track { grid-auto-columns: 60%; gap: 0.875rem; }
+  }
+  @media (min-width: 641px) and (max-width: 1023px) {
+    .cas-coll-track { grid-auto-columns: calc((100% - 1.25rem) / 2); }
+  }
+
+  .cas-coll-arrow {
+    position: absolute;
+    top: 30%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--fg);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px -6px rgba(28, 25, 23, 0.18);
+    transition: opacity 160ms ease, transform 160ms ease;
+    z-index: 2;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .cas-coll-carousel:hover .cas-coll-arrow,
+  .cas-coll-carousel:focus-within .cas-coll-arrow {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .cas-coll-arrow:hover { transform: translateY(-50%) scale(1.05); }
+  .cas-coll-arrow-left { left: -14px; }
+  .cas-coll-arrow-right { right: -14px; }
+  /* Mobile: always-visible smaller arrows below the slides aren't
+     necessary — touch-scroll is the primary affordance there. Hide
+     the arrows below the tablet breakpoint to keep edges clean. */
+  @media (max-width: 768px) {
+    .cas-coll-arrow { display: none; }
+  }
 </style>
 
 <script is:inline>
   (() => {
     const section = document.querySelector("[data-collections-section]");
     if (!section) return;
+
+    // -- Filtro por categoría -------------------------------------
     const chips = section.querySelectorAll("[data-collections-chip]");
-    const cards = section.querySelectorAll("[data-collection-card]");
+    const rows = section.querySelectorAll("[data-collection-row]");
     const empty = section.querySelector("[data-collections-empty]");
 
     const apply = (filter) => {
       let visible = 0;
-      cards.forEach((card) => {
-        const cat = card.getAttribute("data-category") || "";
+      rows.forEach((row) => {
+        const cat = row.getAttribute("data-category") || "";
         const show = !filter || cat === filter;
-        card.classList.toggle("hidden", !show);
+        row.classList.toggle("hidden", !show);
         if (show) visible++;
       });
       if (empty) empty.classList.toggle("hidden", visible > 0);
@@ -200,6 +393,23 @@ const collectionsView = collections.map((c) => ({
 
     chips.forEach((chip) => {
       chip.addEventListener("click", () => apply(chip.getAttribute("data-filter") || ""));
+    });
+
+    // -- Carruseles de portadas -----------------------------------
+    section.querySelectorAll("[data-coll-carousel]").forEach((car) => {
+      const track = car.querySelector("[data-coll-track]");
+      const prev = car.querySelector("[data-coll-prev]");
+      const next = car.querySelector("[data-coll-next]");
+      if (!track) return;
+
+      const scrollOne = (dir) => {
+        const slide = track.querySelector(".cas-coll-slide");
+        const step = slide ? slide.getBoundingClientRect().width + 20 : track.clientWidth * 0.6;
+        track.scrollBy({ left: dir * step, behavior: "smooth" });
+      };
+
+      prev?.addEventListener("click", () => scrollOne(-1));
+      next?.addEventListener("click", () => scrollOne(1));
     });
   })();
 </script>

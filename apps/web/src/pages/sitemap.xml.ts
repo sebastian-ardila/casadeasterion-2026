@@ -1,14 +1,15 @@
 import type { APIRoute } from "astro";
 import { supabase } from "~/lib/supabase";
+import { loadSiteConfig } from "~/lib/site-config";
 
-const STATIC_PATHS = [
+const STATIC_PATHS_BASE = [
   { path: "/", priority: 1.0, changefreq: "daily" },
   { path: "/articulos", priority: 0.8, changefreq: "daily" },
   { path: "/catalogo", priority: 0.9, changefreq: "weekly" },
   { path: "/colecciones", priority: 0.7, changefreq: "weekly" },
   { path: "/autores", priority: 0.7, changefreq: "weekly" },
-  { path: "/nosotros", priority: 0.6, changefreq: "monthly" },
 ];
+const NOSOTROS_PATH = { path: "/nosotros", priority: 0.6, changefreq: "monthly" };
 
 const escapeXml = (str: string) =>
   str.replace(/[<>&'"]/g, (c) =>
@@ -24,18 +25,24 @@ export const GET: APIRoute = async ({ site }) => {
     return new Response("Site URL not configured.", { status: 500 });
   }
 
+  const cfg = await loadSiteConfig();
+  const nosotrosEnabled = cfg.nosotros_enabled !== false;
+
   const [postsRes, booksRes, authorsRes, staffRes, collectionsRes] = await Promise.all([
     supabase.from("posts").select("slug, updated_at, published_at").eq("status", "published"),
     supabase.from("books").select("slug, updated_at, publication_date").eq("status", "published"),
     supabase.from("authors").select("slug, updated_at"),
-    supabase.from("staff").select("slug, updated_at").eq("status", "published"),
+    nosotrosEnabled
+      ? supabase.from("staff").select("slug, updated_at").eq("status", "published")
+      : Promise.resolve({ data: [] as Array<{ slug: string; updated_at: string | null }> }),
     (supabase.from as any)("collections").select("slug, updated_at").eq("status", "published"),
   ]);
 
   type Entry = { url: string; lastmod?: string; priority: number; changefreq: string };
   const entries: Entry[] = [];
 
-  for (const p of STATIC_PATHS) {
+  const staticPaths = nosotrosEnabled ? [...STATIC_PATHS_BASE, NOSOTROS_PATH] : STATIC_PATHS_BASE;
+  for (const p of staticPaths) {
     entries.push({
       url: new URL(p.path, site).href,
       priority: p.priority,
