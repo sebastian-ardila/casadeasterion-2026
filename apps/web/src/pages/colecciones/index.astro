@@ -1,0 +1,205 @@
+---
+import Layout from "~/layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+import { supabase } from "~/lib/supabase";
+import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
+
+// "Colecciones" — agrupaciones temáticas de libros más allá del autor
+// y la categoría. Cada colección incluye un cover, descripción y
+// opcionalmente una categoría. El sitio público las muestra como un
+// grid filtrable y al hacer click se navega a /colecciones/[slug].
+
+const [{ data: collectionsRaw }, { data: bookCountsRaw }] = await Promise.all([
+  (supabase.from as any)("collections")
+    .select("id, slug, name, description_md, cover_image_url, sort_order, category:categories(id, name, icon, slug)")
+    .eq("status", "published")
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true }),
+  // Conteo de libros publicados por colección — un solo round-trip.
+  supabase
+    .from("books")
+    .select("collection_id" as any)
+    .eq("status", "published"),
+]);
+
+const collections = (collectionsRaw ?? []) as Array<{
+  id: string;
+  slug: string;
+  name: string;
+  description_md: string | null;
+  cover_image_url: string | null;
+  sort_order: number;
+  category: { id: string; name: string; icon: string | null; slug: string } | null;
+}>;
+
+// Map collection_id → count.
+const counts = new Map<string, number>();
+for (const row of (bookCountsRaw ?? []) as Array<{ collection_id: string | null }>) {
+  if (row.collection_id) {
+    counts.set(row.collection_id, (counts.get(row.collection_id) ?? 0) + 1);
+  }
+}
+
+// Categorías presentes para el filtro de chips.
+type ChipCat = { id: string; name: string; icon: string | null; slug: string };
+const categoryChips: ChipCat[] = [];
+const seenCats = new Set<string>();
+for (const c of collections) {
+  if (c.category && !seenCats.has(c.category.id)) {
+    seenCats.add(c.category.id);
+    categoryChips.push(c.category);
+  }
+}
+categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
+
+// Render markdown clamp para el grid (90 chars).
+const collectionsView = collections.map((c) => ({
+  ...c,
+  blurb: clampText(mdToPlainText(c.description_md ?? ""), 120),
+  bookCount: counts.get(c.id) ?? 0,
+}));
+---
+
+<Layout
+  title="Colecciones"
+  description="Colecciones editoriales de Casa de Asterión Ediciones: agrupaciones temáticas de libros de filosofía y poesía."
+  keywords={["colecciones Casa de Asterión", "colecciones editoriales", "colecciones de libros", "filosofía colección", "poesía colección"]}
+>
+  <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-20 pb-6 sm:pb-8">
+    <h1 class="font-serif text-3xl sm:text-4xl md:text-6xl mb-3 sm:mb-4">Colecciones</h1>
+    <p class="text-[color:var(--fg-muted)] max-w-prose text-base sm:text-lg leading-relaxed">
+      Agrupaciones temáticas de libros — invitaciones a leer un mismo gesto editorial desde distintas voces.
+    </p>
+  </section>
+
+  {collectionsView.length === 0 ? (
+    <section class="mx-auto max-w-[1180px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
+      <div class="border border-dashed border-[color:var(--border)] py-16 px-8 text-center text-[color:var(--fg-muted)]">
+        <p>Aún no hay colecciones publicadas.</p>
+      </div>
+    </section>
+  ) : (
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24" data-collections-section>
+      {categoryChips.length > 0 && (
+        <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-8 sm:mb-10" data-collections-chips>
+          <button
+            type="button"
+            class="cas-chip cas-chip-active"
+            data-collections-chip
+            data-filter=""
+          >
+            Todas
+          </button>
+          {categoryChips.map((cat) => (
+            <button
+              type="button"
+              class="cas-chip"
+              data-collections-chip
+              data-filter={cat.id}
+            >
+              {cat.icon && (
+                <Icon name={`lucide:${cat.icon}`} class="w-3.5 h-3.5" aria-hidden="true" />
+              )}
+              <span>{cat.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <ul class="grid gap-10 sm:gap-12 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" data-collections-grid>
+        {collectionsView.map((c) => (
+          <li data-collection-card data-category={c.category?.id ?? ""}>
+            <a href={`/colecciones/${c.slug}`} class="group flex flex-col hover:opacity-95 transition-opacity">
+              {c.cover_image_url ? (
+                <img
+                  src={c.cover_image_url}
+                  alt=""
+                  loading="lazy"
+                  class="w-full aspect-[4/5] object-cover bg-[color:var(--bg-alt)] mb-5 sm:mb-6"
+                />
+              ) : (
+                <div class="w-full aspect-[4/5] bg-[color:var(--bg-alt)] mb-5 sm:mb-6 flex items-center justify-center text-[color:var(--fg-muted)]">
+                  <Icon name="lucide:library" class="w-12 h-12" aria-hidden="true" />
+                </div>
+              )}
+              {c.category && (
+                <p class="inline-flex items-center gap-1.5 uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-2">
+                  {c.category.icon && (
+                    <Icon name={`lucide:${c.category.icon}`} class="w-3 h-3" aria-hidden="true" />
+                  )}
+                  <span>{c.category.name}</span>
+                </p>
+              )}
+              <h3 class="font-serif text-xl sm:text-2xl mb-2 sm:mb-3 leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
+                {c.name}
+              </h3>
+              {c.blurb && (
+                <p class="text-sm sm:text-base text-[color:var(--fg-muted)] leading-relaxed mb-3 line-clamp-3">
+                  {c.blurb}
+                </p>
+              )}
+              <p class="text-xs uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">
+                {c.bookCount === 1 ? "1 libro" : `${c.bookCount} libros`}
+              </p>
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <p class="text-[color:var(--fg-muted)] mt-12 hidden" data-collections-empty>
+        No hay colecciones en esta categoría.
+      </p>
+    </section>
+  )}
+</Layout>
+
+<style>
+  .cas-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--border);
+    color: var(--fg-muted);
+    background: transparent;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    cursor: pointer;
+    transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+  }
+  .cas-chip:hover { color: var(--fg); border-color: var(--fg); }
+  .cas-chip-active {
+    color: var(--bg);
+    background: var(--fg);
+    border-color: var(--fg);
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    const section = document.querySelector("[data-collections-section]");
+    if (!section) return;
+    const chips = section.querySelectorAll("[data-collections-chip]");
+    const cards = section.querySelectorAll("[data-collection-card]");
+    const empty = section.querySelector("[data-collections-empty]");
+
+    const apply = (filter) => {
+      let visible = 0;
+      cards.forEach((card) => {
+        const cat = card.getAttribute("data-category") || "";
+        const show = !filter || cat === filter;
+        card.classList.toggle("hidden", !show);
+        if (show) visible++;
+      });
+      if (empty) empty.classList.toggle("hidden", visible > 0);
+      chips.forEach((c) => {
+        c.classList.toggle("cas-chip-active", c.getAttribute("data-filter") === filter);
+      });
+    };
+
+    chips.forEach((chip) => {
+      chip.addEventListener("click", () => apply(chip.getAttribute("data-filter") || ""));
+    });
+  })();
+</script>

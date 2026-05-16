@@ -6,10 +6,11 @@ const config = await loadSiteConfig();
 const showSubscribe = config.subscribe_enabled !== false;
 
 const navItems = [
-  { href: "/catalogo",  label: "Catálogo",      icon: "lucide:book-open" },
-  { href: "/articulos", label: "Publicaciones", icon: "lucide:newspaper" },
-  { href: "/autores",   label: "Autores",       icon: "lucide:users" },
-  { href: "/nosotros",  label: "Nosotros",      icon: "lucide:building" },
+  { href: "/catalogo",    label: "Catálogo",      icon: "lucide:book-open" },
+  { href: "/colecciones", label: "Colecciones",   icon: "lucide:library" },
+  { href: "/articulos",   label: "Publicaciones", icon: "lucide:newspaper" },
+  { href: "/autores",     label: "Autores",       icon: "lucide:users" },
+  { href: "/nosotros",    label: "Nosotros",      icon: "lucide:building" },
 ];
 const path = Astro.url.pathname.replace(/\/$/, "") || "/";
 ---

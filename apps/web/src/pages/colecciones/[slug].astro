@@ -1,0 +1,123 @@
+---
+import Layout from "~/layouts/Layout.astro";
+import BookCard from "~/components/BookCard.astro";
+import { Icon } from "astro-icon/components";
+import { supabase } from "~/lib/supabase";
+import { loadSiteConfig } from "~/lib/site-config";
+import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
+
+// Ficha individual de una colección. Pre-rendered con getStaticPaths
+// desde cada slug publicado. Renderiza el header (cover + nombre +
+// descripción + categoría) y un grid de los libros que pertenecen.
+
+export async function getStaticPaths() {
+  const { data } = await (supabase.from as any)("collections")
+    .select("slug")
+    .eq("status", "published");
+  return (data ?? []).map((c: { slug: string }) => ({ params: { slug: c.slug } }));
+}
+
+const { slug } = Astro.params;
+const config = await loadSiteConfig();
+
+const { data: collection } = await (supabase.from as any)("collections")
+  .select("id, slug, name, description_md, cover_image_url, category:categories(id, name, icon, slug)")
+  .eq("slug", slug!)
+  .eq("status", "published")
+  .maybeSingle();
+
+if (!collection) {
+  return Astro.redirect("/colecciones");
+}
+
+const c = collection as {
+  id: string;
+  slug: string;
+  name: string;
+  description_md: string | null;
+  cover_image_url: string | null;
+  category: { id: string; name: string; icon: string | null; slug: string } | null;
+};
+
+// Libros publicados de esta colección, con autor primario inline para BookCard.
+const { data: booksData } = await supabase
+  .from("books")
+  .select("*, authors!books_author_id_fkey(name, slug)")
+  .eq("status", "published")
+  // collection_id es la columna nueva; cast porque los types aún no
+  // están regenerados.
+  .eq("collection_id" as any, c.id)
+  .order("publication_date", { ascending: false });
+
+const books = (booksData ?? []) as any[];
+
+const description = renderMarkdown(c.description_md ?? "");
+const metaDescription =
+  clampText(mdToPlainText(c.description_md ?? ""), 160) ||
+  `${c.name} — colección editorial de Casa de Asterión Ediciones.`;
+---
+
+<Layout
+  title={c.name}
+  description={metaDescription}
+  breadcrumbLabel={c.name}
+  image={c.cover_image_url}
+  imageAlt={`Colección ${c.name}`}
+  breadcrumbItems={[
+    { name: "Inicio", url: new URL("/", Astro.site).href },
+    { name: "Colecciones", url: new URL("/colecciones", Astro.site).href },
+    { name: c.name, url: Astro.url.href },
+  ]}
+>
+  <header class="mx-auto max-w-[1180px] px-5 sm:px-6 lg:px-12 pt-10 sm:pt-14 md:pt-20 pb-10 sm:pb-12 md:pb-16 grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[340px_1fr] gap-7 sm:gap-10 lg:gap-14 items-start">
+    <aside class="max-w-[280px] sm:max-w-[340px] mx-auto md:mx-0 w-full">
+      {c.cover_image_url ? (
+        <img
+          src={c.cover_image_url}
+          alt=""
+          class="w-full aspect-[4/5] object-cover bg-[color:var(--bg-alt)]"
+        />
+      ) : (
+        <div class="w-full aspect-[4/5] bg-[color:var(--bg-alt)] flex items-center justify-center text-[color:var(--fg-muted)]">
+          <Icon name="lucide:library" class="w-16 h-16" aria-hidden="true" />
+        </div>
+      )}
+    </aside>
+
+    <div class="min-w-0">
+      {c.category && (
+        <a
+          href={`/colecciones?categoria=${c.category.slug}`}
+          class="inline-flex items-center gap-1.5 uppercase text-[11px] sm:text-xs tracking-[0.22em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] mb-3 sm:mb-4 transition"
+        >
+          {c.category.icon && (
+            <Icon name={`lucide:${c.category.icon}`} class="w-3.5 h-3.5" aria-hidden="true" />
+          )}
+          <span>{c.category.name}</span>
+        </a>
+      )}
+      <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl mb-5 sm:mb-7 leading-tight">{c.name}</h1>
+      {description ? (
+        <div class="cas-md max-w-none" set:html={description}></div>
+      ) : (
+        <p class="text-[color:var(--fg-muted)] italic">Pronto añadiremos una descripción para esta colección.</p>
+      )}
+      <p class="mt-7 sm:mt-9 uppercase text-[10px] sm:text-xs tracking-[0.22em] text-[color:var(--fg-muted)]">
+        {books.length === 0 ? "Sin libros aún" : books.length === 1 ? "1 libro" : `${books.length} libros`}
+      </p>
+    </div>
+  </header>
+
+  {books.length > 0 && (
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
+      <h2 class="font-serif text-2xl sm:text-3xl md:text-4xl border-b border-[color:var(--border)] pb-5 sm:pb-7 mb-10 sm:mb-12 md:mb-14">
+        Libros de la colección
+      </h2>
+      <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4">
+        {books.map((book) => (
+          <BookCard book={book} author={book.authors ?? null} config={config} />
+        ))}
+      </div>
+    </section>
+  )}
+</Layout>

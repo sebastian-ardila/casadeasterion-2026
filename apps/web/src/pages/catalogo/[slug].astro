@@ -38,6 +38,20 @@ const { book_authors: rawJunction, ...book } = bookRaw as typeof bookRaw & {
 const authors = extractAuthors(rawJunction);
 const primaryAuthor = authors[0] ?? null;
 
+// Si el libro pertenece a una colección publicada, traemos su slug y
+// nombre para mostrar el badge "Parte de la colección…" sobre el
+// título. Cast porque collection_id es la columna nueva.
+const collectionId = (book as any).collection_id as string | null;
+let parentCollection: { slug: string; name: string } | null = null;
+if (collectionId) {
+  const { data } = await (supabase.from as any)("collections")
+    .select("slug, name")
+    .eq("id", collectionId)
+    .eq("status", "published")
+    .maybeSingle();
+  parentCollection = (data as { slug: string; name: string } | null) ?? null;
+}
+
 // "More from these authors" rail: books co-written by any of this book's
 // authors, ranked by recency. Fetched via the junction so a book counts
 // even if this author isn't the primary one on it.
@@ -195,6 +209,15 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
         overrides cascade into the .cas-md children too — see the inline
         <style> block at the bottom of this page. */}
     <div class="min-w-0">
+      {parentCollection && (
+        <a
+          href={`/colecciones/${parentCollection.slug}`}
+          class="inline-flex items-center gap-1.5 uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] mb-3 sm:mb-4 transition"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
+          <span>Parte de la colección · {parentCollection.name}</span>
+        </a>
+      )}
       <h1 class="cas-book-title font-serif text-2xl sm:text-3xl md:text-5xl leading-[1.1] mb-2 sm:mb-3">{book.title}</h1>
       {book.subtitle && (
         <p class="text-sm sm:text-base md:text-xl text-[color:var(--fg-muted)] italic mb-5 sm:mb-7 md:mb-8">{book.subtitle}</p>

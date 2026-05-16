@@ -5,6 +5,7 @@ const STATIC_PATHS = [
   { path: "/", priority: 1.0, changefreq: "daily" },
   { path: "/articulos", priority: 0.8, changefreq: "daily" },
   { path: "/catalogo", priority: 0.9, changefreq: "weekly" },
+  { path: "/colecciones", priority: 0.7, changefreq: "weekly" },
   { path: "/autores", priority: 0.7, changefreq: "weekly" },
   { path: "/nosotros", priority: 0.6, changefreq: "monthly" },
 ];
@@ -23,11 +24,12 @@ export const GET: APIRoute = async ({ site }) => {
     return new Response("Site URL not configured.", { status: 500 });
   }
 
-  const [postsRes, booksRes, authorsRes, staffRes] = await Promise.all([
+  const [postsRes, booksRes, authorsRes, staffRes, collectionsRes] = await Promise.all([
     supabase.from("posts").select("slug, updated_at, published_at").eq("status", "published"),
     supabase.from("books").select("slug, updated_at, publication_date").eq("status", "published"),
     supabase.from("authors").select("slug, updated_at"),
     supabase.from("staff").select("slug, updated_at").eq("status", "published"),
+    (supabase.from as any)("collections").select("slug, updated_at").eq("status", "published"),
   ]);
 
   type Entry = { url: string; lastmod?: string; priority: number; changefreq: string };
@@ -73,6 +75,15 @@ export const GET: APIRoute = async ({ site }) => {
       url: new URL(`/nosotros/${s.slug}`, site).href,
       lastmod: s.updated_at ?? undefined,
       priority: 0.4,
+      changefreq: "monthly",
+    });
+  }
+
+  for (const col of (collectionsRes.data ?? []) as Array<{ slug: string; updated_at: string | null }>) {
+    entries.push({
+      url: new URL(`/colecciones/${col.slug}`, site).href,
+      lastmod: col.updated_at ?? undefined,
+      priority: 0.6,
       changefreq: "monthly",
     });
   }
