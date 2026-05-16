@@ -29,30 +29,28 @@ const stripDiacritics = (s: string) =>
   <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24" data-authors-section>
     {authors && authors.length > 0 ? (
       <>
-        {/* Search bar */}
-        <div class="relative max-w-md mb-10 sm:mb-12">
-          <svg
-            class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[color:var(--fg-muted)] pointer-events-none"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="7"/>
-            <path d="m21 21-4.3-4.3"/>
-          </svg>
-          <input
-            type="text"
-            data-authors-search
-            placeholder="Buscar autor…"
-            autocomplete="off"
-            spellcheck="false"
-            aria-label="Buscar autor"
-            class="w-full pl-10 pr-3 py-2.5 sm:py-3 text-sm sm:text-base bg-[color:var(--bg-alt)] border border-[color:var(--border)] focus:border-[color:var(--fg)] focus:outline-none transition"
-          />
+        {/* Search bar — mismo patrón visual que /catalogo y /colecciones. */}
+        <div class="mb-8 sm:mb-10">
+          <label for="autores-search" class="sr-only">Buscar autor por nombre</label>
+          <div class="relative">
+            <svg
+              class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"
+              width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              id="autores-search"
+              type="search"
+              data-authors-search
+              placeholder="Buscar autor por nombre…"
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Buscar autor por nombre"
+              class="w-full pl-10 pr-3 py-3 border border-[color:var(--border)] bg-[color:var(--bg)] text-sm focus:outline-none focus:border-stone-900 transition-colors"
+            />
+          </div>
         </div>
 
         <div class="grid gap-8 sm:gap-10 md:gap-12 grid-cols-2 md:grid-cols-3 lg:grid-cols-4" data-authors-grid>
