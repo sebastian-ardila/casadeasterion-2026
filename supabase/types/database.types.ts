@@ -163,6 +163,7 @@ export type Database = {
           author_id: string | null
           canonical_url: string | null
           category_id: string | null
+          collection_id: string | null
           cover_image_alt: string | null
           cover_image_url: string | null
           created_at: string
@@ -190,6 +191,7 @@ export type Database = {
           author_id?: string | null
           canonical_url?: string | null
           category_id?: string | null
+          collection_id?: string | null
           cover_image_alt?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -217,6 +219,7 @@ export type Database = {
           author_id?: string | null
           canonical_url?: string | null
           category_id?: string | null
+          collection_id?: string | null
           cover_image_alt?: string | null
           cover_image_url?: string | null
           created_at?: string
@@ -253,6 +256,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "books_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
             referencedColumns: ["id"]
           },
           {
@@ -351,6 +361,63 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "collaborators_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections: {
+        Row: {
+          category_id: string | null
+          cover_image_url: string | null
+          created_at: string
+          description_md: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description_md?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description_md?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
