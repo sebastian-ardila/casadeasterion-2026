@@ -235,16 +235,19 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
                   </p>
                 )}
                 {c.allBooks.length > 0 ? (
-                  <div>
-                    <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-2.5 sm:mb-3">
+                  // Lista detallada de títulos+autor solo en desktop —
+                  // en mobile cargaría demasiada información para una
+                  // vista resumen. El detalle vive en /colecciones/[slug].
+                  <div class="hidden lg:block">
+                    <p class="uppercase text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-3">
                       {c.allBooks.length === 1 ? "Libro" : "Libros"}
                     </p>
-                    <ul class="space-y-1.5 sm:space-y-2">
+                    <ul class="space-y-2">
                       {c.allBooks.map((b) => (
                         <li>
                           <a
                             href={`/catalogo/${b.slug}`}
-                            class="group inline-flex items-baseline gap-2 text-sm sm:text-base leading-snug hover:text-[color:var(--fg)] text-[color:var(--fg)]"
+                            class="group inline-flex items-baseline gap-2 text-base leading-snug hover:text-[color:var(--fg)] text-[color:var(--fg)]"
                           >
                             <span class="text-[color:var(--fg-muted)] group-hover:text-[color:var(--fg)] transition">·</span>
                             <span class="min-w-0">
@@ -252,7 +255,7 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
                                 {b.title}
                               </span>
                               {b.authors?.name && (
-                                <span class="text-[color:var(--fg-muted)] text-xs sm:text-sm"> — {b.authors.name}</span>
+                                <span class="text-[color:var(--fg-muted)] text-sm"> — {b.authors.name}</span>
                               )}
                             </span>
                           </a>
