@@ -136,7 +136,7 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
             data-category={c.category?.id ?? ""}
           >
             <header class="mb-6 sm:mb-8 border-b border-[color:var(--border)] pb-5 sm:pb-7">
-              <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
                 <div class="min-w-0">
                   {c.category && (
                     <p class="inline-flex items-center gap-1.5 uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-2">
@@ -154,10 +154,10 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
                 </div>
                 <a
                   href={`/colecciones/${c.slug}`}
-                  class="shrink-0 inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.18em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition"
+                  class="group shrink-0 inline-flex items-center gap-2.5 self-start sm:self-end px-5 py-2.5 sm:px-6 sm:py-3 border border-[color:var(--fg)] text-[color:var(--fg)] text-xs uppercase tracking-[0.2em] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors"
                 >
                   <span>{c.bookCount === 1 ? "Ver libro" : `Ver los ${c.bookCount} libros`}</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="transition-transform group-hover:translate-x-1">
                     <path d="M5 12h14"/>
                     <path d="m13 5 7 7-7 7"/>
                   </svg>
