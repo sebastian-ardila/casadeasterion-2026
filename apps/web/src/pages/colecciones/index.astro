@@ -247,15 +247,15 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
                         <li>
                           <a
                             href={`/catalogo/${b.slug}`}
-                            class="group inline-flex items-baseline gap-2 text-base leading-snug hover:text-[color:var(--fg)] text-[color:var(--fg)]"
+                            class="group inline-flex items-baseline gap-2 font-serif text-base leading-snug text-[color:var(--fg)]"
                           >
                             <span class="text-[color:var(--fg-muted)] group-hover:text-[color:var(--fg)] transition">·</span>
                             <span class="min-w-0">
-                              <span class="font-serif italic group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
+                              <span class="italic group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
                                 {b.title}
                               </span>
                               {b.authors?.name && (
-                                <span class="text-[color:var(--fg-muted)] text-sm"> — {b.authors.name}</span>
+                                <span class="text-[color:var(--fg-muted)]"> — {b.authors.name}</span>
                               )}
                             </span>
                           </a>
