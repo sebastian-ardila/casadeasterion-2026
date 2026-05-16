@@ -21,7 +21,7 @@ const [{ data: collectionsRaw }, { data: booksRaw }] = await Promise.all([
     .order("name", { ascending: true }),
   supabase
     .from("books")
-    .select("id, slug, title, cover_image_url, publication_date, collection_id" as any)
+    .select("id, slug, title, cover_image_url, publication_date, collection_id, authors!books_author_id_fkey(name)" as any)
     .eq("status", "published")
     .order("publication_date", { ascending: false }),
 ]);
@@ -43,6 +43,7 @@ type Book = {
   cover_image_url: string | null;
   publication_date: string | null;
   collection_id: string | null;
+  authors: { name: string } | null;
 };
 
 // Strip diacritics & lowercase para que la búsqueda funcione sin
@@ -164,7 +165,7 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
         </div>
       )}
 
-      <div class="space-y-16 sm:space-y-20 md:space-y-24" data-collections-rows>
+      <div class="cas-coll-list" data-collections-rows>
         {collectionsView.map((c) => (
           <article
             class="cas-coll-row"
@@ -172,26 +173,49 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
             data-category={c.category?.id ?? ""}
             data-search-text={c.haystack}
           >
-            <header class="mb-6 sm:mb-8 border-b border-[color:var(--border)] pb-5 sm:pb-7">
-              <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-                <div class="min-w-0">
-                  {c.category && (
-                    <p class="inline-flex items-center gap-1.5 uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-2">
-                      {c.category.icon && (
-                        <Icon name={`lucide:${c.category.icon}`} class="w-3 h-3" aria-hidden="true" />
-                      )}
-                      <span>{c.category.name}</span>
-                    </p>
-                  )}
-                  <h2 class="font-serif text-2xl sm:text-3xl md:text-4xl leading-tight">
-                    <a href={`/colecciones/${c.slug}`} class="hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
-                      {c.name}
+            <header class="cas-coll-header mb-5 sm:mb-8 pb-4 sm:pb-7 border-b border-[color:var(--border)]">
+              <div class="flex items-start gap-4 sm:items-end sm:justify-between sm:gap-6">
+                {/* Cover thumbnail + title group. En mobile el thumb
+                    arranca el row y le da identidad; en desktop el
+                    thumb se oculta porque el carrusel del lado derecho
+                    ya muestra portadas. */}
+                <div class="flex items-start gap-3 sm:gap-0 min-w-0 flex-1">
+                  {(c.cover_image_url || c.carouselBooks[0]?.cover_image_url) && (
+                    <a
+                      href={`/colecciones/${c.slug}`}
+                      class="shrink-0 sm:hidden block w-12 h-16 overflow-hidden bg-[color:var(--bg-alt)]"
+                      aria-label={`Ver la colección ${c.name}`}
+                    >
+                      <img
+                        src={c.cover_image_url || c.carouselBooks[0]?.cover_image_url || ""}
+                        alt=""
+                        loading="lazy"
+                        class="w-full h-full object-cover"
+                      />
                     </a>
-                  </h2>
+                  )}
+                  <div class="min-w-0">
+                    {c.category && (
+                      <p class="inline-flex items-center gap-1.5 uppercase text-[9px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-1.5 sm:mb-2">
+                        {c.category.icon && (
+                          <Icon name={`lucide:${c.category.icon}`} class="w-3 h-3" aria-hidden="true" />
+                        )}
+                        <span>{c.category.name}</span>
+                      </p>
+                    )}
+                    <h2 class="font-serif text-xl sm:text-3xl md:text-4xl leading-tight">
+                      <a href={`/colecciones/${c.slug}`} class="hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
+                        {c.name}
+                      </a>
+                    </h2>
+                    <p class="sm:hidden mt-1 text-[10px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)]">
+                      {c.bookCount === 1 ? "1 libro" : `${c.bookCount} libros`}
+                    </p>
+                  </div>
                 </div>
                 <a
                   href={`/colecciones/${c.slug}`}
-                  class="group shrink-0 inline-flex items-center gap-2.5 self-start sm:self-end px-5 py-2.5 sm:px-6 sm:py-3 border border-[color:var(--fg)] text-[color:var(--fg)] text-xs uppercase tracking-[0.2em] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors"
+                  class="hidden sm:inline-flex group shrink-0 items-center gap-2.5 self-end px-6 py-3 border border-[color:var(--fg)] text-[color:var(--fg)] text-xs uppercase tracking-[0.2em] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors"
                 >
                   <span>{c.bookCount === 1 ? "Ver libro" : `Ver los ${c.bookCount} libros`}</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="transition-transform group-hover:translate-x-1">
@@ -202,29 +226,34 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
               </div>
             </header>
 
-            <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_1fr] gap-8 sm:gap-10 lg:gap-14">
+            <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_1fr] gap-6 sm:gap-10 lg:gap-14">
               {/* Lado izquierdo: blurb + lista de títulos */}
-              <aside class="min-w-0">
+              <aside class="min-w-0 order-2 lg:order-1">
                 {c.blurb && (
-                  <p class="text-sm sm:text-base text-[color:var(--fg-muted)] leading-relaxed mb-5 sm:mb-6">
+                  <p class="text-sm sm:text-base text-[color:var(--fg-muted)] leading-relaxed mb-4 sm:mb-6">
                     {c.blurb}
                   </p>
                 )}
                 {c.allBooks.length > 0 ? (
                   <div>
-                    <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-3">
+                    <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-2.5 sm:mb-3">
                       {c.allBooks.length === 1 ? "Libro" : "Libros"}
                     </p>
-                    <ul class="space-y-2">
+                    <ul class="space-y-1.5 sm:space-y-2">
                       {c.allBooks.map((b) => (
                         <li>
                           <a
                             href={`/catalogo/${b.slug}`}
-                            class="group inline-flex items-baseline gap-2 text-sm sm:text-base leading-tight hover:text-[color:var(--fg)] text-[color:var(--fg)]"
+                            class="group inline-flex items-baseline gap-2 text-sm sm:text-base leading-snug hover:text-[color:var(--fg)] text-[color:var(--fg)]"
                           >
                             <span class="text-[color:var(--fg-muted)] group-hover:text-[color:var(--fg)] transition">·</span>
-                            <span class="font-serif italic group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
-                              {b.title}
+                            <span class="min-w-0">
+                              <span class="font-serif italic group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
+                                {b.title}
+                              </span>
+                              {b.authors?.name && (
+                                <span class="text-[color:var(--fg-muted)] text-xs sm:text-sm"> — {b.authors.name}</span>
+                              )}
                             </span>
                           </a>
                         </li>
@@ -236,10 +265,22 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
                     Aún no hay libros publicados en esta colección.
                   </p>
                 )}
+
+                {/* Mobile-only CTA al final del aside, full-width. */}
+                <a
+                  href={`/colecciones/${c.slug}`}
+                  class="group sm:hidden mt-5 flex w-full items-center justify-center gap-2.5 px-5 py-2.5 border border-[color:var(--fg)] text-[color:var(--fg)] text-[11px] uppercase tracking-[0.2em] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors"
+                >
+                  <span>{c.bookCount === 1 ? "Ver libro" : `Ver los ${c.bookCount} libros`}</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="transition-transform group-hover:translate-x-1">
+                    <path d="M5 12h14"/>
+                    <path d="m13 5 7 7-7 7"/>
+                  </svg>
+                </a>
               </aside>
 
               {/* Lado derecho: carrusel de portadas, hasta 3 visibles. */}
-              <div class="min-w-0">
+              <div class="min-w-0 order-1 lg:order-2">
                 {c.carouselBooks.length > 0 ? (
                   <div class="cas-coll-carousel" data-coll-carousel>
                     <button
@@ -267,7 +308,7 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
                             ) : (
                               <div class="w-full aspect-[3/4] bg-[color:var(--bg-alt)]"></div>
                             )}
-                            <p class="font-serif text-sm sm:text-base mt-3 leading-tight line-clamp-2 group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
+                            <p class="font-serif text-xs sm:text-base mt-2 sm:mt-3 leading-tight line-clamp-2 group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">
                               {b.title}
                             </p>
                           </a>
@@ -331,9 +372,32 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
     border-color: var(--fg);
   }
 
+  /* Lista de colecciones — divider más visible y compacto en mobile,
+     spacing original en desktop. */
+  .cas-coll-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .cas-coll-row + .cas-coll-row {
+    margin-top: 2.5rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+  @media (min-width: 640px) {
+    .cas-coll-row + .cas-coll-row {
+      margin-top: 5rem;
+      padding-top: 0;
+      border-top: 0;
+    }
+  }
+  @media (min-width: 768px) {
+    .cas-coll-row + .cas-coll-row { margin-top: 6rem; }
+  }
+
   /* Carrusel de portadas. Track scroll-snap horizontal con tres
      slides visibles en desktop; las flechas hacen scrollBy del ancho
-     visible. En mobile se ve uno a la vez. */
+     visible. En mobile mostramos ~2.3 portadas pequeñas para que se
+     vea claramente que hay más libros desplazables. */
   .cas-coll-carousel {
     position: relative;
   }
@@ -362,7 +426,7 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
     min-width: 0;
   }
   @media (max-width: 640px) {
-    .cas-coll-track { grid-auto-columns: 60%; gap: 0.875rem; }
+    .cas-coll-track { grid-auto-columns: 42%; gap: 0.75rem; }
   }
   @media (min-width: 641px) and (max-width: 1023px) {
     .cas-coll-track { grid-auto-columns: calc((100% - 1.25rem) / 2); }
