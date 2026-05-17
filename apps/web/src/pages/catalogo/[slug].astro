@@ -38,18 +38,41 @@ const { book_authors: rawJunction, ...book } = bookRaw as typeof bookRaw & {
 const authors = extractAuthors(rawJunction);
 const primaryAuthor = authors[0] ?? null;
 
-// Si el libro pertenece a una colección publicada, traemos su slug y
-// nombre para mostrar el badge "Parte de la colección…" sobre el
-// título. Cast porque collection_id es la columna nueva.
+// Si el libro pertenece a una colección publicada, traemos su slug,
+// nombre, descripción y los otros libros publicados que la integran.
+// Cast porque collection_id es la columna nueva.
+type ParentCollection = {
+  slug: string;
+  name: string;
+  description_md: string | null;
+  cover_image_url: string | null;
+};
 const collectionId = (book as any).collection_id as string | null;
-let parentCollection: { slug: string; name: string } | null = null;
+let parentCollection: ParentCollection | null = null;
+let collectionSiblings: any[] = [];
 if (collectionId) {
   const { data } = await (supabase.from as any)("collections")
-    .select("slug, name")
+    .select("slug, name, description_md, cover_image_url")
     .eq("id", collectionId)
     .eq("status", "published")
     .maybeSingle();
-  parentCollection = (data as { slug: string; name: string } | null) ?? null;
+  parentCollection = (data as ParentCollection | null) ?? null;
+
+  if (parentCollection) {
+    // Otros libros publicados de la misma colección (excluyendo el
+    // libro actual). Traemos hasta 12 + el autor primario via junction
+    // — el render es un carrusel horizontal con scroll-snap, así que
+    // si la colección tiene más de los visibles, el lector navega
+    // dentro de la sección antes de ir a /colecciones/[slug].
+    const { data: siblingsRaw } = await (supabase.from as any)("books")
+      .select("*, book_authors(sort_order, author:authors(*))")
+      .eq("collection_id", collectionId)
+      .eq("status", "published")
+      .neq("id", book.id)
+      .order("publication_date", { ascending: false })
+      .limit(12);
+    collectionSiblings = (siblingsRaw as any[]) ?? [];
+  }
 }
 
 // "More from these authors" rail: books co-written by any of this book's
@@ -135,7 +158,7 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
     { name: book.title, url: Astro.url.href },
   ]}
 >
-  <article class="mx-auto max-w-[1100px] px-5 sm:px-6 lg:px-12 pt-6 sm:pt-10 md:pt-16 pb-12 sm:pb-16 md:pb-20 grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_1fr] gap-7 sm:gap-9 lg:gap-14">
+  <article class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-6 sm:pt-10 md:pt-16 pb-12 sm:pb-16 md:pb-20 grid grid-cols-1 lg:grid-cols-[minmax(0,360px)_1fr] gap-7 sm:gap-9 lg:gap-16">
     {/* Left rail: cover + author card + tech info. On mobile this stacks
         before the description; tech info is reordered to the bottom. */}
     <aside class="lg:sticky lg:top-24 self-start space-y-5 sm:space-y-6 lg:space-y-7">
@@ -212,10 +235,25 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
       {parentCollection && (
         <a
           href={`/colecciones/${parentCollection.slug}`}
-          class="inline-flex items-center gap-1.5 uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] mb-3 sm:mb-4 transition"
+          class="group flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6 p-3 sm:p-4 border border-[color:var(--border)] bg-[color:var(--bg-alt)]/60 hover:border-[color:var(--fg)] hover:bg-[color:var(--bg-alt)] transition-colors"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
-          <span>Parte de la colección · {parentCollection.name}</span>
+          <span class="flex w-10 h-10 sm:w-11 sm:h-11 items-center justify-center bg-[color:var(--bg)] border border-[color:var(--border)] group-hover:border-[color:var(--fg)] transition-colors shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/>
+            </svg>
+          </span>
+          <div class="min-w-0 flex-1">
+            <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)] mb-0.5">
+              Parte de la colección
+            </p>
+            <p class="font-serif text-base sm:text-lg md:text-xl leading-tight text-[color:var(--fg)] group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)] truncate">
+              {parentCollection.name}
+            </p>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-[color:var(--fg-muted)] group-hover:text-[color:var(--fg)] group-hover:translate-x-0.5 transition" aria-hidden="true">
+            <path d="M5 12h14"/>
+            <path d="m13 5 7 7-7 7"/>
+          </svg>
         </a>
       )}
       <h1 class="cas-book-title font-serif text-2xl sm:text-3xl md:text-5xl leading-[1.1] mb-2 sm:mb-3">{book.title}</h1>
@@ -252,6 +290,164 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
       />
     </div>
   </article>
+
+  {/* Otros libros de la misma colección. Carrusel horizontal con
+      scroll-snap — 4 portadas visibles en desktop, 2 en mobile. El
+      botón "Ver colección" sigue siendo prominente al final del header
+      y se repite como CTA debajo del carrusel. */}
+  {parentCollection && collectionSiblings.length > 0 && (
+    <section class="bg-[color:var(--bg-alt)] border-y border-[color:var(--border)]">
+      <div class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 py-16 sm:py-20 md:py-24">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 sm:gap-6 mb-8 sm:mb-10 md:mb-12 border-b border-[color:var(--border)] pb-6 sm:pb-7 md:pb-8">
+          <div class="min-w-0">
+            <p class="uppercase text-[10px] sm:text-xs tracking-[0.2em] text-[color:var(--fg-muted)] mb-1.5 sm:mb-2 inline-flex items-center gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
+              <span>De la colección</span>
+            </p>
+            <h2 class="font-serif text-xl sm:text-2xl md:text-3xl leading-tight">
+              Otros libros de <a href={`/colecciones/${parentCollection.slug}`} class="italic hover:underline underline-offset-4 decoration-[color:var(--fg-muted)]">{parentCollection.name}</a>
+            </h2>
+          </div>
+          <a
+            href={`/colecciones/${parentCollection.slug}`}
+            class="group inline-flex items-center justify-center gap-2.5 self-start sm:self-auto shrink-0 border border-[color:var(--fg)] text-[color:var(--fg)] px-5 py-2.5 sm:px-6 sm:py-3 text-[11px] sm:text-xs uppercase tracking-[0.22em] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors"
+          >
+            <span>Ver colección</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+              <path d="M5 12h14"/>
+              <path d="m13 5 7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+
+        <div class="cas-coll-sib-carousel relative">
+          <ul class="cas-coll-sib-track" data-coll-sib-track>
+            {collectionSiblings.map((b: any) => {
+              const siblingAuthors = extractAuthors(
+                (b.book_authors ?? []) as { sort_order: number; author: Author | null }[],
+              );
+              const siblingAuthor = siblingAuthors[0] ?? null;
+              return (
+                <li class="cas-coll-sib-slide">
+                  <BookCard book={b} author={siblingAuthor} config={config} />
+                </li>
+              );
+            })}
+          </ul>
+          {collectionSiblings.length > 4 && (
+            <>
+              <button
+                type="button"
+                class="cas-coll-sib-arrow cas-coll-sib-arrow-prev hidden md:inline-flex"
+                aria-label="Anterior"
+                data-coll-sib-prev
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <button
+                type="button"
+                class="cas-coll-sib-arrow cas-coll-sib-arrow-next hidden md:inline-flex"
+                aria-label="Siguiente"
+                data-coll-sib-next
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <style>
+    .cas-coll-sib-carousel { position: relative; }
+    .cas-coll-sib-track {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: calc((100% - 3 * 2.5rem) / 4);
+      gap: 2.5rem;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      list-style: none;
+      margin: 0;
+      padding: 0 0 0.5rem;
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in oklch, var(--fg) 25%, transparent) transparent;
+    }
+    .cas-coll-sib-track::-webkit-scrollbar { height: 4px; }
+    .cas-coll-sib-track::-webkit-scrollbar-thumb {
+      background: color-mix(in oklch, var(--fg) 25%, transparent);
+      border-radius: 2px;
+    }
+    .cas-coll-sib-slide {
+      scroll-snap-align: start;
+      min-width: 0;
+    }
+    @media (max-width: 640px) {
+      .cas-coll-sib-track { grid-auto-columns: 60%; gap: 1.25rem; }
+    }
+    @media (min-width: 641px) and (max-width: 1023px) {
+      .cas-coll-sib-track {
+        grid-auto-columns: calc((100% - 2 * 2rem) / 3);
+        gap: 2rem;
+      }
+    }
+    .cas-coll-sib-arrow {
+      position: absolute;
+      top: 30%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      border-radius: 9999px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--fg);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      transition: background-color 0.15s, border-color 0.15s, opacity 0.2s;
+      z-index: 2;
+    }
+    .cas-coll-sib-arrow:hover {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+    }
+    .cas-coll-sib-arrow[disabled] { opacity: 0.3; pointer-events: none; }
+    .cas-coll-sib-arrow-prev { left: -18px; }
+    .cas-coll-sib-arrow-next { right: -18px; }
+  </style>
+
+  <script is:inline>
+    (() => {
+      const init = () => {
+        document.querySelectorAll("[data-coll-sib-track]").forEach((track) => {
+          if (track.dataset.csibBound) return;
+          track.dataset.csibBound = "1";
+          const wrap = track.closest(".cas-coll-sib-carousel");
+          if (!wrap) return;
+          const prev = wrap.querySelector("[data-coll-sib-prev]");
+          const next = wrap.querySelector("[data-coll-sib-next]");
+          const updateArrows = () => {
+            const max = track.scrollWidth - track.clientWidth;
+            if (prev) prev.toggleAttribute("disabled", track.scrollLeft <= 1);
+            if (next) next.toggleAttribute("disabled", track.scrollLeft >= max - 1);
+          };
+          const step = () => Math.max(track.clientWidth * 0.85, 200);
+          prev?.addEventListener("click", () => track.scrollBy({ left: -step(), behavior: "smooth" }));
+          next?.addEventListener("click", () => track.scrollBy({ left: step(), behavior: "smooth" }));
+          track.addEventListener("scroll", updateArrows, { passive: true });
+          window.addEventListener("resize", updateArrows);
+          updateArrows();
+        });
+      };
+      init();
+      document.addEventListener("astro:page-load", init);
+    })();
+  </script>
 
   {/* Otros libros: cualquier libro escrito por al menos uno de los
       autores de éste. Cuando hay un solo autor, el "Ver todos" lleva a
