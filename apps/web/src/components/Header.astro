@@ -24,13 +24,23 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
       href="/"
       class="flex items-center gap-2 sm:gap-3 font-serif tracking-[0.18em] uppercase font-medium hover:opacity-70 transition shrink-0 min-w-0"
     >
-      <img
-        src="/casadeasterion.webp"
-        alt=""
-        width="48"
-        height="48"
-        class="h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12 object-contain shrink-0"
-      />
+      <span class="cas-logo-swap h-9 w-9 sm:h-10 sm:w-10 md:h-12 md:w-12 shrink-0">
+        <img
+          src="/casadeasterion4.webp"
+          alt=""
+          width="48"
+          height="48"
+          class="cas-logo-default h-full w-full object-contain"
+        />
+        <img
+          src="/casadeasterion5.webp"
+          alt=""
+          width="48"
+          height="48"
+          loading="lazy"
+          class="cas-logo-hover h-full w-full object-contain"
+        />
+      </span>
       <span class="flex flex-col leading-[1.1] tracking-[0.16em] text-[11px] sm:text-xs md:text-sm text-[color:var(--fg)] font-semibold">
         <span>Casa de</span>
         <span>Asterión</span>
@@ -81,36 +91,42 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
     </div>
   </div>
 
-  {/* Mobile drawer */}
-  <nav
-    id="mobile-nav"
-    class="md:hidden hidden border-t border-[color:var(--border)] bg-[color:var(--bg)]"
-  >
-    <ul class="px-6 py-4 flex flex-col gap-1">
-      {navItems.map((item) => (
-        <li>
-          <a
-            href={item.href}
-            class:list={[
-              "flex items-center gap-3 py-3 uppercase text-sm tracking-[0.18em] font-medium",
-              path.startsWith(item.href)
-                ? "text-[color:var(--fg)]"
-                : "text-[color:var(--fg-muted)] hover:text-[color:var(--fg)]",
-            ]}
-          >
-            <Icon name={item.icon} class="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>{item.label}</span>
-          </a>
-        </li>
-      ))}
-      {showSubscribe && (
-        <li class="pt-3 mt-2 border-t border-[color:var(--border)]">
-          <a href="/#suscribirse" class="btn-outline inline-block">Suscribirse</a>
-        </li>
-      )}
-    </ul>
-  </nav>
 </header>
+
+{/* Mobile drawer — vive FUERA del <header> porque éste tiene
+    backdrop-blur, que crea un containing block para elementos fixed
+    y rompía el posicionamiento full-screen del drawer. Aquí es fixed
+    relativo al viewport como esperábamos. z-20 para quedar sobre el
+    contenido pero debajo del header sticky (z-30) que mantiene
+    visible el botón de cerrar. */}
+<nav
+  id="mobile-nav"
+  class="md:hidden hidden fixed inset-x-0 top-16 sm:top-20 bottom-0 z-20 border-t border-[color:var(--border)] bg-[color:var(--bg)] overflow-y-auto"
+>
+  <ul class="px-6 sm:px-8 py-8 flex flex-col gap-1">
+    {navItems.map((item) => (
+      <li>
+        <a
+          href={item.href}
+          class:list={[
+            "flex items-center gap-4 py-4 sm:py-5 uppercase text-base sm:text-lg tracking-[0.2em] font-medium border-b border-[color:var(--border)]",
+            path.startsWith(item.href)
+              ? "text-[color:var(--fg)]"
+              : "text-[color:var(--fg-muted)] hover:text-[color:var(--fg)]",
+          ]}
+        >
+          <Icon name={item.icon} class="w-5 h-5 shrink-0" aria-hidden="true" />
+          <span>{item.label}</span>
+        </a>
+      </li>
+    ))}
+    {showSubscribe && (
+      <li class="pt-8 mt-2">
+        <a href="/#suscribirse" class="btn-outline inline-block">Suscribirse</a>
+      </li>
+    )}
+  </ul>
+</nav>
 
 <script is:inline>
   (() => {

@@ -199,3 +199,19 @@
     font-weight: 600;
   }
 }
+
+/* Logo hover swap — el wrapper apila dos imgs (default + hover) y
+   hovering cualquiera dispara un cross-fade de 200ms. Sólo afecta al
+   wrapper .cas-logo-swap; el resto del link sigue con su propio hover. */
+.cas-logo-swap { position: relative; display: inline-block; line-height: 0; }
+.cas-logo-swap > .cas-logo-default,
+.cas-logo-swap > .cas-logo-hover { transition: opacity 200ms ease; }
+.cas-logo-swap > .cas-logo-hover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+.cas-logo-swap:hover > .cas-logo-default { opacity: 0; }
+.cas-logo-swap:hover > .cas-logo-hover { opacity: 1; }

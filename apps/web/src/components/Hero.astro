@@ -1,4 +1,5 @@
 ---
+import { Icon } from "astro-icon/components";
 // Hero — the home page hero. Wordmark monolith with a single italic
 // editorial tagline and CTAs. Texts come from the CMS
 // (site_configuration); the right-half image and section background
@@ -38,10 +39,35 @@ const {
 
 const titleLines = title.split(/\r?\n/).filter(Boolean);
 const hasTertiary = !!(ctaTertiaryLabel && ctaTertiaryHref);
+
+// Mapeo href → icono lucide para los CTA. Misma convención que la nav
+// del Header — así un botón "Entrar al catálogo" / "Leer publicaciones"
+// / "Ver colecciones" carga el icono correcto sin necesidad de
+// configurarlo desde el CMS.
+function iconForHref(href: string): string | null {
+  if (!href) return null;
+  if (href.startsWith("/catalogo")) return "lucide:book-open";
+  if (href.startsWith("/colecciones")) return "lucide:library";
+  if (
+    href.startsWith("/articulos") ||
+    href.startsWith("/filosofia") ||
+    href.startsWith("/poesia")
+  ) return "lucide:newspaper";
+  if (href.startsWith("/autores")) return "lucide:users";
+  if (href.startsWith("/nosotros")) return "lucide:building";
+  return null;
+}
+const primaryIcon = iconForHref(ctaPrimaryHref);
+const secondaryIcon = iconForHref(ctaSecondaryHref);
+const tertiaryIcon = ctaTertiaryHref ? iconForHref(ctaTertiaryHref) : null;
 ---
 
 <div class="relative z-10 w-full md:w-1/2 px-5 sm:px-8 md:px-12 lg:px-16 xl:px-20 py-10 md:py-0 max-w-2xl">
-  <h1 class="font-serif text-[2.4rem] sm:text-[3.2rem] md:text-[4.2rem] lg:text-[5.4rem] xl:text-[6.2rem] leading-[0.98] sm:leading-[0.95] text-[color:var(--fg)] mb-6 sm:mb-10 break-words">
+  {/* Wordmark. El logo dejó de ser inline tanto en mobile como en
+      desktop: en ambos viewports se renderiza absoluto sobre el seam
+      entre cream y la fotografía (vertical en mobile, horizontal en
+      desktop). Ver index.astro. */}
+  <h1 class="font-serif text-[2.4rem] sm:text-[2.6rem] md:text-[3.6rem] lg:text-[4.8rem] xl:text-[5.6rem] leading-[0.98] sm:leading-[0.95] text-[color:var(--fg)] break-words mb-6 sm:mb-10">
     {titleLines.map((line, i) => (
       <>
         {i > 0 && <br />}
@@ -54,14 +80,14 @@ const hasTertiary = !!(ctaTertiaryLabel && ctaTertiaryHref);
       (typographic remate); md+ keeps the original V4 layout with the
       rule anchoring the line on the left. */}
   <p class="font-serif italic text-[1.45rem] sm:text-[1.7rem] md:text-[1.95rem] lg:text-[2.4rem] xl:text-[2.8rem] text-[color:var(--fg-muted)] leading-[1.2] max-w-2xl md:hidden mb-3">
-    {tagline}
+    <span class="cas-hero-text-bg">{tagline}</span>
   </p>
   <span class="block md:hidden w-16 h-px bg-[color:var(--fg)]/40 mb-8"></span>
 
   <div class="hidden md:flex md:items-baseline md:gap-4 md:mb-12">
     <span class="block w-12 h-px bg-[color:var(--fg)] shrink-0 translate-y-[-0.6em]"></span>
     <p class="font-serif italic text-[1.95rem] lg:text-[2.4rem] xl:text-[2.8rem] text-[color:var(--fg-muted)] leading-[1.2] max-w-2xl">
-      {tagline}
+      <span class="cas-hero-text-bg">{tagline}</span>
     </p>
   </div>
 
@@ -71,7 +97,10 @@ const hasTertiary = !!(ctaTertiaryLabel && ctaTertiaryHref);
       href={ctaPrimaryHref}
       class="md:hidden group flex items-center justify-between gap-4 w-full bg-[color:var(--fg)] text-[color:var(--bg)] pl-6 pr-5 h-14 text-[11.5px] uppercase tracking-[0.22em] hover:bg-[color:var(--fg-muted)] transition-colors"
     >
-      <span>{ctaPrimaryLabel}</span>
+      <span class="inline-flex items-center gap-2.5 min-w-0">
+        {primaryIcon && <Icon name={primaryIcon} class="w-4 h-4 shrink-0" aria-hidden="true" />}
+        <span class="truncate">{ctaPrimaryLabel}</span>
+      </span>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1 shrink-0" aria-hidden="true">
         <path d="M5 12h14" />
         <path d="m13 5 7 7-7 7" />
@@ -82,13 +111,16 @@ const hasTertiary = !!(ctaTertiaryLabel && ctaTertiaryHref);
         si no hay tertiary). Solo visibles en mobile — en md+ no se
         muestran porque el Header ya expone Publicaciones y Colecciones
         en la nav. */}
-    <div class="md:hidden flex flex-col gap-3">
+    <div class="md:hidden flex gap-3">
       <a
         href={ctaSecondaryHref}
-        class="group flex items-center justify-between gap-4 w-full border border-[color:var(--fg)] text-[color:var(--fg)] pl-6 pr-5 h-12 text-[11.5px] uppercase tracking-[0.22em] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors"
+        class="group flex flex-1 min-w-0 items-center justify-between gap-2 border border-[color:var(--fg)] text-[color:var(--fg)] pl-3 pr-2.5 h-12 text-[10.5px] uppercase tracking-[0.18em] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors"
       >
-        <span>{ctaSecondaryLabel}</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1 shrink-0" aria-hidden="true">
+        <span class="inline-flex items-center gap-2 min-w-0">
+          {secondaryIcon && <Icon name={secondaryIcon} class="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+          <span class="truncate">{ctaSecondaryLabel}</span>
+        </span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1 shrink-0" aria-hidden="true">
           <path d="M5 12h14" />
           <path d="m13 5 7 7-7 7" />
         </svg>
@@ -96,10 +128,13 @@ const hasTertiary = !!(ctaTertiaryLabel && ctaTertiaryHref);
       {hasTertiary && (
         <a
           href={ctaTertiaryHref}
-          class="group flex items-center justify-between gap-4 w-full border border-[color:var(--fg)] text-[color:var(--fg)] pl-6 pr-5 h-12 text-[11.5px] uppercase tracking-[0.22em] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors"
+          class="group flex flex-1 min-w-0 items-center justify-between gap-2 border border-[color:var(--fg)] text-[color:var(--fg)] pl-3 pr-2.5 h-12 text-[10.5px] uppercase tracking-[0.18em] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors"
         >
-          <span>{ctaTertiaryLabel}</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1 shrink-0" aria-hidden="true">
+          <span class="inline-flex items-center gap-2 min-w-0">
+            {tertiaryIcon && <Icon name={tertiaryIcon} class="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+            <span class="truncate">{ctaTertiaryLabel}</span>
+          </span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1 shrink-0" aria-hidden="true">
             <path d="M5 12h14" />
             <path d="m13 5 7 7-7 7" />
           </svg>
@@ -112,8 +147,9 @@ const hasTertiary = !!(ctaTertiaryLabel && ctaTertiaryHref);
       href={ctaPrimaryHref}
       class="hidden md:inline-flex group items-stretch border border-[color:var(--fg)] text-[color:var(--fg)] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors max-w-full"
     >
-      <span class="px-8 h-14 inline-flex items-center text-xs uppercase tracking-[0.26em]">
-        {ctaPrimaryLabel}
+      <span class="px-8 h-14 inline-flex items-center gap-3 text-xs uppercase tracking-[0.26em]">
+        {primaryIcon && <Icon name={primaryIcon} class="w-4 h-4 shrink-0" aria-hidden="true" />}
+        <span>{ctaPrimaryLabel}</span>
       </span>
       <span class="border-l border-current/40 group-hover:border-current/60 w-14 h-14 inline-flex items-center justify-center transition-colors shrink-0">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">
@@ -131,7 +167,8 @@ const hasTertiary = !!(ctaTertiaryLabel && ctaTertiaryHref);
         href={ctaSecondaryHref}
         class="group inline-flex items-center gap-2 text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition-colors"
       >
-        {ctaSecondaryLabel}
+        {secondaryIcon && <Icon name={secondaryIcon} class="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+        <span>{ctaSecondaryLabel}</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-0.5" aria-hidden="true">
           <path d="M5 12h14" />
           <path d="m13 5 7 7-7 7" />
@@ -144,7 +181,8 @@ const hasTertiary = !!(ctaTertiaryLabel && ctaTertiaryHref);
             href={ctaTertiaryHref}
             class="group inline-flex items-center gap-2 text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition-colors"
           >
-            {ctaTertiaryLabel}
+            {tertiaryIcon && <Icon name={tertiaryIcon} class="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+            <span>{ctaTertiaryLabel}</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-0.5" aria-hidden="true">
               <path d="M5 12h14" />
               <path d="m13 5 7 7-7 7" />
@@ -155,3 +193,20 @@ const hasTertiary = !!(ctaTertiaryLabel && ctaTertiaryHref);
     </div>
   </div>
 </div>
+
+<style>
+  /* Halo difuminado en color de fondo alrededor del texto del hero.
+     Invisible en condiciones normales (cream-on-cream), pero cuando
+     el seam-logo pasa por detrás del texto, el halo crea un "anillo"
+     cream que mejora la lectura sin agregar fondo opaco rectangular. */
+  /* Fondo translúcido del color del contenedor por detrás del tagline.
+     box-decoration-break: clone hace que cada línea reciba su propio
+     rectángulo. La transparencia (~85%) suaviza el bloque y deja que
+     el seam logo se asome un poquito por detrás del texto. */
+  .cas-hero-text-bg {
+    background-color: color-mix(in oklch, var(--bg-alt) 92%, transparent);
+    padding: 0.08em 0.28em;
+    -webkit-box-decoration-break: clone;
+            box-decoration-break: clone;
+  }
+</style>
