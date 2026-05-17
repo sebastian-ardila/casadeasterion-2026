@@ -79,17 +79,52 @@ import Layout from "~/layouts/Layout.astro";
             <span class="text-xs uppercase tracking-[0.14em] text-stone-500">
               Teléfono <span class="text-red-700" aria-hidden="true">*</span>
             </span>
-            <input
-              type="tel"
-              id="checkout-phone"
-              required
-              autocomplete="tel"
-              autofocus
-              inputmode="tel"
-              maxlength="50"
-              placeholder="+57 300 000 0000"
-              class="px-3 py-2 border border-stone-300 focus:border-stone-900 focus:outline-none bg-[color:var(--bg)]"
-            />
+            <div class="relative flex">
+              <button
+                type="button"
+                id="checkout-country-btn"
+                aria-haspopup="listbox"
+                aria-expanded="false"
+                aria-label="Cambiar país"
+                data-iso="CO"
+                data-code="+57"
+                class="flex items-center gap-2 px-3 py-2 border border-stone-300 border-r-0 bg-stone-50 hover:bg-stone-100 text-sm cursor-pointer focus:outline-none focus:border-stone-900 focus:z-10 transition-colors"
+              >
+                <span data-country-flag class="text-base leading-none">🇨🇴</span>
+                <span data-country-code class="text-stone-700 tabular-nums">+57</span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-stone-500 shrink-0" aria-hidden="true">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <input
+                type="tel"
+                id="checkout-phone"
+                required
+                autocomplete="tel-national"
+                autofocus
+                inputmode="tel"
+                maxlength="50"
+                placeholder="300 000 0000"
+                class="flex-1 min-w-0 px-3 py-2 border border-stone-300 focus:border-stone-900 focus:outline-none bg-[color:var(--bg)]"
+              />
+              <div
+                id="checkout-country-list"
+                role="listbox"
+                aria-label="Países"
+                class="hidden absolute z-30 top-full left-0 mt-1 w-80 max-w-[calc(100vw-2.5rem)] max-h-72 border border-stone-300 bg-white shadow-lg overflow-hidden flex-col"
+              >
+                <div class="p-2 border-b border-stone-200 bg-stone-50/50">
+                  <input
+                    type="search"
+                    id="checkout-country-search"
+                    placeholder="Buscar país o código"
+                    autocomplete="off"
+                    class="w-full px-2.5 py-1.5 text-sm border border-stone-300 focus:border-stone-900 focus:outline-none bg-white"
+                  />
+                </div>
+                <ul id="checkout-country-options" class="overflow-y-auto flex-1 text-sm"></ul>
+              </div>
+            </div>
           </label>
           <label class="flex flex-col gap-1.5 sm:col-span-2">
             <span class="text-xs uppercase tracking-[0.14em] text-stone-500">
@@ -181,6 +216,214 @@ import Layout from "~/layouts/Layout.astro";
     s.replace(/[&<>"']/g, (c) => (
       { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string
     ));
+
+  // ─── Country picker (teléfono) ────────────────────────────────────────
+  // Lista priorizada: Colombia primero (mercado principal), luego el
+  // resto de hispanohablantes en orden alfabético, y al final algunos
+  // destinos comunes para diáspora (USA, Canadá, Europa).
+  type Country = { iso: string; name: string; code: string; flag: string };
+  const COUNTRIES: Country[] = [
+    { iso: "CO", name: "Colombia",            code: "+57",  flag: "🇨🇴" },
+    { iso: "AR", name: "Argentina",           code: "+54",  flag: "🇦🇷" },
+    { iso: "BO", name: "Bolivia",             code: "+591", flag: "🇧🇴" },
+    { iso: "CL", name: "Chile",               code: "+56",  flag: "🇨🇱" },
+    { iso: "CR", name: "Costa Rica",          code: "+506", flag: "🇨🇷" },
+    { iso: "CU", name: "Cuba",                code: "+53",  flag: "🇨🇺" },
+    { iso: "EC", name: "Ecuador",             code: "+593", flag: "🇪🇨" },
+    { iso: "SV", name: "El Salvador",         code: "+503", flag: "🇸🇻" },
+    { iso: "ES", name: "España",              code: "+34",  flag: "🇪🇸" },
+    { iso: "GT", name: "Guatemala",           code: "+502", flag: "🇬🇹" },
+    { iso: "HN", name: "Honduras",            code: "+504", flag: "🇭🇳" },
+    { iso: "MX", name: "México",              code: "+52",  flag: "🇲🇽" },
+    { iso: "NI", name: "Nicaragua",           code: "+505", flag: "🇳🇮" },
+    { iso: "PA", name: "Panamá",              code: "+507", flag: "🇵🇦" },
+    { iso: "PY", name: "Paraguay",            code: "+595", flag: "🇵🇾" },
+    { iso: "PE", name: "Perú",                code: "+51",  flag: "🇵🇪" },
+    { iso: "PR", name: "Puerto Rico",         code: "+1",   flag: "🇵🇷" },
+    { iso: "DO", name: "República Dominicana",code: "+1",   flag: "🇩🇴" },
+    { iso: "UY", name: "Uruguay",             code: "+598", flag: "🇺🇾" },
+    { iso: "VE", name: "Venezuela",           code: "+58",  flag: "🇻🇪" },
+    { iso: "US", name: "Estados Unidos",      code: "+1",   flag: "🇺🇸" },
+    { iso: "CA", name: "Canadá",              code: "+1",   flag: "🇨🇦" },
+    { iso: "BR", name: "Brasil",              code: "+55",  flag: "🇧🇷" },
+    { iso: "FR", name: "Francia",             code: "+33",  flag: "🇫🇷" },
+    { iso: "DE", name: "Alemania",            code: "+49",  flag: "🇩🇪" },
+    { iso: "IT", name: "Italia",              code: "+39",  flag: "🇮🇹" },
+    { iso: "PT", name: "Portugal",            code: "+351", flag: "🇵🇹" },
+    { iso: "GB", name: "Reino Unido",         code: "+44",  flag: "🇬🇧" },
+  ];
+
+  // Mapeo de timezone → ISO. Cubre la mayoría de zonas hispanas y los
+  // destinos de diáspora más comunes; si la zona no aparece, usamos CO
+  // como default (es la editorial principal).
+  const TZ_TO_ISO: Record<string, string> = {
+    "America/Bogota": "CO",
+    "America/Mexico_City": "MX", "America/Tijuana": "MX",
+    "America/Cancun": "MX",      "America/Monterrey": "MX",
+    "America/Argentina/Buenos_Aires": "AR",
+    "America/Argentina/Cordoba": "AR",
+    "America/Argentina/Mendoza": "AR",
+    "America/Argentina/Salta": "AR",
+    "America/Argentina/Ushuaia": "AR",
+    "America/Santiago": "CL",
+    "America/Lima": "PE",
+    "America/Guayaquil": "EC",
+    "America/Caracas": "VE",
+    "America/La_Paz": "BO",
+    "America/Asuncion": "PY",
+    "America/Montevideo": "UY",
+    "America/Costa_Rica": "CR",
+    "America/Panama": "PA",
+    "America/Guatemala": "GT",
+    "America/Tegucigalpa": "HN",
+    "America/El_Salvador": "SV",
+    "America/Managua": "NI",
+    "America/Santo_Domingo": "DO",
+    "America/Puerto_Rico": "PR",
+    "America/Havana": "CU",
+    "Europe/Madrid": "ES",
+    "America/New_York": "US", "America/Chicago": "US",
+    "America/Denver": "US",   "America/Los_Angeles": "US",
+    "America/Phoenix": "US",  "America/Anchorage": "US",
+    "Pacific/Honolulu": "US",
+    "America/Toronto": "CA",  "America/Vancouver": "CA",
+    "America/Edmonton": "CA", "America/Winnipeg": "CA",
+    "America/Halifax": "CA",
+    "America/Sao_Paulo": "BR", "America/Manaus": "BR",
+    "America/Recife": "BR",    "America/Fortaleza": "BR",
+    "Europe/Paris": "FR",
+    "Europe/Berlin": "DE",
+    "Europe/Rome": "IT",
+    "Europe/Lisbon": "PT",
+    "Europe/London": "GB",
+  };
+
+  const COUNTRY_STORAGE_KEY = "cda:checkout-country";
+
+  function detectCountryIso(): string {
+    try {
+      const stored = localStorage.getItem(COUNTRY_STORAGE_KEY);
+      if (stored && COUNTRIES.some((c) => c.iso === stored)) return stored;
+    } catch {}
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz && TZ_TO_ISO[tz]) return TZ_TO_ISO[tz];
+    } catch {}
+    return "CO";
+  }
+
+  function selectCountry(iso: string) {
+    const c = COUNTRIES.find((x) => x.iso === iso) ?? COUNTRIES[0];
+    const btn = $("checkout-country-btn");
+    if (!btn) return;
+    btn.setAttribute("data-iso", c.iso);
+    btn.setAttribute("data-code", c.code);
+    const flag = btn.querySelector("[data-country-flag]");
+    const code = btn.querySelector("[data-country-code]");
+    if (flag) flag.textContent = c.flag;
+    if (code) code.textContent = c.code;
+    try { localStorage.setItem(COUNTRY_STORAGE_KEY, c.iso); } catch {}
+  }
+
+  function renderCountryOptions(filter = "") {
+    const ul = $("checkout-country-options");
+    if (!ul) return;
+    const q = filter.trim().toLowerCase();
+    const items = q
+      ? COUNTRIES.filter(
+          (c) =>
+            c.name.toLowerCase().includes(q) ||
+            c.code.includes(q.replace(/^\+/, "")) ||
+            c.iso.toLowerCase() === q,
+        )
+      : COUNTRIES;
+    const selected = $("checkout-country-btn")?.getAttribute("data-iso") || "CO";
+    ul.innerHTML = items
+      .map(
+        (c) => `
+          <li>
+            <button
+              type="button"
+              role="option"
+              data-iso="${c.iso}"
+              aria-selected="${c.iso === selected ? "true" : "false"}"
+              class="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-stone-100 ${c.iso === selected ? "bg-stone-100" : ""}"
+            >
+              <span class="text-base leading-none">${c.flag}</span>
+              <span class="flex-1 min-w-0 truncate text-stone-900">${escape(c.name)}</span>
+              <span class="text-xs text-stone-500 tabular-nums shrink-0">${c.code}</span>
+            </button>
+          </li>`,
+      )
+      .join("") || `<li class="px-3 py-4 text-center text-stone-500 text-xs">Sin resultados</li>`;
+  }
+
+  function openCountryList(open: boolean) {
+    const list = $("checkout-country-list");
+    const btn = $("checkout-country-btn");
+    if (!list || !btn) return;
+    list.classList.toggle("hidden", !open);
+    list.classList.toggle("flex", open);
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) {
+      renderCountryOptions("");
+      const search = $<HTMLInputElement>("checkout-country-search");
+      if (search) {
+        search.value = "";
+        requestAnimationFrame(() => search.focus());
+      }
+    }
+  }
+
+  function bindCountryPicker() {
+    const btn = $("checkout-country-btn");
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = "1";
+    selectCountry(detectCountryIso());
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const list = $("checkout-country-list");
+      const open = list?.classList.contains("hidden");
+      openCountryList(!!open);
+    });
+    const search = $<HTMLInputElement>("checkout-country-search");
+    search?.addEventListener("input", (e) => {
+      renderCountryOptions((e.target as HTMLInputElement).value);
+    });
+    const ul = $("checkout-country-options");
+    ul?.addEventListener("click", (e) => {
+      const opt = (e.target as Element).closest("[data-iso]");
+      if (!opt) return;
+      const iso = opt.getAttribute("data-iso") || "CO";
+      selectCountry(iso);
+      openCountryList(false);
+      $<HTMLInputElement>("checkout-phone")?.focus();
+    });
+    // Cerrar al click fuera del picker
+    document.addEventListener("click", (e) => {
+      const t = e.target as Element | null;
+      if (!t) return;
+      if (t.closest("#checkout-country-list") || t.closest("#checkout-country-btn")) return;
+      openCountryList(false);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") openCountryList(false);
+    });
+  }
+
+  // Combina código de país + número local en un E.164 razonable.
+  // - Si el usuario tipeó un "+" al inicio, respetamos su número entero
+  //   (asumimos que ya viene con código internacional).
+  // - Si no, prependemos el código del picker.
+  function composePhone(): string | undefined {
+    const raw = ($<HTMLInputElement>("checkout-phone")?.value ?? "").trim();
+    if (!raw) return undefined;
+    const cleaned = raw.replace(/[^\d+]/g, "");
+    if (!cleaned) return undefined;
+    if (cleaned.startsWith("+")) return cleaned;
+    const code = $("checkout-country-btn")?.getAttribute("data-code") || "+57";
+    return code + cleaned;
+  }
 
   function showSection(name: "empty" | "login" | "form") {
     ["empty", "login", "form"].forEach((n) => {
@@ -319,7 +562,7 @@ import Layout from "~/layouts/Layout.astro";
         items: items.map((it) => ({ slug: it.slug, quantity: it.quantity })),
         customer: {
           full_name: ($<HTMLInputElement>("checkout-name")?.value ?? "").trim(),
-          phone: ($<HTMLInputElement>("checkout-phone")?.value ?? "").trim() || undefined,
+          phone: composePhone(),
           notes: ($<HTMLTextAreaElement>("checkout-notes")?.value ?? "").trim() || undefined,
         },
       };
@@ -368,10 +611,12 @@ import Layout from "~/layouts/Layout.astro";
 
   bindLogin();
   bindForm();
+  bindCountryPicker();
   bootstrap();
   document.addEventListener("astro:page-load", () => {
     bindLogin();
     bindForm();
+    bindCountryPicker();
     bootstrap();
   });
 </script>
