@@ -1,8 +1,13 @@
 ---
 // Hero — the home page hero. Wordmark monolith with a single italic
-// editorial tagline and a primary + secondary CTA. Texts come from the
-// CMS (site_configuration); the right-half image and section background
+// editorial tagline and CTAs. Texts come from the CMS
+// (site_configuration); the right-half image and section background
 // color are wired separately in index.astro.
+//
+// Desktop layout: primary outline button + secondary text link.
+// Mobile layout: primary solid pill + two secondary outline buttons
+// (Publicaciones + Colecciones). The third CTA only appears on
+// mobile — desktop already exposes Publicaciones in the Header nav.
 
 interface Props {
   /** Multi-line wordmark. Newlines (\n) become <br />. */
@@ -12,9 +17,12 @@ interface Props {
   /** Primary CTA — solid pill on mobile, split outline on md+. */
   ctaPrimaryLabel: string;
   ctaPrimaryHref: string;
-  /** Secondary CTA — quiet text link. */
+  /** Secondary CTA — text link on md+, outline button on mobile. */
   ctaSecondaryLabel: string;
   ctaSecondaryHref: string;
+  /** Tertiary CTA — mobile only. Outline button next to secondary. */
+  ctaTertiaryLabel?: string;
+  ctaTertiaryHref?: string;
 }
 
 const {
@@ -24,9 +32,12 @@ const {
   ctaPrimaryHref,
   ctaSecondaryLabel,
   ctaSecondaryHref,
+  ctaTertiaryLabel,
+  ctaTertiaryHref,
 } = Astro.props;
 
 const titleLines = title.split(/\r?\n/).filter(Boolean);
+const hasTertiary = !!(ctaTertiaryLabel && ctaTertiaryHref);
 ---
 
 <div class="relative z-10 w-full md:w-1/2 px-5 sm:px-8 md:px-12 lg:px-16 xl:px-20 py-10 md:py-0 max-w-2xl">
@@ -66,6 +77,36 @@ const titleLines = title.split(/\r?\n/).filter(Boolean);
         <path d="m13 5 7 7-7 7" />
       </svg>
     </a>
+
+    {/* Mobile secondary CTAs: dos botones outline apilados (o uno solo
+        si no hay tertiary). Solo visibles en mobile — en md+ no se
+        muestran porque el Header ya expone Publicaciones y Colecciones
+        en la nav. */}
+    <div class="md:hidden flex flex-col gap-3">
+      <a
+        href={ctaSecondaryHref}
+        class="group flex items-center justify-between gap-4 w-full border border-[color:var(--fg)] text-[color:var(--fg)] pl-6 pr-5 h-12 text-[11.5px] uppercase tracking-[0.22em] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors"
+      >
+        <span>{ctaSecondaryLabel}</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1 shrink-0" aria-hidden="true">
+          <path d="M5 12h14" />
+          <path d="m13 5 7 7-7 7" />
+        </svg>
+      </a>
+      {hasTertiary && (
+        <a
+          href={ctaTertiaryHref}
+          class="group flex items-center justify-between gap-4 w-full border border-[color:var(--fg)] text-[color:var(--fg)] pl-6 pr-5 h-12 text-[11.5px] uppercase tracking-[0.22em] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors"
+        >
+          <span>{ctaTertiaryLabel}</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-1 shrink-0" aria-hidden="true">
+            <path d="M5 12h14" />
+            <path d="m13 5 7 7-7 7" />
+          </svg>
+        </a>
+      )}
+    </div>
+
     {/* Desktop primary CTA: split outline */}
     <a
       href={ctaPrimaryHref}
@@ -82,9 +123,11 @@ const titleLines = title.split(/\r?\n/).filter(Boolean);
       </span>
     </a>
 
+    {/* Desktop secondary: text link (Publicaciones). Tertiary no se
+        muestra aquí — desktop ya tiene Colecciones en el Header. */}
     <a
       href={ctaSecondaryHref}
-      class="group inline-flex items-center gap-2 text-[11.5px] sm:text-xs uppercase tracking-[0.22em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition-colors"
+      class="hidden md:inline-flex group items-center gap-2 text-xs uppercase tracking-[0.22em] text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] transition-colors"
     >
       {ctaSecondaryLabel}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform group-hover:translate-x-0.5" aria-hidden="true">
