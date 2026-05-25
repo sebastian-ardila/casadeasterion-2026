@@ -165,14 +165,15 @@ const heroImageMobile = config.hero_image_url?.trim()
     })();
   </script>
 
-  {/* Posts recientes */}
+  {/* Posts recientes — grid de 3 columnas en desktop para mantener
+      la sección compacta incluso cuando solo hay 1 ó 2 lecturas. */}
   {rest.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-20 sm:pt-24 md:pt-28 pb-16 sm:pb-20 md:pb-24">
-      <div class="flex items-end justify-between gap-4 mb-10 sm:mb-12 md:mb-14 border-b border-[color:var(--border)] pb-7 sm:pb-8 md:pb-10">
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-14 sm:pt-16 md:pt-20 pb-12 sm:pb-16 md:pb-20">
+      <div class="flex items-end justify-between gap-4 mb-8 sm:mb-10 md:mb-12 border-b border-[color:var(--border)] pb-5 sm:pb-6 md:pb-8">
         <h2 class="font-serif text-2xl sm:text-3xl md:text-4xl">Lecturas recientes</h2>
         <a href="/filosofia" class="nav-link shrink-0 pb-1">Ver todo</a>
       </div>
-      <div class="grid gap-10 sm:gap-12 md:grid-cols-2">
+      <div class="grid gap-8 sm:gap-10 sm:grid-cols-2 lg:grid-cols-3">
         {rest.map((post) => (
           <PostCard
             post={post}

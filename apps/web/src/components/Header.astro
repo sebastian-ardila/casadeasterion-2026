@@ -6,14 +6,39 @@ const config = await loadSiteConfig();
 const showSubscribe = config.subscribe_enabled !== false;
 const showNosotros = config.nosotros_enabled !== false;
 
-const navItems = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: string;
+  /** Hijos que despliegan un submenú al hacer hover (desktop) o tap
+   *  (mobile). El padre sigue siendo navegable: su `href` es el
+   *  destino principal cuando el usuario hace click directo. */
+  children?: { href: string; label: string; icon: string }[];
+};
+
+const navItems: NavItem[] = [
   { href: "/catalogo",    label: "Catálogo",      icon: "lucide:book-open" },
   { href: "/colecciones", label: "Colecciones",   icon: "lucide:library" },
   { href: "/articulos",   label: "Publicaciones", icon: "lucide:newspaper" },
-  { href: "/autores",     label: "Autores",       icon: "lucide:users" },
-  ...(showNosotros ? [{ href: "/nosotros", label: "Nosotros", icon: "lucide:building" }] : []),
+  {
+    href: "/autores",
+    label: "Autores",
+    icon: "lucide:users",
+    children: [
+      { href: "/autores",       label: "Autores",       icon: "lucide:users" },
+      { href: "/colaboradores", label: "Colaboradores", icon: "lucide:user-plus" },
+    ],
+  },
+  ...(showNosotros ? [{ href: "/nosotros", label: "Nosotros", icon: "lucide:building" } as NavItem] : []),
 ];
 const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+
+// Match-active helper: el padre se marca activo si la ruta actual
+// arranca con su href o con el de cualquier hijo.
+function isItemActive(item: NavItem): boolean {
+  if (path.startsWith(item.href)) return true;
+  return (item.children ?? []).some((c) => path.startsWith(c.href));
+}
 ---
 
 <header
@@ -50,16 +75,56 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
 
     <nav class="hidden md:flex items-center gap-6 lg:gap-8">
       {navItems.map((item) => (
-        <a
-          href={item.href}
-          class:list={[
-            "nav-link inline-flex items-center gap-1.5",
-            path.startsWith(item.href) && "text-[color:var(--fg)]",
-          ]}
-        >
-          <Icon name={item.icon} class="w-3.5 h-3.5" aria-hidden="true" />
-          <span>{item.label}</span>
-        </a>
+        item.children ? (
+          /* Wrapper de dropdown: hover sobre el wrapper abre el panel
+             vía CSS (.cas-nav-dropdown:hover .cas-nav-panel). El
+             trigger es navegable también (focusable, sigue al href). */
+          <div class="cas-nav-dropdown relative">
+            <a
+              href={item.href}
+              aria-haspopup="true"
+              class:list={[
+                "nav-link inline-flex items-center gap-1.5",
+                isItemActive(item) && "text-[color:var(--fg)]",
+              ]}
+            >
+              <Icon name={item.icon} class="w-3.5 h-3.5" aria-hidden="true" />
+              <span>{item.label}</span>
+              <Icon name="lucide:chevron-down" class="w-3 h-3 opacity-70" aria-hidden="true" />
+            </a>
+            <div class="cas-nav-panel absolute left-0 top-full pt-2 min-w-[12rem] z-40">
+              <ul class="cas-nav-panel-inner bg-[color:var(--bg)] border border-[color:var(--border)] shadow-lg shadow-stone-900/5 py-2">
+                {item.children.map((child) => (
+                  <li>
+                    <a
+                      href={child.href}
+                      class:list={[
+                        "flex items-center gap-2.5 px-4 py-2.5 text-[0.78rem] uppercase tracking-[0.16em] transition-colors",
+                        path.startsWith(child.href)
+                          ? "text-[color:var(--fg)] bg-[color:var(--bg-alt)]"
+                          : "text-[color:var(--fg-muted)] hover:text-[color:var(--fg)] hover:bg-[color:var(--bg-alt)]",
+                      ]}
+                    >
+                      <Icon name={child.icon} class="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                      <span>{child.label}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        ) : (
+          <a
+            href={item.href}
+            class:list={[
+              "nav-link inline-flex items-center gap-1.5",
+              path.startsWith(item.href) && "text-[color:var(--fg)]",
+            ]}
+          >
+            <Icon name={item.icon} class="w-3.5 h-3.5" aria-hidden="true" />
+            <span>{item.label}</span>
+          </a>
+        )
       ))}
     </nav>
 
@@ -105,20 +170,61 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
 >
   <ul class="px-6 sm:px-8 py-8 flex flex-col gap-1">
     {navItems.map((item) => (
-      <li>
-        <a
-          href={item.href}
-          class:list={[
-            "flex items-center gap-4 py-4 sm:py-5 uppercase text-base sm:text-lg tracking-[0.2em] font-medium border-b border-[color:var(--border)]",
-            path.startsWith(item.href)
-              ? "text-[color:var(--fg)]"
-              : "text-[color:var(--fg-muted)] hover:text-[color:var(--fg)]",
-          ]}
-        >
-          <Icon name={item.icon} class="w-5 h-5 shrink-0" aria-hidden="true" />
-          <span>{item.label}</span>
-        </a>
-      </li>
+      item.children ? (
+        /* Acordeón mobile: el padre es un botón que expande/colapsa
+           la lista de hijos. Los hijos heredan el mismo tipo de fila
+           que el resto del menu, solo que con indent visual. */
+        <li class="cas-mnav-group">
+          <button
+            type="button"
+            data-mnav-toggle
+            aria-expanded="false"
+            class:list={[
+              "w-full flex items-center gap-4 py-4 sm:py-5 uppercase text-base sm:text-lg tracking-[0.2em] font-medium border-b border-[color:var(--border)]",
+              isItemActive(item)
+                ? "text-[color:var(--fg)]"
+                : "text-[color:var(--fg-muted)] hover:text-[color:var(--fg)]",
+            ]}
+          >
+            <Icon name={item.icon} class="w-5 h-5 shrink-0" aria-hidden="true" />
+            <span class="flex-1 text-left">{item.label}</span>
+            <Icon name="lucide:chevron-down" class="cas-mnav-chevron w-4 h-4 shrink-0 transition-transform" aria-hidden="true" />
+          </button>
+          <ul class="cas-mnav-children hidden bg-[color:var(--bg-alt)]">
+            {item.children.map((child) => (
+              <li>
+                <a
+                  href={child.href}
+                  class:list={[
+                    "flex items-center gap-4 py-3.5 pl-10 sm:pl-12 pr-6 uppercase text-sm sm:text-base tracking-[0.2em] border-b border-[color:var(--border)]",
+                    path.startsWith(child.href)
+                      ? "text-[color:var(--fg)]"
+                      : "text-[color:var(--fg-muted)] hover:text-[color:var(--fg)]",
+                  ]}
+                >
+                  <Icon name={child.icon} class="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>{child.label}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </li>
+      ) : (
+        <li>
+          <a
+            href={item.href}
+            class:list={[
+              "flex items-center gap-4 py-4 sm:py-5 uppercase text-base sm:text-lg tracking-[0.2em] font-medium border-b border-[color:var(--border)]",
+              path.startsWith(item.href)
+                ? "text-[color:var(--fg)]"
+                : "text-[color:var(--fg-muted)] hover:text-[color:var(--fg)]",
+            ]}
+          >
+            <Icon name={item.icon} class="w-5 h-5 shrink-0" aria-hidden="true" />
+            <span>{item.label}</span>
+          </a>
+        </li>
+      )
     ))}
     {showSubscribe && (
       <li class="pt-8 mt-2">
@@ -127,6 +233,28 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
     )}
   </ul>
 </nav>
+
+<style>
+  /* Dropdown desktop — hover/focus abre el panel. Padding-top en el
+     panel (.pt-2) crea un "puente" sobre el cual el mouse puede
+     transitar sin perder el hover. */
+  .cas-nav-panel {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease, transform 140ms ease;
+    transform: translateY(-4px);
+  }
+  .cas-nav-dropdown:hover .cas-nav-panel,
+  .cas-nav-dropdown:focus-within .cas-nav-panel {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  /* Acordeón mobile: el chevron rota 180° cuando el grupo está abierto. */
+  .cas-mnav-group[data-open="true"] .cas-mnav-chevron {
+    transform: rotate(180deg);
+  }
+</style>
 
 <script is:inline>
   (() => {
@@ -143,6 +271,33 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
       iconOpen?.classList.toggle("hidden", open);
       iconClose?.classList.toggle("hidden", !open);
     };
+
+    // Acordeón: cada botón [data-mnav-toggle] expande/colapsa su lista
+    // .cas-mnav-children siguiente. No es exclusivo — varios grupos
+    // pueden estar abiertos a la vez. Default abierto si el padre o
+    // alguno de los hijos coincide con la ruta actual.
+    drawer.querySelectorAll("[data-mnav-toggle]").forEach((toggle) => {
+      const group = toggle.closest(".cas-mnav-group");
+      const children = group?.querySelector(".cas-mnav-children");
+      if (!group || !children) return;
+      // Auto-expand al cargar si algún hijo está activo (el padre
+      // tendrá text-[color:var(--fg)] al estar activo).
+      const hasActiveChild = !!children.querySelector(
+        'a[class*="var(--fg)]"]:not([class*="muted"])',
+      );
+      if (hasActiveChild) {
+        group.setAttribute("data-open", "true");
+        children.classList.remove("hidden");
+        toggle.setAttribute("aria-expanded", "true");
+      }
+      toggle.addEventListener("click", () => {
+        const isOpen = group.getAttribute("data-open") === "true";
+        const next = !isOpen;
+        group.setAttribute("data-open", next ? "true" : "false");
+        children.classList.toggle("hidden", !next);
+        toggle.setAttribute("aria-expanded", next ? "true" : "false");
+      });
+    });
 
     btn.addEventListener("click", () => {
       set(drawer.classList.contains("hidden"));

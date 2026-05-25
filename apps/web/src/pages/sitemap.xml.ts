@@ -8,6 +8,7 @@ const STATIC_PATHS_BASE = [
   { path: "/catalogo", priority: 0.9, changefreq: "weekly" },
   { path: "/colecciones", priority: 0.7, changefreq: "weekly" },
   { path: "/autores", priority: 0.7, changefreq: "weekly" },
+  { path: "/colaboradores", priority: 0.6, changefreq: "weekly" },
 ];
 const NOSOTROS_PATH = { path: "/nosotros", priority: 0.6, changefreq: "monthly" };
 
@@ -28,7 +29,7 @@ export const GET: APIRoute = async ({ site }) => {
   const cfg = await loadSiteConfig();
   const nosotrosEnabled = cfg.nosotros_enabled !== false;
 
-  const [postsRes, booksRes, authorsRes, staffRes, collectionsRes] = await Promise.all([
+  const [postsRes, booksRes, authorsRes, staffRes, collectionsRes, collaboratorsRes] = await Promise.all([
     supabase.from("posts").select("slug, updated_at, published_at").eq("status", "published"),
     supabase.from("books").select("slug, updated_at, publication_date").eq("status", "published"),
     supabase.from("authors").select("slug, updated_at"),
@@ -36,6 +37,7 @@ export const GET: APIRoute = async ({ site }) => {
       ? supabase.from("staff").select("slug, updated_at").eq("status", "published")
       : Promise.resolve({ data: [] as Array<{ slug: string; updated_at: string | null }> }),
     (supabase.from as any)("collections").select("slug, updated_at").eq("status", "published"),
+    supabase.from("collaborators").select("slug, updated_at"),
   ]);
 
   type Entry = { url: string; lastmod?: string; priority: number; changefreq: string };
@@ -91,6 +93,15 @@ export const GET: APIRoute = async ({ site }) => {
       url: new URL(`/colecciones/${col.slug}`, site).href,
       lastmod: col.updated_at ?? undefined,
       priority: 0.6,
+      changefreq: "monthly",
+    });
+  }
+
+  for (const c of collaboratorsRes.data ?? []) {
+    entries.push({
+      url: new URL(`/colaboradores/${c.slug}`, site).href,
+      lastmod: c.updated_at ?? undefined,
+      priority: 0.4,
       changefreq: "monthly",
     });
   }
