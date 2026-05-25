@@ -82,6 +82,9 @@ export type SiteConfigMap = {
    *  the link is removed from the Header, /nosotros/* redirects to
    *  home, and /nosotros/[slug] generates no static pages. */
   nosotros_enabled: boolean;
+  /** Master switch for the two-halves seam logo (laberinto) that sits
+   *  on the boundary between the text column and the hero image. */
+  hero_seam_logo_enabled: boolean;
   default_keywords: string[];
   twitter_handle: string;
   og_image_default: string;
@@ -186,6 +189,7 @@ const DEFAULTS: SiteConfigMap = {
   robots_block_ai: [],
   subscribe_enabled: true,
   nosotros_enabled: true,
+  hero_seam_logo_enabled: true,
   default_keywords: [],
   twitter_handle: "",
   og_image_default: "",

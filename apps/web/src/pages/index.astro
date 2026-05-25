@@ -97,22 +97,22 @@ const heroImageMobile = config.hero_image_url?.trim()
       ctaTertiaryHref="/colecciones"
     />
 
-    {/* Logo en el seam (md+ solamente). Se centra absoluto al 50%
-        horizontal y vertical del section. Dos copias clipeadas: la
-        mitad izquierda renderiza el laberinto negro original sobre la
-        columna cream; la mitad derecha aplica invert(1) para verse
-        blanco sobre la fotografía oscura. El hover hace cross-fade
-        v4 ↔ v5 en ambas mitades simultáneamente. */}
-    <span class="cas-hero-seam hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[5] h-56 w-56 lg:h-72 lg:w-72 xl:h-80 xl:w-80 pointer-events-none">
-      <span class="cas-hero-seam-half cas-hero-seam-half--left absolute inset-0">
-        <img src="/casadeasterion4.webp" alt="" width="320" height="320" class="cas-hero-seam-default absolute inset-0 h-full w-full object-contain" />
-        <img src="/casadeasterion5.webp" alt="" width="320" height="320" loading="lazy" class="cas-hero-seam-hover absolute inset-0 h-full w-full object-contain opacity-0" />
+    {/* Logo del seam (md+) — toggle desde el CMS en /site?tab=hero.
+        Dos copias clipeadas: la mitad izquierda renderiza el laberinto
+        negro original sobre la columna cream; la mitad derecha aplica
+        invert(1) + opacity para verse blanca translúcida sobre la
+        fotografía. El CMS persiste hero_seam_logo_enabled en
+        site_configuration. */}
+    {config.hero_seam_logo_enabled !== false && (
+      <span class="cas-hero-seam hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[5] h-56 w-56 lg:h-72 lg:w-72 xl:h-80 xl:w-80 pointer-events-none">
+        <span class="cas-hero-seam-half cas-hero-seam-half--left absolute inset-0">
+          <img src="/casadeasterion4.webp" alt="" width="320" height="320" class="absolute inset-0 h-full w-full object-contain" />
+        </span>
+        <span class="cas-hero-seam-half cas-hero-seam-half--right absolute inset-0">
+          <img src="/casadeasterion4.webp" alt="" width="320" height="320" class="absolute inset-0 h-full w-full object-contain" />
+        </span>
       </span>
-      <span class="cas-hero-seam-half cas-hero-seam-half--right absolute inset-0">
-        <img src="/casadeasterion4.webp" alt="" width="320" height="320" class="cas-hero-seam-default absolute inset-0 h-full w-full object-contain" />
-        <img src="/casadeasterion5.webp" alt="" width="320" height="320" loading="lazy" class="cas-hero-seam-hover absolute inset-0 h-full w-full object-contain opacity-0" />
-      </span>
-    </span>
+    )}
 
     {/* Mobile photo — stacked below the hero content. Hidden on md+
         where the fixed right-half image takes over. */}
@@ -144,20 +144,14 @@ const heroImageMobile = config.hero_image_url?.trim()
   <style>
     /* Seam logo desktop — mitades clipeadas. La izquierda se ve normal
        (negro sobre cream); la derecha se invierte para verse blanca
-       sobre la foto. */
+       sobre la foto, con transparencia para que la foto se asome a
+       través del laberinto. */
     .cas-hero-seam-half--left { clip-path: inset(0 50% 0 0); }
     .cas-hero-seam-half--right {
       clip-path: inset(0 0 0 50%);
       filter: invert(1);
-      /* La parte blanca lleva transparencia para que la fotografía se
-         asome a través del laberinto en lugar de taparla con blanco. */
       opacity: 0.6;
     }
-    .cas-hero-seam-default,
-    .cas-hero-seam-hover { transition: opacity 200ms ease; }
-    .cas-hero-seam:hover .cas-hero-seam-default { opacity: 0; }
-    .cas-hero-seam:hover .cas-hero-seam-hover { opacity: 1; }
-
   </style>
 
   <script is:inline>
