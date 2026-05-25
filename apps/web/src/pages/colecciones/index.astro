@@ -7,8 +7,8 @@ import { mdToPlainText, clampText } from "~/lib/markdown";
 // "Colecciones" — agrupaciones temáticas de libros. Cada colección
 // se renderiza como una fila independiente: a la izquierda los
 // metadatos y la lista completa de títulos; a la derecha un
-// carrusel horizontal con hasta 3 portadas visibles a la vez. Chips
-// arriba filtran client-side por categoría.
+// carrusel horizontal con hasta 3 portadas visibles a la vez. Arriba
+// hay badges navegables (uno por colección) que llevan al detalle.
 
 // 1. Traer todas las colecciones publicadas + sus libros (todos, no
 //    solo 3 — el carrusel scrollea, pero también necesitamos los
@@ -82,31 +82,18 @@ const collectionsView = collections.map((c) => {
   };
 });
 
-// Chips de categoría para el filtro.
-type ChipCat = { id: string; name: string; icon: string | null; slug: string };
-const categoryChips: ChipCat[] = [];
-const seenCats = new Set<string>();
-for (const c of collections) {
-  if (c.category && !seenCats.has(c.category.id)) {
-    seenCats.add(c.category.id);
-    categoryChips.push(c.category);
-  }
-}
-categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
 ---
 
 <Layout
   title="Colecciones"
-  description="Colecciones editoriales de Casa de Asterión Ediciones: agrupaciones temáticas de libros de filosofía y poesía publicadas desde Pereira, Risaralda, para todo el Eje Cafetero y Colombia."
+  description="Colecciones editoriales de Casa de Asterión Ediciones: agrupaciones temáticas de libros de filosofía y poesía contemporáneas."
   keywords={[
     "colecciones Casa de Asterión",
     "colecciones editoriales",
     "colecciones de libros",
     "filosofía colección",
     "poesía colección",
-    "colecciones libros Pereira",
-    "colecciones editoriales Eje Cafetero",
-    "editorial Pereira colecciones",
+    "editorial independiente",
   ]}
 >
   <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-20 pb-6 sm:pb-8">
@@ -148,30 +135,35 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
         </div>
       </div>
 
-      {categoryChips.length > 0 && (
-        <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-10 sm:mb-12 md:mb-14" data-collections-chips>
-          <button
-            type="button"
-            class="cas-chip cas-chip-active"
-            data-collections-chip
-            data-filter=""
-          >
-            Todas
-          </button>
-          {categoryChips.map((cat) => (
-            <button
-              type="button"
-              class="cas-chip"
-              data-collections-chip
-              data-filter={cat.id}
-            >
-              {cat.icon && (
-                <Icon name={`lucide:${cat.icon}`} class="w-3.5 h-3.5" aria-hidden="true" />
-              )}
-              <span>{cat.name}</span>
-            </button>
+      {/* Badges navegables — una por colección publicada. Sustituyen
+          al filtro por categoría: cada badge es un atajo directo al
+          detalle de la colección. */}
+      {collectionsView.length > 0 && (
+        <nav
+          aria-label="Ir a una colección"
+          class="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-10 sm:mb-12 md:mb-14"
+        >
+          {collectionsView.map((c) => (
+            <a href={`/colecciones/${c.slug}`} class="cas-chip cas-chip-link">
+              <span>{c.name}</span>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                class="transition-transform group-hover:translate-x-0.5"
+              >
+                <path d="M5 12h14" />
+                <path d="m13 5 7 7-7 7" />
+              </svg>
+            </a>
           ))}
-        </div>
+        </nav>
       )}
 
       <div class="cas-coll-list" data-collections-rows>
@@ -179,7 +171,6 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
           <article
             class="cas-coll-row"
             data-collection-row
-            data-category={c.category?.id ?? ""}
             data-search-text={c.haystack}
           >
             <header class="cas-coll-header mb-5 sm:mb-8 pb-4 sm:pb-7 border-b border-[color:var(--border)]">
@@ -239,7 +230,7 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
               {/* Lado izquierdo: blurb + lista de títulos */}
               <aside class="min-w-0 order-2 lg:order-1">
                 {c.blurb && (
-                  <p class="text-sm sm:text-base text-[color:var(--fg-muted)] leading-relaxed mb-4 sm:mb-6">
+                  <p class="font-serif text-base sm:text-lg text-[color:var(--fg-muted)] leading-relaxed mb-4 sm:mb-6">
                     {c.blurb}
                   </p>
                 )}
@@ -383,6 +374,25 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
     background: var(--fg);
     border-color: var(--fg);
   }
+  /* Badge navegable — un atajo directo al detalle de cada colección.
+     Se diferencia visualmente del chip filtrable: hover invierte
+     fondo/color para acentuar la afordancia de "voy a otra página". */
+  .cas-chip-link {
+    text-decoration: none;
+    color: var(--fg);
+    border-color: var(--border);
+  }
+  .cas-chip-link svg {
+    transition: transform 160ms ease;
+  }
+  .cas-chip-link:hover {
+    color: var(--bg);
+    background: var(--fg);
+    border-color: var(--fg);
+  }
+  .cas-chip-link:hover svg {
+    transform: translateX(2px);
+  }
 
   /* Lista de colecciones — divider más visible y compacto en mobile,
      spacing original en desktop. */
@@ -485,8 +495,7 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
     const section = document.querySelector("[data-collections-section]");
     if (!section) return;
 
-    // -- Filtros combinados: categoría + búsqueda libre -------------
-    const chips = section.querySelectorAll("[data-collections-chip]");
+    // -- Búsqueda libre ------------------------------------------
     const rows = section.querySelectorAll("[data-collection-row]");
     const empty = section.querySelector("[data-collections-empty]");
     const search = section.querySelector("[data-collections-search]");
@@ -494,37 +503,21 @@ categoryChips.sort((a, b) => a.name.localeCompare(b.name, "es"));
     const stripDiacritics = (s) =>
       String(s ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-    let currentFilter = "";
     let currentQuery = "";
 
     const apply = () => {
       let visible = 0;
       rows.forEach((row) => {
-        const cat = row.getAttribute("data-category") || "";
         const text = row.getAttribute("data-search-text") || "";
-        const matchesCat = !currentFilter || cat === currentFilter;
-        const matchesQuery = !currentQuery || text.includes(currentQuery);
-        const show = matchesCat && matchesQuery;
+        const show = !currentQuery || text.includes(currentQuery);
         row.classList.toggle("hidden", !show);
         if (show) visible++;
       });
       if (empty) {
         empty.classList.toggle("hidden", visible > 0);
-        empty.textContent = currentQuery
-          ? "No hay colecciones que coincidan con tu búsqueda."
-          : "No hay colecciones en esta categoría.";
+        empty.textContent = "No hay colecciones que coincidan con tu búsqueda.";
       }
-      chips.forEach((c) => {
-        c.classList.toggle("cas-chip-active", c.getAttribute("data-filter") === currentFilter);
-      });
     };
-
-    chips.forEach((chip) => {
-      chip.addEventListener("click", () => {
-        currentFilter = chip.getAttribute("data-filter") || "";
-        apply();
-      });
-    });
 
     if (search) {
       search.addEventListener("input", () => {

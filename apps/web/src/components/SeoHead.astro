@@ -75,12 +75,7 @@ const primaryAuthorName = authorList[0]?.name ?? null;
 // <title> for the home page and as the og:site_name everywhere — it's
 // how the brand should appear on SERPs alongside the URL.
 const siteName = "Casa de Asterión Ediciones";
-// El tagline aparece en el <title> del homepage y como slogan de la
-// Organization. Incluye Pereira/Risaralda explícitamente: es la señal
-// más fuerte para Google de relevancia local sin tocar el render
-// visible (el wordmark del hero sigue siendo "Casa de Asterión
-// Ediciones" — esto solo viaja en metadata).
-const siteTagline = "Editorial de filosofía y poesía en Pereira, Risaralda";
+const siteTagline = "Filosofía y poesía";
 const siteFullName = `${siteName} — ${siteTagline}`;
 
 // Title strategy:
@@ -122,43 +117,12 @@ const twitterHandle = config.twitter_handle?.startsWith("@")
 
 const siteOrigin = new URL("/", url).href;
 
-// Organization + LocalBusiness multi-type. La tipificación combinada
-// le dice a Google que somos una editorial Y un negocio con presencia
-// física en Pereira (Risaralda) — necesario para aparecer en Local
-// Pack / Maps y para que el knowledge panel muestre dirección,
-// teléfono, área de cobertura y horario.
-//
-// Las coords son del centro de Pereira; ajustar si la editorial tiene
-// dirección pública específica.
-const PEREIRA_LAT = 4.8133;
-const PEREIRA_LNG = -75.6961;
-
-const areaServed = [
-  // Núcleo: Pereira metropolitana
-  { "@type": "City", name: "Pereira", "@id": "https://www.wikidata.org/wiki/Q188728" },
-  { "@type": "City", name: "Dosquebradas" },
-  { "@type": "City", name: "Santa Rosa de Cabal" },
-  // Eje Cafetero
-  { "@type": "City", name: "Manizales" },
-  { "@type": "City", name: "Armenia" },
-  // Ciudades principales de Colombia
-  { "@type": "City", name: "Bogotá" },
-  { "@type": "City", name: "Medellín" },
-  { "@type": "City", name: "Cali" },
-  { "@type": "City", name: "Barranquilla" },
-  { "@type": "City", name: "Cartagena" },
-  { "@type": "City", name: "Bucaramanga" },
-  { "@type": "City", name: "Cúcuta" },
-  { "@type": "City", name: "Ibagué" },
-  { "@type": "City", name: "Santa Marta" },
-  // Regiones + país
-  { "@type": "AdministrativeArea", name: "Eje Cafetero" },
-  { "@type": "AdministrativeArea", name: "Risaralda" },
-  { "@type": "Country", name: "Colombia", "@id": "https://www.wikidata.org/wiki/Q739" },
-];
-
+// Organization (sin LocalBusiness): la editorial no tiene sede física,
+// opera online distribuyendo en Colombia. areaServed se limita a
+// Colombia como país; sin address/geo/openingHours para no afirmar
+// presencia física que no existe.
 const organization: Record<string, unknown> = {
-  "@type": ["Organization", "LocalBusiness"],
+  "@type": "Organization",
   "@id": `${siteOrigin}#organization`,
   name: siteName,
   alternateName: ["Casa de Asterión", "Casa de Asterion Ediciones"],
@@ -174,31 +138,10 @@ const organization: Record<string, unknown> = {
     "Literatura latinoamericana",
     "Edición independiente",
     "Edición de libros",
-    "Editorial Pereira",
-    "Editorial Eje Cafetero",
-    "Editorial Risaralda",
   ],
-  address: {
-    "@type": "PostalAddress",
-    addressLocality: "Pereira",
-    addressRegion: "Risaralda",
-    addressCountry: "CO",
-  },
-  geo: {
-    "@type": "GeoCoordinates",
-    latitude: PEREIRA_LAT,
-    longitude: PEREIRA_LNG,
-  },
-  areaServed,
-  openingHoursSpecification: [
-    {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-      opens: "09:00",
-      closes: "18:00",
-    },
+  areaServed: [
+    { "@type": "Country", name: "Colombia", "@id": "https://www.wikidata.org/wiki/Q739" },
   ],
-  priceRange: "$$",
 };
 if (config.organization_logo_url) {
   organization.logo = { "@type": "ImageObject", url: config.organization_logo_url };
@@ -214,9 +157,6 @@ const sameAsLinks = [
   config.social_links?.facebook,
   config.social_links?.instagram,
   config.social_links?.twitter,
-  // TODO: añadir aquí Google Maps URL y Google Business Profile cuando
-  // se cree el perfil — fortalece la verificación local en el
-  // knowledge graph.
 ].filter(Boolean);
 if (sameAsLinks.length) organization.sameAs = sameAsLinks;
 
@@ -317,14 +257,6 @@ const ogType =
 <link rel="alternate" hreflang="es" href={canonicalUrl} />
 <meta http-equiv="content-language" content="es" />
 <meta name="theme-color" content="#1c1917" />
-{/* Meta tags geo — señales clásicas para SEO local. Google ya no las
-    pondera tanto en ranking, pero Bing/Yandex y agregadores locales
-    siguen leyéndolas, y son señal de coherencia con el schema. ICBM
-    es el formato decimal "lat, lng" de mapas. */}
-<meta name="geo.region" content="CO-RIS" />
-<meta name="geo.placename" content="Pereira" />
-<meta name="geo.position" content="4.8133;-75.6961" />
-<meta name="ICBM" content="4.8133, -75.6961" />
 {/* index/follow plus the AI opt-out signals (noai/noimageai) some
     crawlers honor. Single canonical robots meta — avoids the
     conflicting-tag ambiguity browsers/bots have when there are two. */}

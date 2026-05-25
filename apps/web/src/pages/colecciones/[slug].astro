@@ -98,9 +98,9 @@ const metaDescription =
       )}
       <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl mb-5 sm:mb-7 leading-tight">{c.name}</h1>
       {description ? (
-        <div class="cas-md max-w-none" set:html={description}></div>
+        <div class="cas-md font-serif max-w-none" set:html={description}></div>
       ) : (
-        <p class="text-[color:var(--fg-muted)] italic">Pronto añadiremos una descripción para esta colección.</p>
+        <p class="font-serif italic text-[color:var(--fg-muted)]">Pronto añadiremos una descripción para esta colección.</p>
       )}
       <p class="mt-7 sm:mt-9 uppercase text-[10px] sm:text-xs tracking-[0.22em] text-[color:var(--fg-muted)]">
         {books.length === 0 ? "Sin libros aún" : books.length === 1 ? "1 libro" : `${books.length} libros`}
