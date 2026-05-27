@@ -111,11 +111,23 @@
       <p id="cda-cart-checkout-hint" class="text-[11px] text-stone-500 leading-relaxed mt-3 text-center">
         Iniciamos sesión con Google para evitar bots y guardar tu pedido.
       </p>
+      {/* Vaciar carrito — botón secundario outline. Antes era un
+          underline diminuto difícil de detectar; ahora se lee como
+          una acción real, alineado en peso con el "Confirmar pedido"
+          de arriba pero en outline para señalar que es destructivo
+          (no la acción principal). */}
       <button
         type="button"
         id="cda-cart-clear"
-        class="block w-full text-center text-xs text-stone-500 hover:text-stone-900 mt-3 underline underline-offset-4 cursor-pointer"
-      >Vaciar carrito</button>
+        class="w-full inline-flex items-center justify-center gap-2 mt-3 border border-stone-300 text-stone-700 py-2.5 text-xs uppercase tracking-[0.16em] hover:border-stone-900 hover:text-stone-900 transition-colors cursor-pointer"
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 6h18"/>
+          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+        </svg>
+        <span>Vaciar carrito</span>
+      </button>
     </footer>
   </div>
 </aside>
