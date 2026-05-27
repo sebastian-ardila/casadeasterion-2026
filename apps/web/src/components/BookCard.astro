@@ -71,7 +71,11 @@ const priceLine = formattedPrice || NBSP;
         solo peso y tamaño. mt-auto empuja el bloque al fondo del
         article (h-full) para alinear los botones de toda la fila. */}
     <div class="mt-auto pt-2 sm:pt-3 space-y-2 sm:space-y-3">
-      <p class="font-serif text-xl sm:text-2xl font-bold text-stone-900 tabular-nums leading-tight">
+      {/* Sans-serif (Inter) para el número — los dígitos serif del
+          Cormorant Garamond son elegantes pero su lectura rápida es
+          menor; Inter con tabular-nums optimiza claridad y alineación
+          vertical de los precios entre tarjetas. */}
+      <p class="font-sans text-xl sm:text-2xl font-bold text-stone-900 tabular-nums leading-tight tracking-tight">
         {priceLine}
       </p>
       <AddToCartButton
