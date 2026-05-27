@@ -444,12 +444,26 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
       min-width: 0;
     }
     @media (max-width: 640px) {
-      .cas-coll-sib-track { grid-auto-columns: 60%; gap: 1.25rem; }
+      /* 2 portadas visibles en mobile, igualando el grid del catálogo
+         (grid-cols-2 default). Gap más compacto. */
+      .cas-coll-sib-track {
+        grid-auto-columns: calc((100% - 1.25rem) / 2);
+        gap: 1.25rem;
+      }
     }
     @media (min-width: 641px) and (max-width: 1023px) {
       .cas-coll-sib-track {
         grid-auto-columns: calc((100% - 2 * 2rem) / 3);
         gap: 2rem;
+      }
+    }
+    /* xl breakpoint — iguala el catálogo (xl:grid-cols-5): 5 portadas
+       visibles por viewport del carrusel. Sin esto las portadas del
+       carrusel se veían más grandes que las del catálogo principal. */
+    @media (min-width: 1280px) {
+      .cas-coll-sib-track {
+        grid-auto-columns: calc((100% - 4 * 2.5rem) / 5);
+        gap: 2.5rem;
       }
     }
     .cas-coll-sib-arrow {
