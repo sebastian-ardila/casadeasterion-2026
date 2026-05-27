@@ -102,19 +102,24 @@
      class makes all of those legible on the public site without pulling in
      @tailwindcss/typography. */
   .cas-md {
-    line-height: 1.75;
+    line-height: 1.65;
     color: var(--fg);
     font-size: 1.35rem;
   }
-  .cas-md > * + * { margin-top: 1em; }
-  /* Tighter rhythm on mobile so long descriptions don't feel airy. */
+  /* Espaciado entre bloques reducido: el editor convierte cada Enter
+     en un párrafo nuevo. Para poesía (cada verso = párrafo) un 1em
+     se siente excesivo combinado con line-height 1.65; con 0.5em los
+     versos se sienten estrofa, y la prosa con párrafos largos sigue
+     respirando bien gracias al line-height interno. */
+  .cas-md > * + * { margin-top: 0.5em; }
+  .cas-md p + p { margin-top: 0.5em; }
   @media (max-width: 640px) {
     .cas-md {
-      line-height: 1.65;
+      line-height: 1.55;
       font-size: 1.15rem;
     }
-    .cas-md > * + * { margin-top: 0.75em; }
-    .cas-md p + p { margin-top: 0.75em; }
+    .cas-md > * + * { margin-top: 0.4em; }
+    .cas-md p + p { margin-top: 0.4em; }
   }
   .cas-md a {
     color: var(--fg);
