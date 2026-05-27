@@ -96,12 +96,9 @@ const hasAny = hasEmails || hasPhones || hasPlace || socials.length > 0;
         <p class="uppercase text-[10px] sm:text-xs tracking-[0.22em] text-[color:var(--fg-muted)] mb-2 sm:mb-3">
           Casa de Asterión
         </p>
-        <h2 class="font-serif text-3xl sm:text-4xl md:text-5xl leading-[1.05] mb-3 sm:mb-4">
+        <h2 class="font-serif text-3xl sm:text-4xl md:text-5xl leading-[1.05]">
           Contacto
         </h2>
-        <p class="text-[color:var(--fg-muted)] leading-relaxed text-sm sm:text-base max-w-prose">
-          Para consultas generales o colaboraciones escríbanos por el medio que prefiera.
-        </p>
       </header>
 
       <div class="contact-methods">
@@ -228,41 +225,54 @@ const hasAny = hasEmails || hasPhones || hasPlace || socials.length > 0;
     max-width: 1180px;
     margin: 0 auto;
     padding: 4rem 1.25rem 4.5rem;
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 2.5rem;
   }
   @media (min-width: 640px) {
     .contact-section-inner { padding: 5rem 1.5rem 5.5rem; }
   }
   @media (min-width: 768px) {
-    .contact-section-inner {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-      gap: 4rem;
-    }
+    .contact-section-inner { gap: 3rem; }
   }
   @media (min-width: 1024px) {
     .contact-section-inner {
       padding: 6rem 3rem 6.5rem;
-      gap: 5rem;
+      gap: 3.5rem;
     }
   }
 
   .contact-section-head { min-width: 0; }
 
   .contact-methods {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem 3rem;
     min-width: 0;
+  }
+  @media (min-width: 768px) {
+    .contact-methods {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2rem 3rem;
+    }
+    .contact-group-social { grid-column: 1 / -1; }
   }
   .contact-group {
     padding: 1.5rem 0 1.75rem;
     border-bottom: 1px solid var(--border);
+    min-width: 0;
   }
   .contact-group:first-child { padding-top: 0; }
   .contact-group:last-child { border-bottom: 0; }
   @media (min-width: 768px) {
-    .contact-group { padding: 1.75rem 0 2rem; }
+    .contact-group {
+      padding: 0;
+      border-bottom: 0;
+    }
+    .contact-group-social {
+      padding-top: 1.75rem;
+      border-top: 1px solid var(--border);
+    }
   }
 
   .contact-eyebrow {
