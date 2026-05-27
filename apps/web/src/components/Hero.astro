@@ -142,16 +142,18 @@ const tertiaryIcon = ctaTertiaryHref ? iconForHref(ctaTertiaryHref) : null;
       )}
     </div>
 
-    {/* Desktop primary CTA: split outline */}
+    {/* Desktop primary CTA: pill sólida (negro / cream) — mismo
+        contraste que la versión mobile para señalar más fuerte la
+        acción comercial principal. */}
     <a
       href={ctaPrimaryHref}
-      class="hidden md:inline-flex group items-stretch border border-[color:var(--fg)] text-[color:var(--fg)] hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)] transition-colors max-w-full"
+      class="hidden md:inline-flex group items-stretch bg-[color:var(--fg)] text-[color:var(--bg)] hover:bg-[color:var(--fg-muted)] transition-colors max-w-full"
     >
       <span class="px-8 h-14 inline-flex items-center gap-3 text-xs uppercase tracking-[0.26em]">
         {primaryIcon && <Icon name={primaryIcon} class="w-4 h-4 shrink-0" aria-hidden="true" />}
         <span>{ctaPrimaryLabel}</span>
       </span>
-      <span class="border-l border-current/40 group-hover:border-current/60 w-14 h-14 inline-flex items-center justify-center transition-colors shrink-0">
+      <span class="border-l border-[color:var(--bg)]/30 w-14 h-14 inline-flex items-center justify-center transition-colors shrink-0">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">
           <path d="M5 12h14" />
           <path d="m13 5 7 7-7 7" />
