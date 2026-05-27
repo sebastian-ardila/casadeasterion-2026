@@ -20,17 +20,22 @@ const formattedPrice =
       }).format(Number(book.price_amount))
     : null;
 
-// Líneas resueltas en el frontmatter — siempre tienen contenido. Si
-// no hay autor o precio, usamos un non-breaking space literal
-// (` `) en vez de cadena vacía. Esto garantiza que la línea
-// renderice su altura natural y la tarjeta mantenga su estructura
-// completa, independiente de si la fila tiene datos completos o no.
-const NBSP = " ";
+// Líneas resueltas en el frontmatter. Cuando no hay autor o precio
+// inyectamos un non-breaking space literal para que el navegador
+// renderice la línea con altura natural.
+const NBSP = " ";
 const authorLine = author?.name?.trim() || NBSP;
 const priceLine = formattedPrice || NBSP;
 ---
 
-<article class="group flex flex-col h-full">
+{/* Arquitectura de la tarjeta — versión deterministica:
+    cada subsección tiene altura FIJA (no min-h, no flex-1, no
+    mt-auto). Resultado: la tarjeta entera mide exactamente lo mismo
+    independientemente del contenido. Antes dependíamos del grid
+    items-stretch + h-full + flex-1 + mt-auto; ese combo fallaba en
+    algunos navegadores y dejaba cards con metadata vacía más
+    bajitas que sus vecinas. */}
+<article class="group flex flex-col">
   {
     book.cover_image_url ? (
       <a
@@ -55,42 +60,32 @@ const priceLine = formattedPrice || NBSP;
     )
   }
 
-  {/* min-h fija sobre el wrapper de metadata: incluso si el grid no
-      estira los items (cosa que en teoría debería pero en algunos
-      browser/viewport combos falla), todas las tarjetas miden lo
-      mismo abajo del cover. mt-auto adentro hace que el botón quede
-      pegado al fondo de ese bloque consistente. */}
-  <div class="pt-3 sm:pt-4 flex flex-col flex-1 min-w-0 min-h-[180px] sm:min-h-[200px]">
-    {/* Autor — siempre presente con   si no hay dato. */}
-    <p class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)] line-clamp-1 mb-1 sm:mb-1.5 min-h-[1.4em]">
+  {/* Metadata — cada fila con altura FIJA y gaps fijos. NO flex-1,
+      NO mt-auto. Total: pt + author + title + price + gaps + button
+      = mismo número para todas las cards. */}
+  <div class="pt-3 sm:pt-4 flex flex-col gap-y-2 sm:gap-y-3">
+    {/* Autor: 1 línea con truncate (no line-clamp para evitar
+        -webkit-box collapsing cuando el contenido es nbsp). h fija
+        garantiza la línea aún sin texto visible. */}
+    <p class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)] truncate h-[1.4em]">
       {authorLine}
     </p>
-    {/* Título — reservamos espacio para 2 líneas con min-h-[2.75em]
-        (2 * line-height-snug 1.375). */}
-    <h3 class="font-serif text-base sm:text-lg md:text-xl leading-snug line-clamp-2 min-h-[2.75em]">
+    {/* Título: 2 líneas exactas (h-[2.75em] = 2 × leading-snug 1.375
+        × 1em). line-clamp-2 + overflow-hidden cortan títulos largos. */}
+    <h3 class="font-serif text-base sm:text-lg md:text-xl leading-snug line-clamp-2 h-[2.75em] overflow-hidden">
       <a href={`/catalogo/${book.slug}`} class="hover:opacity-70 transition-opacity">{book.title}</a>
     </h3>
-    {/* Precio + AddToCart agrupados. Precio en serif grande y bold
-        para que sea la información comercial más prominente de la
-        tarjeta — sin color cromático (el rojo cansa la lectura),
-        solo peso y tamaño. mt-auto empuja el bloque al fondo del
-        article (h-full) para alinear los botones de toda la fila. */}
-    <div class="mt-auto pt-2 sm:pt-3 space-y-2 sm:space-y-3">
-      {/* Sans-serif (Inter) para el número — los dígitos serif del
-          Cormorant Garamond son elegantes pero su lectura rápida es
-          menor; Inter con tabular-nums optimiza claridad y alineación
-          vertical de los precios entre tarjetas. */}
-      <p class="font-sans text-xl sm:text-2xl text-stone-900 tabular-nums leading-tight tracking-tight min-h-[1.4em]">
-        {priceLine}
-      </p>
-      <AddToCartButton
-        slug={book.slug}
-        title={book.title}
-        coverImageUrl={book.cover_image_url}
-        priceAmount={book.price_amount}
-        priceCurrency={book.price_currency}
-        variant="ghost"
-      />
-    </div>
+    {/* Precio: misma sans tipográfica que el carrito; h fija. */}
+    <p class="font-sans text-xl sm:text-2xl text-stone-900 tabular-nums leading-tight tracking-tight h-[1.4em]">
+      {priceLine}
+    </p>
+    <AddToCartButton
+      slug={book.slug}
+      title={book.title}
+      coverImageUrl={book.cover_image_url}
+      priceAmount={book.price_amount}
+      priceCurrency={book.price_currency}
+      variant="ghost"
+    />
   </div>
 </article>
