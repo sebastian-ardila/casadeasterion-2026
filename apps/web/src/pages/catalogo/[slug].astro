@@ -192,53 +192,6 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
         )}
       </div>
 
-      {/* Cast del libro: autores + traductores + prologistas +
-          colaboradores. Cada rol vive en su propia junction; aquí los
-          renderizamos como listas separadas con su eyebrow para que
-          el lector entienda el aporte de cada persona al libro. */}
-      {(authors.length + translators.length + prologuists.length + collaborators.length) > 0 && (
-        <div class="space-y-5 sm:space-y-6 max-w-[320px] mx-auto lg:mx-0 w-full">
-          {[
-            { people: authors,       label: authors.length > 1 ? "Autores" : "Autor",            section: "autores"      as const },
-            { people: translators,   label: translators.length > 1 ? "Traducción de" : "Traducción de", section: "traductores"  as const },
-            { people: prologuists,   label: prologuists.length > 1 ? "Prólogos de" : "Prólogo de",     section: "prologistas"  as const },
-            { people: collaborators, label: collaborators.length > 1 ? "Con la colaboración de" : "Con la colaboración de", section: "colaboradores" as const },
-          ].filter((g) => g.people.length > 0).map((g) => (
-            <div class="space-y-3 sm:space-y-4">
-              <p class="uppercase text-[10px] tracking-[0.18em] text-[color:var(--fg-muted)] mb-0.5">
-                {g.label}
-              </p>
-              {g.people.map((a) => (
-                <a
-                  href={`/${g.section}/${a.slug}`}
-                  class="group flex items-center gap-3 sm:gap-4 hover:opacity-85 transition-opacity"
-                >
-                  <div class="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 shrink-0 overflow-hidden bg-[color:var(--bg-alt)] ring-1 ring-stone-900/[0.06]">
-                    {a.photo_url ? (
-                      <img
-                        src={a.photo_url}
-                        alt={a.name}
-                        loading="lazy"
-                        class="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div class="w-full h-full flex items-center justify-center text-[color:var(--fg-muted)] font-serif text-xl">
-                        {a.name.charAt(0)}
-                      </div>
-                    )}
-                  </div>
-                  <div class="min-w-0">
-                    <p class="font-serif text-base sm:text-lg leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)] truncate">
-                      {a.name}
-                    </p>
-                  </div>
-                </a>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Technical info — single column, sits under cover on desktop. */}
       {techRows.length > 0 && (
         <dl class="hidden lg:grid border-t border-[color:var(--border)] pt-5 text-sm grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
@@ -316,6 +269,55 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
         variant="primary"
         className="w-full sm:w-auto justify-center"
       />
+
+      {/* Cast del libro debajo del botón Comprar. Cuatro secciones
+          condicionales (autores, colaboradores, traductores,
+          prologistas) en el orden de aporte editorial. Los labels son
+          singular/plural según cuántas personas haya en cada rol. */}
+      {(authors.length + collaborators.length + translators.length + prologuists.length) > 0 && (
+        <div class="mt-8 sm:mt-10 md:mt-12 space-y-7 sm:space-y-8 border-t border-[color:var(--border)] pt-7 sm:pt-9">
+          {[
+            { people: authors,       singular: "Autor",        plural: "Autores",        section: "autores"        as const },
+            { people: collaborators, singular: "Colaborador",  plural: "Colaboradores",  section: "colaboradores"  as const },
+            { people: translators,   singular: "Traductor",    plural: "Traductores",    section: "traductores"    as const },
+            { people: prologuists,   singular: "Prologista",   plural: "Prologistas",    section: "prologistas"    as const },
+          ].filter((g) => g.people.length > 0).map((g) => (
+            <div class="space-y-3 sm:space-y-4">
+              <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)]">
+                {g.people.length > 1 ? g.plural : g.singular}
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                {g.people.map((a) => (
+                  <a
+                    href={`/${g.section}/${a.slug}`}
+                    class="group flex items-center gap-3 sm:gap-4 hover:opacity-85 transition-opacity"
+                  >
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 shrink-0 overflow-hidden bg-[color:var(--bg-alt)] ring-1 ring-stone-900/[0.06]">
+                      {a.photo_url ? (
+                        <img
+                          src={a.photo_url}
+                          alt={a.name}
+                          loading="lazy"
+                          class="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div class="w-full h-full flex items-center justify-center text-[color:var(--fg-muted)] font-serif text-xl">
+                          {a.name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <div class="min-w-0">
+                      <p class="font-serif text-base sm:text-lg leading-tight group-hover:underline underline-offset-4 decoration-[color:var(--fg-muted)] truncate">
+                        {a.name}
+                      </p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   </article>
 
