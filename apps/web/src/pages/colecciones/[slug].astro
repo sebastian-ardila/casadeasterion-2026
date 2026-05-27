@@ -1,6 +1,7 @@
 ---
 import Layout from "~/layouts/Layout.astro";
 import BookCard from "~/components/BookCard.astro";
+import SocialShare from "~/components/SocialShare.astro";
 import { Icon } from "astro-icon/components";
 import { supabase } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
@@ -68,6 +69,7 @@ const metaDescription =
     { name: "Colecciones", url: new URL("/colecciones", Astro.site).href },
     { name: c.name, url: Astro.url.href },
   ]}
+  ogTitleCategory={c.category?.name ?? "Colección"}
 >
   <header class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-10 sm:pt-14 md:pt-20 pb-10 sm:pb-12 md:pb-16 grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[340px_1fr] gap-7 sm:gap-10 lg:gap-14 items-start">
     <aside class="max-w-[280px] sm:max-w-[340px] mx-auto md:mx-0 w-full">
@@ -105,6 +107,12 @@ const metaDescription =
       <p class="mt-7 sm:mt-9 uppercase text-[10px] sm:text-xs tracking-[0.22em] text-[color:var(--fg-muted)]">
         {books.length === 0 ? "Sin libros aún" : books.length === 1 ? "1 libro" : `${books.length} libros`}
       </p>
+
+      <SocialShare
+        url={Astro.url.href}
+        title={`${c.name} (${c.category?.name ?? "Colección"})`}
+        className="mt-6 sm:mt-8"
+      />
     </div>
   </header>
 

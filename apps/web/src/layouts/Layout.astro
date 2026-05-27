@@ -32,6 +32,10 @@ interface Props {
   isbn?: string | null;
   sameAs?: string[] | null;
   breadcrumbItems?: { name: string; url: string }[] | null;
+  /** Categoría inyectada entre paréntesis en og:title (sin afectar
+   *  el <title> del navegador). Usar en /articulos, /catalogo,
+   *  /colecciones para que el share-preview muestre el tipo. */
+  ogTitleCategory?: string | null;
 }
 
 const {
@@ -53,6 +57,7 @@ const {
   isbn,
   sameAs,
   breadcrumbItems,
+  ogTitleCategory,
 } = Astro.props;
 const config = await loadSiteConfig();
 // Empty title → SeoHead recognizes the home page and emits the
@@ -98,6 +103,7 @@ const url = Astro.url.href;
       isbn={isbn}
       sameAs={sameAs}
       breadcrumb={breadcrumbItems}
+      ogTitleCategory={ogTitleCategory}
     />
 
     <link

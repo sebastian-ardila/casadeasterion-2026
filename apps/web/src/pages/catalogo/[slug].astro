@@ -2,6 +2,7 @@
 import Layout from "~/layouts/Layout.astro";
 import BookCard from "~/components/BookCard.astro";
 import AddToCartButton from "~/components/AddToCartButton.astro";
+import SocialShare from "~/components/SocialShare.astro";
 import { supabase, type Author } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
 import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
@@ -55,6 +56,12 @@ const pluckAuthors = (rows: { data: any[] | null }): Author[] =>
 const translators  = pluckAuthors(transRaw);
 const prologuists  = pluckAuthors(prologRaw);
 const collaborators = pluckAuthors(collabRaw);
+
+// Categoría del libro — opcional. Solo la usamos en og:title (para que
+// el preview del compartido lleve "(Filosofía)") y en SocialShare.
+const { data: bookCategory } = (book as any).category_id
+  ? await supabase.from("categories").select("name").eq("id", (book as any).category_id).maybeSingle()
+  : { data: null };
 
 // Si el libro pertenece a una colección publicada, traemos su slug,
 // nombre, descripción y los otros libros publicados que la integran.
@@ -175,6 +182,7 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
     { name: "Catálogo", url: new URL("/catalogo", Astro.site).href },
     { name: book.title, url: Astro.url.href },
   ]}
+  ogTitleCategory={bookCategory?.name ?? null}
 >
   <article class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-6 sm:pt-10 md:pt-16 pb-12 sm:pb-16 md:pb-20 grid grid-cols-1 lg:grid-cols-[minmax(0,360px)_1fr] gap-7 sm:gap-9 lg:gap-16">
     {/* Left rail: cover + author card + tech info. On mobile this stacks
@@ -282,6 +290,12 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
         priceCurrency={book.price_currency}
         variant="primary"
         className="w-full sm:w-auto justify-center"
+      />
+
+      <SocialShare
+        url={Astro.url.href}
+        title={`${book.title}${bookCategory?.name ? ` (${bookCategory.name})` : ""}`}
+        className="mt-5 sm:mt-6"
       />
 
       {/* Cast del libro debajo del botón Comprar. Cuatro secciones

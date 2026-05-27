@@ -2,6 +2,7 @@
 import Layout from "~/layouts/Layout.astro";
 import PostCard from "~/components/PostCard.astro";
 import BookCard from "~/components/BookCard.astro";
+import SocialShare from "~/components/SocialShare.astro";
 import { Icon } from "astro-icon/components";
 import { supabase, type Author, type Category } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
@@ -173,6 +174,7 @@ const formatted = post.published_at
     { name: "Publicaciones", url: new URL("/articulos", Astro.site).href },
     { name: post.title, url: Astro.url.href },
   ]}
+  ogTitleCategory={category?.name ?? null}
 >
   {/* Grid unificado: aside izquierdo (foto + autor + meta) arranca
       a la misma altura que el header. En desktop ambas columnas
@@ -329,6 +331,12 @@ const formatted = post.published_at
       )}
 
       <div class="cas-article-body cas-md max-w-none" set:html={html}></div>
+
+      <SocialShare
+        url={Astro.url.href}
+        title={`${post.title}${category?.name ? ` (${category.name})` : ""}`}
+        className="mt-8 sm:mt-10 pt-6 sm:pt-7 border-t border-[color:var(--border)]"
+      />
     </div>
   </article>
 

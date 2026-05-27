@@ -18,6 +18,11 @@ interface Props {
   keywords?: string[] | null;
   canonical?: string | null;
   config: SiteConfigMap;
+  /** Categoría que se inyecta entre paréntesis en og:title y
+   *  twitter:title sin afectar el <title> del navegador. Ej.: si
+   *  title="Guaduales" y ogTitleCategory="Poesía", el OG quedará
+   *  "Guaduales (Poesía) · Casa de Asterión Ediciones". */
+  ogTitleCategory?: string | null;
   // Article + Book — support either the legacy single-author props
   // (authorName/authorUrl) or the new multi-author array. The array
   // wins if provided; otherwise the legacy fields are normalized into
@@ -58,6 +63,7 @@ const {
   isbn,
   sameAs,
   breadcrumb,
+  ogTitleCategory,
 } = Astro.props as Props;
 
 // Normalize authors into one consistent shape regardless of how the
@@ -91,6 +97,16 @@ const fullTitle = isHomeTitle
   : title.includes(siteName)
     ? title
     : `${title} · ${siteName}`;
+
+// Versión del título para OG/Twitter: si hay categoría, se intercala
+// "(Categoría)" entre el título y el sufijo del sitio. El <title> del
+// navegador no la lleva para no inflar el tab/SERP.
+const ogTitleSuffix = ogTitleCategory ? ` (${ogTitleCategory})` : "";
+const ogTitle = isHomeTitle
+  ? siteFullName
+  : title.includes(siteName)
+    ? title
+    : `${title}${ogTitleSuffix} · ${siteName}`;
 
 const ogImage = image || config.og_image_default || "";
 const ogImageAlt = imageAlt || title || siteFullName;
@@ -273,7 +289,7 @@ const ogType =
 
 <meta property="og:site_name" content={siteName} />
 <meta property="og:type" content={ogType} />
-<meta property="og:title" content={fullTitle} />
+<meta property="og:title" content={ogTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={url} />
 <meta property="og:locale" content="es_CO" />
@@ -309,7 +325,7 @@ const ogType =
 )}
 
 <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
-<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:title" content={ogTitle} />
 <meta name="twitter:description" content={description} />
 {ogImage && <meta name="twitter:image" content={ogImage} />}
 {ogImage && <meta name="twitter:image:alt" content={ogImageAlt} />}

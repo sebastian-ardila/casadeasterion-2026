@@ -1,0 +1,168 @@
+---
+import { Icon } from "astro-icon/components";
+
+// Botones para compartir el contenido actual en redes sociales. La
+// preview (imagen, título, descripción) la maneja el OG que se emite
+// desde SeoHead — aquí solo construimos los share-URLs canónicos.
+//
+// Uso:
+//   <SocialShare url={pageUrl} title={`Título (Categoría)`} />
+//
+// `url` se asume ya absoluta (canónica) y se URL-encodea. `title` se
+// usa como texto pre-compuesto en WhatsApp/Twitter/Email; el resto de
+// redes lo ignoran y leen el OG.
+
+interface Props {
+  url: string;
+  title: string;
+  /** Pequeño rótulo opcional encima de los íconos. */
+  label?: string;
+  /** Clase extra del wrapper para ajustar márgenes per-página. */
+  className?: string;
+}
+
+const { url, title, label = "Compartir", className = "" } = Astro.props;
+
+const encUrl = encodeURIComponent(url);
+const encText = encodeURIComponent(title);
+const encTitlePlusUrl = encodeURIComponent(`${title}\n${url}`);
+
+// WhatsApp: api.whatsapp.com/send funciona tanto en desktop (lleva a
+// WhatsApp Web) como en mobile (al app si está instalado). Mejor que
+// wa.me porque no requiere número.
+const whatsappHref = `https://api.whatsapp.com/send?text=${encTitlePlusUrl}`;
+// Twitter/X: el dominio nuevo (x.com/intent/tweet) funciona; el viejo
+// twitter.com/intent también — uso x.com porque el rebrand ya cuajó.
+const twitterHref = `https://x.com/intent/tweet?text=${encText}&url=${encUrl}`;
+const facebookHref = `https://www.facebook.com/sharer/sharer.php?u=${encUrl}`;
+const linkedinHref = `https://www.linkedin.com/sharing/share-offsite/?url=${encUrl}`;
+// mailto: subject + body. El navegador abre el cliente de correo.
+const mailHref = `mailto:?subject=${encText}&body=${encTitlePlusUrl}`;
+
+const buttons: { kind: string; href: string; icon: string; label: string }[] = [
+  { kind: "whatsapp", href: whatsappHref, icon: "lucide:message-circle",  label: "WhatsApp" },
+  { kind: "twitter",  href: twitterHref,  icon: "lucide:twitter",         label: "X (Twitter)" },
+  { kind: "facebook", href: facebookHref, icon: "lucide:facebook",        label: "Facebook" },
+  { kind: "linkedin", href: linkedinHref, icon: "lucide:linkedin",        label: "LinkedIn" },
+  { kind: "email",    href: mailHref,     icon: "lucide:mail",            label: "Email" },
+];
+---
+
+<div class={`cas-social-share ${className}`} data-cas-share-url={url}>
+  <p class="cas-social-label">{label}</p>
+  <div class="cas-social-row">
+    {buttons.map((b) => (
+      <a
+        href={b.href}
+        target={b.kind === "email" ? undefined : "_blank"}
+        rel={b.kind === "email" ? undefined : "noopener noreferrer"}
+        class={`cas-social-btn cas-social-btn-${b.kind}`}
+        aria-label={`Compartir en ${b.label}`}
+        title={`Compartir en ${b.label}`}
+      >
+        <Icon name={b.icon} class="w-4 h-4" aria-hidden="true" />
+      </a>
+    ))}
+    <button
+      type="button"
+      class="cas-social-btn cas-social-btn-copy"
+      data-cas-copy-link
+      aria-label="Copiar enlace"
+      title="Copiar enlace"
+    >
+      <Icon name="lucide:link" class="w-4 h-4 cas-social-icon-link" aria-hidden="true" />
+      <Icon name="lucide:check" class="w-4 h-4 cas-social-icon-check" aria-hidden="true" />
+    </button>
+  </div>
+</div>
+
+<style is:global>
+  .cas-social-share {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .cas-social-label {
+    margin: 0;
+    text-transform: uppercase;
+    font-size: 0.625rem;
+    letter-spacing: 0.22em;
+    color: var(--fg-muted);
+  }
+  .cas-social-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .cas-social-btn {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--border);
+    background: var(--bg-alt);
+    color: var(--fg);
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+  }
+  .cas-social-btn:hover {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+    transform: translateY(-1px);
+  }
+  /* Copy-link toggles which icon is visible. Default: link icon; tras
+     el click pasa a check con un fade. Vuelve a link después de 1.5s. */
+  .cas-social-btn-copy .cas-social-icon-check { display: none; }
+  .cas-social-btn-copy.is-copied .cas-social-icon-link { display: none; }
+  .cas-social-btn-copy.is-copied .cas-social-icon-check { display: inline-block; }
+  .cas-social-btn-copy.is-copied {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    if (window.__casShareInit) return;
+    window.__casShareInit = true;
+
+    async function copyToClipboard(text) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch {}
+      // Fallback para contextos sin clipboard API (iOS WebView, http).
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return ok;
+      } catch {
+        return false;
+      }
+    }
+
+    document.addEventListener("click", async (e) => {
+      const btn = e.target instanceof Element ? e.target.closest("[data-cas-copy-link]") : null;
+      if (!btn) return;
+      e.preventDefault();
+      const container = btn.closest(".cas-social-share");
+      const url = (container && container.getAttribute("data-cas-share-url")) || window.location.href;
+      const ok = await copyToClipboard(url);
+      if (ok) {
+        btn.classList.add("is-copied");
+        setTimeout(() => btn.classList.remove("is-copied"), 1500);
+      }
+    });
+  })();
+</script>
