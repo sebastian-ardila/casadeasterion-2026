@@ -3,7 +3,7 @@ import Layout from "~/layouts/Layout.astro";
 import PostCard from "~/components/PostCard.astro";
 import BookCard from "~/components/BookCard.astro";
 import { Icon } from "astro-icon/components";
-import { supabase, type Author, type Collaborator, type Category } from "~/lib/supabase";
+import { supabase, type Author, type Category } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
 import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
 import { extractAuthors, joinAuthorNames } from "~/lib/multi-author";
@@ -20,12 +20,13 @@ export async function getStaticPaths() {
 const { slug } = Astro.params;
 
 // Fetch the publication + its author junction AND its collaborator
-// junction in one round-trip. Both junctions return ordered arrays
-// that we flatten into Author[] / Collaborator[] for rendering.
+// junction in one round-trip. Tras la migration 0045 (unificación de
+// personas) ambas junctions referencian la tabla `authors` via
+// author_id — no hay más tabla `collaborators` separada.
 const { data: postRaw } = await supabase
   .from("posts")
   .select(
-    "*, post_authors(sort_order, author:authors(*)), post_collaborators(sort_order, collaborator:collaborators(*))",
+    "*, post_authors(sort_order, author:authors(*)), post_collaborators(sort_order, author:authors(*))",
   )
   .eq("slug", slug!)
   .eq("status", "published")
@@ -37,13 +38,13 @@ if (!postRaw) {
 
 const { post_authors: rawJunction, post_collaborators: rawCollabJunction, ...post } = postRaw as typeof postRaw & {
   post_authors: { sort_order: number; author: Author | null }[];
-  post_collaborators: { sort_order: number; collaborator: Collaborator | null }[];
+  post_collaborators: { sort_order: number; author: Author | null }[];
 };
 const authors = extractAuthors(rawJunction);
 const collaborators = [...(rawCollabJunction ?? [])]
   .sort((a, b) => a.sort_order - b.sort_order)
-  .map((r) => r.collaborator)
-  .filter(Boolean) as Collaborator[];
+  .map((r) => r.author)
+  .filter(Boolean) as Author[];
 const authorListLabel = joinAuthorNames(authors.map((a) => a.name));
 const primaryAuthor = authors[0] ?? null;
 

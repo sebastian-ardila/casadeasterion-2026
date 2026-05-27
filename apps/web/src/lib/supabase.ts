@@ -18,6 +18,10 @@ export type Tables = Database["public"]["Tables"];
 export type Post = Tables["posts"]["Row"];
 export type Book = Tables["books"]["Row"];
 export type Author = Tables["authors"]["Row"];
-export type Collaborator = Tables["collaborators"]["Row"];
+// Legacy alias: la tabla `collaborators` se eliminó en migration 0045
+// (las personas se unificaron en `authors` con role_tags). Mantengo
+// el alias para que el código existente que importe `Collaborator`
+// siga compilando — son la misma forma de fila.
+export type Collaborator = Tables["authors"]["Row"];
 export type Category = Tables["categories"]["Row"];
 export type SiteConfig = Tables["site_configuration"]["Row"];
