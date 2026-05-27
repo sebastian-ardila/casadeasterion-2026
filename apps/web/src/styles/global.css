@@ -78,7 +78,12 @@
     @apply uppercase text-xs tracking-[0.18em] font-medium border border-[color:var(--fg)] px-5 py-2.5 transition-colors hover:bg-[color:var(--fg)] hover:text-[color:var(--bg)];
   }
   .btn-solid {
-    @apply uppercase text-xs tracking-[0.18em] font-medium bg-[color:var(--fg)] text-[color:var(--bg)] px-5 py-2.5 transition-opacity hover:opacity-85;
+    /* Borde del mismo color que el fondo — invisible visualmente,
+       pero suma 1px por lado al outer box. Así un btn-solid junto a
+       un btn-outline (que sí tiene borde) queda exactamente con la
+       misma altura/ancho. Sin esto, el botón solid se ve "pequeño"
+       al lado del outlined. */
+    @apply uppercase text-xs tracking-[0.18em] font-medium bg-[color:var(--fg)] text-[color:var(--bg)] border border-[color:var(--fg)] px-5 py-2.5 transition-opacity hover:opacity-85;
   }
   .quote-mark::before {
     content: '"';

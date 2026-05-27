@@ -27,15 +27,21 @@
     <circle cx="19" cy="21" r="1" />
     <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
   </svg>
-  {/* Badge oculto por default — el JS lo muestra solo cuando hay
-      items. Vaciamos el texto del SSR para que, si por algún motivo
-      la clase `hidden` no aplica (race condition de hidratación),
-      no se vea un "0" fantasma. */}
+  {/* Badge controlado por CONTENIDO (no clase): `:empty` lo oculta
+      con CSS, así nunca se ve una burbuja negra sin número aunque
+      el JS de sync deje el estado inconsistente. El JS solo escribe
+      el número cuando hay items y vacía el texto cuando no. */}
   <span
     id="cda-cart-badge"
-    class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-stone-900 text-white text-[10px] font-semibold rounded-full inline-flex items-center justify-center hidden ring-2 ring-[color:var(--bg)]"
+    class="cda-cart-badge absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-stone-900 text-white text-[10px] font-semibold rounded-full inline-flex items-center justify-center ring-2 ring-[color:var(--bg)]"
   ></span>
 </button>
+
+<style is:global>
+  /* Hide cart badge whenever it has no count to display — covers SSR
+     emptiness and any future race where JS clears the count. */
+  .cda-cart-badge:empty { display: none; }
+</style>
 
 <script>
   import { getCart, subscribe } from "~/lib/cart";
@@ -44,12 +50,9 @@
     const badge = document.getElementById("cda-cart-badge");
     if (!badge) return;
     const total = getCart().reduce((s, it) => s + it.quantity, 0);
-    if (total > 0) {
-      badge.textContent = String(total > 99 ? "99+" : total);
-      badge.classList.remove("hidden");
-    } else {
-      badge.classList.add("hidden");
-    }
+    // CSS oculta el badge cuando :empty — escribimos solo cuando hay
+    // count y limpiamos si no, sin tocar clases.
+    badge.textContent = total > 0 ? String(total > 99 ? "99+" : total) : "";
   }
 
   function init() {
