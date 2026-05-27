@@ -24,7 +24,7 @@ const [{ data: featuredPosts }, { data: featuredBooks }, { data: authors }, { da
       .select("*")
       .eq("status", "published")
       .order("publication_date", { ascending: false })
-      .limit(8),
+      .limit(10),
     supabase.from("authors").select("*").order("name"),
     supabase.from("categories").select("*"),
   ]);

@@ -10,6 +10,15 @@ interface Props {
 }
 
 const { book, author } = Astro.props;
+
+const formattedPrice =
+  book.price_amount != null
+    ? new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: book.price_currency,
+        maximumFractionDigits: 0,
+      }).format(Number(book.price_amount))
+    : null;
 ---
 
 <article class="group flex flex-col h-full">
@@ -38,34 +47,33 @@ const { book, author } = Astro.props;
   }
 
   <div class="pt-3 sm:pt-4 flex flex-col flex-1 min-w-0">
-    {/* Slot reservado para el autor — siempre presente para que las
-        tarjetas con y sin autor tengan EXACTAMENTE el mismo alto.
-        min-h fija la altura de una línea uppercase tracking-[0.18em];
-        si no hay autor queda vacío pero el espacio sigue ahí. */}
-    <p class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)] line-clamp-1 min-h-[1.2em] mb-1 sm:mb-1.5">
-      {author?.name ?? ""}
-    </p>
+    {/* Slot reservado para el autor. Cuando no hay autor, inyectamos
+        un &nbsp; vía set:html para que la línea conserve su altura
+        natural (un <p> con string vacío puede colapsar a 0). */}
+    {author?.name ? (
+      <p class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)] line-clamp-1 mb-1 sm:mb-1.5">
+        {author.name}
+      </p>
+    ) : (
+      <p class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)] line-clamp-1 mb-1 sm:mb-1.5" set:html="&nbsp;"></p>
+    )}
     {/* Reserve room for two lines of title so single-line titles
         don't shorten the card. line-height-snug = 1.375, so 2.75em
         is exactly two line-heights of the current font-size. */}
     <h3 class="font-serif text-base sm:text-lg md:text-xl leading-snug line-clamp-2 min-h-[2.75em]">
       <a href={`/catalogo/${book.slug}`} class="hover:opacity-70 transition-opacity">{book.title}</a>
     </h3>
-    {/* Price + AddToCart agrupados: el precio queda pegado al botón
-        para que se lea como un par "$X · Comprar". El botón sólido
-        cierra cada tarjeta con peso visual claro y sirve de "piso"
-        al que se ancla la portada. mt-auto mantiene los pies de
-        botón alineados entre tarjetas aunque el título sea más corto. */}
+    {/* Price + AddToCart agrupados: el precio queda pegado al botón.
+        Cuando no hay precio inyectamos &nbsp; para garantizar la
+        línea — sin esto, una tarjeta sin precio era ~20px más baja
+        que las otras y rompía la alineación de la fila. mt-auto
+        empuja el bloque al fondo del article (h-full stretched). */}
     <div class="mt-auto pt-2 sm:pt-3 space-y-2 sm:space-y-3">
-      <p class="text-sm sm:text-[15px] tabular-nums min-h-[1.25rem] font-medium">
-        {book.price_amount != null
-          ? new Intl.NumberFormat("es-CO", {
-              style: "currency",
-              currency: book.price_currency,
-              maximumFractionDigits: 0,
-            }).format(Number(book.price_amount))
-          : ""}
-      </p>
+      {formattedPrice ? (
+        <p class="text-sm sm:text-[15px] tabular-nums font-medium">{formattedPrice}</p>
+      ) : (
+        <p class="text-sm sm:text-[15px] tabular-nums font-medium" set:html="&nbsp;"></p>
+      )}
       <AddToCartButton
         slug={book.slug}
         title={book.title}
