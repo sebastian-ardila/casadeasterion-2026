@@ -113,7 +113,7 @@ const metaDescription =
       <h2 class="font-serif text-2xl sm:text-3xl md:text-4xl border-b border-[color:var(--border)] pb-5 sm:pb-7 mb-10 sm:mb-12 md:mb-14">
         Libros de la colección
       </h2>
-      <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4">
+      <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 items-stretch">
         {books.map((book) => (
           <BookCard book={book} author={book.authors ?? null} config={config} />
         ))}
