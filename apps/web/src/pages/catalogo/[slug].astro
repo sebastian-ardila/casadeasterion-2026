@@ -190,6 +190,20 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
         ) : (
           <div class="aspect-[3/4] bg-[color:var(--bg-alt)]"></div>
         )}
+
+        {/* CTA debajo de la portada. Mismo componente y slug que el
+            CTA de abajo del cast → el subscribe(syncAll) del carrito
+            mantiene los dos botones (y cualquier otro del libro en
+            la página) en el mismo estado. */}
+        <AddToCartButton
+          slug={book.slug}
+          title={book.title}
+          coverImageUrl={book.cover_image_url}
+          priceAmount={book.price_amount}
+          priceCurrency={book.price_currency}
+          variant="primary"
+          className="mt-4 sm:mt-5"
+        />
       </div>
 
       {/* Technical info — single column, sits under cover on desktop. */}
@@ -272,21 +286,21 @@ if (formattedPrice) techRows.push({ label: "Precio", value: formattedPrice });
 
       {/* Cast del libro debajo del botón Comprar. Cuatro secciones
           condicionales (autores, colaboradores, traductores,
-          prologistas) en el orden de aporte editorial. Los labels son
+          prologuistas) en el orden de aporte editorial. Los labels son
           singular/plural según cuántas personas haya en cada rol. */}
       {(authors.length + collaborators.length + translators.length + prologuists.length) > 0 && (
-        <div class="mt-8 sm:mt-10 md:mt-12 space-y-7 sm:space-y-8 border-t border-[color:var(--border)] pt-7 sm:pt-9">
+        <div class="mt-8 sm:mt-10 md:mt-12 space-y-4 sm:space-y-5 border-t border-[color:var(--border)] pt-7 sm:pt-9">
           {[
             { people: authors,       singular: "Autor",        plural: "Autores",        section: "autores"        as const },
             { people: collaborators, singular: "Colaborador",  plural: "Colaboradores",  section: "colaboradores"  as const },
             { people: translators,   singular: "Traductor",    plural: "Traductores",    section: "traductores"    as const },
-            { people: prologuists,   singular: "Prologista",   plural: "Prologistas",    section: "prologistas"    as const },
+            { people: prologuists,   singular: "Prologuista",  plural: "Prologuistas",   section: "prologuistas"   as const },
           ].filter((g) => g.people.length > 0).map((g) => (
-            <div class="space-y-3 sm:space-y-4">
+            <div class="border border-[color:var(--border)] bg-[color:var(--bg-alt)]/40 p-4 sm:p-5 space-y-3 sm:space-y-4">
               <p class="uppercase text-[10px] sm:text-[11px] tracking-[0.22em] text-[color:var(--fg-muted)]">
                 {g.people.length > 1 ? g.plural : g.singular}
               </p>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+              <div class="flex flex-wrap gap-x-8 gap-y-4">
                 {g.people.map((a) => (
                   <a
                     href={`/${g.section}/${a.slug}`}

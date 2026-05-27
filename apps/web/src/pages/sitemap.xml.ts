@@ -10,7 +10,7 @@ const STATIC_PATHS_BASE = [
   { path: "/autores", priority: 0.7, changefreq: "weekly" },
   { path: "/colaboradores", priority: 0.6, changefreq: "weekly" },
   { path: "/traductores", priority: 0.6, changefreq: "weekly" },
-  { path: "/prologistas", priority: 0.6, changefreq: "weekly" },
+  { path: "/prologuistas", priority: 0.6, changefreq: "weekly" },
 ];
 const NOSOTROS_PATH = { path: "/nosotros", priority: 0.6, changefreq: "monthly" };
 
@@ -129,7 +129,7 @@ export const GET: APIRoute = async ({ site }) => {
 
   for (const p of prologuistsRes.data ?? []) {
     entries.push({
-      url: new URL(`/prologistas/${p.slug}`, site).href,
+      url: new URL(`/prologuistas/${p.slug}`, site).href,
       lastmod: p.updated_at ?? undefined,
       priority: 0.4,
       changefreq: "monthly",

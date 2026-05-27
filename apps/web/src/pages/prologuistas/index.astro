@@ -3,7 +3,7 @@ import Layout from "~/layouts/Layout.astro";
 import EmptyState from "~/components/EmptyState.astro";
 import { supabase } from "~/lib/supabase";
 
-// "Prologistas" — vista filtrada de `authors` donde role_tags
+// "Prologuistas" — vista filtrada de `authors` donde role_tags
 // incluye 'prologuist'. Mismo molde que /traductores y /colaboradores.
 const { data: prologuists } = await supabase
   .from("authors")
@@ -16,17 +16,17 @@ const stripDiacritics = (s: string) =>
 ---
 
 <Layout
-  title="Prologistas"
+  title="Prologuistas"
   description="Quienes han escrito prólogos para libros y publicaciones de Casa de Asterión Ediciones."
   keywords={[
-    "prologistas Casa de Asterión",
+    "prologuistas Casa de Asterión",
     "prologuistas filosofía y poesía",
     "prólogos libros",
-    "prologistas Colombia",
+    "prologuistas Colombia",
   ]}
 >
   <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-20 pb-6 sm:pb-8">
-    <h1 class="font-serif text-3xl sm:text-4xl md:text-6xl mb-3 sm:mb-4">Prologistas</h1>
+    <h1 class="font-serif text-3xl sm:text-4xl md:text-6xl mb-3 sm:mb-4">Prologuistas</h1>
     <p class="text-[color:var(--fg-muted)] max-w-prose">
       Personas que han escrito prólogos para libros o publicaciones de Casa de Asterión — la voz que precede al texto.
     </p>
@@ -36,7 +36,7 @@ const stripDiacritics = (s: string) =>
     {prologuists && prologuists.length > 0 ? (
       <>
         <div class="mb-8 sm:mb-10">
-          <label for="prologistas-search" class="sr-only">Buscar prologista por nombre</label>
+          <label for="prologuistas-search" class="sr-only">Buscar prologuista por nombre</label>
           <div class="relative">
             <svg
               class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"
@@ -46,13 +46,13 @@ const stripDiacritics = (s: string) =>
               <path d="m21 21-4.3-4.3" />
             </svg>
             <input
-              id="prologistas-search"
+              id="prologuistas-search"
               type="search"
               data-people-search
-              placeholder="Buscar prologista por nombre…"
+              placeholder="Buscar prologuista por nombre…"
               autocomplete="off"
               spellcheck="false"
-              aria-label="Buscar prologista por nombre"
+              aria-label="Buscar prologuista por nombre"
               class="w-full pl-10 pr-3 py-3 border border-[color:var(--border)] bg-[color:var(--bg)] text-sm focus:outline-none focus:border-stone-900 transition-colors"
             />
           </div>
@@ -61,7 +61,7 @@ const stripDiacritics = (s: string) =>
         <div class="grid gap-8 sm:gap-10 md:gap-12 grid-cols-2 md:grid-cols-3 lg:grid-cols-4" data-people-grid>
           {prologuists.map((p) => (
             <a
-              href={`/prologistas/${p.slug}`}
+              href={`/prologuistas/${p.slug}`}
               class="group"
               data-people-card
               data-search-text={stripDiacritics(p.name ?? "")}
@@ -81,13 +81,13 @@ const stripDiacritics = (s: string) =>
         </div>
 
         <p class="text-[color:var(--fg-muted)] mt-12 hidden" data-people-empty>
-          No encontramos prologistas con ese nombre.
+          No encontramos prologuistas con ese nombre.
         </p>
       </>
     ) : (
       <EmptyState
         icon="lucide:quote"
-        title="Pronto, información sobre nuestros prologistas"
+        title="Pronto, información sobre nuestros prologuistas"
         description="Estamos preparando las fichas de quienes han escrito prólogos para la editorial."
         ctaLabel="Volver al inicio"
       />

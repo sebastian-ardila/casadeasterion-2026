@@ -1,7 +1,7 @@
 -- 0045_unified_people_roles.sql
 --
 -- Unifica todas las personas (autores, colaboradores, traductores,
--- prologistas) bajo la tabla `authors`. Una persona = una fila, con
+-- prologuistas) bajo la tabla `authors`. Una persona = una fila, con
 -- `role_tags text[]` indicando qué roles cumple. Las junctions
 -- separadas por rol mantienen la relación con libros y posts.
 --

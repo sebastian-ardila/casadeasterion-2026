@@ -6,7 +6,7 @@ import { supabase, type Author, type Category } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
 import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
 
-// Ficha pública de un prologista. Lee de `authors` (filtrada por
+// Ficha pública de un prologuista. Lee de `authors` (filtrada por
 // role_tag='prologuist') y junta libros y publicaciones a través de
 // las junctions book_prologuists / post_prologuists.
 
@@ -29,7 +29,7 @@ const { data: prologuist } = await supabase
   .maybeSingle();
 
 if (!prologuist) {
-  return Astro.redirect("/prologistas");
+  return Astro.redirect("/prologuistas");
 }
 
 const { data: bookRows } = await supabase
@@ -80,7 +80,7 @@ const sameAs = [links.web, links.twitter, links.instagram].filter(Boolean) as st
 const bioPlain = clampText(mdToPlainText(prologuist.bio_md), 160);
 const metaDescription =
   bioPlain ||
-  `${prologuist.name} — prologista de Casa de Asterión Ediciones.`;
+  `${prologuist.name} — prologuista de Casa de Asterión Ediciones.`;
 ---
 
 <Layout
@@ -94,7 +94,7 @@ const metaDescription =
   sameAs={sameAs}
   breadcrumbItems={[
     { name: "Inicio", url: new URL("/", Astro.site).href },
-    { name: "Prologistas", url: new URL("/prologistas", Astro.site).href },
+    { name: "Prologuistas", url: new URL("/prologuistas", Astro.site).href },
     { name: prologuist.name, url: Astro.url.href },
   ]}
 >
@@ -112,7 +112,7 @@ const metaDescription =
     </div>
     <div>
       <p class="uppercase text-[11px] sm:text-xs tracking-[0.2em] text-[color:var(--fg-muted)] mb-3 sm:mb-4">
-        Prologista
+        Prologuista
       </p>
       <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl mb-5 sm:mb-6">{prologuist.name}</h1>
       <div class="cas-md max-w-none" set:html={bio}></div>
