@@ -7,14 +7,14 @@
   type="button"
   id="cda-cart-btn"
   aria-label="Abrir carrito"
-  class="relative inline-flex items-center justify-center w-10 h-10 hover:bg-[color:var(--bg-alt,rgba(0,0,0,0.04))] transition-colors rounded-sm cursor-pointer"
+  class="relative inline-flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 text-[color:var(--fg)] hover:bg-[color:var(--bg-alt,rgba(0,0,0,0.04))] transition-colors rounded-sm cursor-pointer"
 >
   {/* lucide:shopping-cart — el carro con ruedas es el affordance
       universal de "área de compras". El shopping-bag de antes se
       confundía con un menú lateral o una carpeta. */}
   <svg
-    width="20"
-    height="20"
+    width="22"
+    height="22"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -27,10 +27,14 @@
     <circle cx="19" cy="21" r="1" />
     <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
   </svg>
+  {/* Badge oculto por default — el JS lo muestra solo cuando hay
+      items. Vaciamos el texto del SSR para que, si por algún motivo
+      la clase `hidden` no aplica (race condition de hidratación),
+      no se vea un "0" fantasma. */}
   <span
     id="cda-cart-badge"
-    class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-stone-900 text-white text-[10px] font-medium rounded-full inline-flex items-center justify-center hidden"
-  >0</span>
+    class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-stone-900 text-white text-[10px] font-semibold rounded-full inline-flex items-center justify-center hidden ring-2 ring-[color:var(--bg)]"
+  ></span>
 </button>
 
 <script>

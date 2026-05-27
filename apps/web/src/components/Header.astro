@@ -138,18 +138,20 @@ function isItemActive(item: NavItem): boolean {
     </nav>
 
     <div class="flex items-center gap-2 sm:gap-3">
-      {/* CTA primario en el header — sólido negro con texto cream para
-          que la acción comercial sea evidente desde cualquier página.
-          Visible sm+ (en mobile el menú hamburguer cubre todo). */}
+      {/* CTA primario en el header — sólido negro con texto cream
+          para que la acción comercial sea evidente desde cualquier
+          página. Visible sm+ (en mobile el hamburger cubre el espacio).
+          Comparte la altura exacta de .btn-outline (px-5 py-2.5)
+          para que Comprar + Suscribirse formen una pareja simétrica. */}
       <a
         href="/catalogo"
-        class="hidden sm:inline-flex items-center gap-1.5 bg-[color:var(--fg)] text-[color:var(--bg)] px-4 py-2 text-[11px] uppercase tracking-[0.18em] hover:bg-[color:var(--fg-muted)] transition-colors"
+        class="btn-solid hidden sm:inline-flex items-center gap-1.5"
       >
-        <Icon name="lucide:shopping-cart" class="w-3.5 h-3.5" aria-hidden="true" />
+        <Icon name="lucide:shopping-cart" class="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
         <span>Comprar</span>
       </a>
       {showSubscribe && (
-        <a href="/#suscribirse" class="btn-outline hidden sm:inline-block">Suscribirse</a>
+        <a href="/#suscribirse" class="btn-outline hidden sm:inline-flex items-center">Suscribirse</a>
       )}
       <CartButton />
 
