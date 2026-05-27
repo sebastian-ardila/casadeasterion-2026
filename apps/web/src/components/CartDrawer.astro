@@ -273,6 +273,23 @@
     total.textContent = allPriced ? formatPrice(amount, currency) : "Consultar precio";
   }
 
+  // Devuelve el botón de Confirmar pedido al estado neutral (sin
+  // spinner, sin disabled). Lo llamamos en el catch de handleCheckout,
+  // en cada init() del drawer y en el evento pageshow para cubrir el
+  // caso bfcache: el usuario hace clic en Confirmar → va al login →
+  // presiona "Volver" del navegador → la página se restaura desde
+  // bfcache con el botón aún en estado "Conectando…" porque el JS no
+  // se re-ejecuta. Sin este reset el botón quedaba congelado.
+  function resetCheckoutButton() {
+    const btn = document.getElementById("cda-cart-checkout") as HTMLButtonElement | null;
+    if (!btn) return;
+    const label = btn.querySelector<HTMLSpanElement>("[data-cda-checkout-label]");
+    const spinner = btn.querySelector<SVGElement>("[data-cda-checkout-spinner]");
+    btn.disabled = false;
+    spinner?.classList.add("hidden");
+    if (label) label.textContent = "Confirmar pedido";
+  }
+
   // Click "Confirmar pedido": if there's a session, navigate to
   // /checkout (step 2). If not, kick off Google OAuth here so the
   // customer doesn't land on /checkout without auth — Google will
@@ -295,9 +312,7 @@
       // signInWithOAuth navigates to Google; control never returns.
     } catch (err) {
       console.error("[cart] checkout error:", err);
-      if (btn) btn.disabled = false;
-      spinner?.classList.add("hidden");
-      if (label) label.textContent = "Confirmar pedido";
+      resetCheckoutButton();
       const hint = document.getElementById("cda-cart-checkout-hint");
       if (hint) {
         hint.textContent = "No pudimos iniciar sesión. Intenta de nuevo.";
@@ -312,11 +327,27 @@
     if (!drawer || drawer.dataset.bound) {
       // Always re-render on init in case items changed while away.
       render();
+      // Si el usuario regresó a esta página después de un intento de
+      // login que abandonó, el botón "Confirmar pedido" podía haber
+      // quedado disabled con spinner. Lo reseteamos aquí también, no
+      // solo en pageshow.
+      resetCheckoutButton();
       return;
     }
     drawer.dataset.bound = "1";
 
     window.addEventListener("cda:open-cart", open);
+
+    // pageshow se dispara al cargar la página por primera vez y también
+    // cuando el navegador la restaura desde bfcache (back/forward). El
+    // flag persisted distingue ambos casos. Reseteamos el botón cada
+    // vez que volvemos via bfcache para deshacer el estado "Conectando…"
+    // que pudo haber quedado tras un signInWithGoogle abandonado.
+    window.addEventListener("pageshow", (e) => {
+      if ((e as PageTransitionEvent).persisted) {
+        resetCheckoutButton();
+      }
+    });
 
     drawer.addEventListener("click", (e) => {
       const t = e.target as HTMLElement;
