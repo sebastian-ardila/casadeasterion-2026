@@ -290,21 +290,32 @@ const hasAny = hasEmails || hasPhones || hasPlace || socials.length > 0;
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 1.125rem;
-  }
-  .contact-list > li + li {
-    padding-top: 1.125rem;
-    border-top: 1px dashed var(--border);
+    gap: 0.625rem;
   }
 
   .contact-item {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    align-items: baseline;
+    align-items: center;
     gap: 0.875rem 1.5rem;
+    padding: 1rem 1.125rem;
+    min-height: 5.25rem;
     text-decoration: none;
     color: inherit;
-    transition: opacity 0.15s;
+    background: color-mix(in srgb, var(--fg) 3%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+    border-radius: 4px;
+    transition: background-color 0.15s, border-color 0.15s;
+  }
+  @media (min-width: 768px) {
+    .contact-item {
+      padding: 1.125rem 1.25rem;
+      min-height: 5.5rem;
+    }
+  }
+  a.contact-item:hover {
+    background: color-mix(in srgb, var(--fg) 6%, transparent);
+    border-color: var(--border);
   }
   .contact-item-static { cursor: default; }
 
