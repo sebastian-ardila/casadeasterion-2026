@@ -1,0 +1,56 @@
+---
+import BookCard from "~/components/BookCard.astro";
+import PostCard from "~/components/PostCard.astro";
+import type { PersonSection } from "~/lib/person-sections";
+import type { Author, Category } from "~/lib/supabase";
+import type { SiteConfigMap } from "~/lib/site-config";
+
+interface Props {
+  sections: PersonSection[];
+  categoryMap: Map<string, Category>;
+  /** Persona dueña de la ficha. Solo se pasa a BookCard como autor
+   *  cuando la sección es la propia (role==="author") porque el resto
+   *  de roles no tienen al sujeto como autor del libro. */
+  person: Author;
+  config: SiteConfigMap;
+}
+
+const { sections, categoryMap, person, config } = Astro.props as Props;
+---
+
+{sections.map((s) => (
+  <>
+    {s.books.length > 0 && (
+      <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-12 sm:pb-16 md:pb-20">
+        <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
+          {s.booksTitle}
+        </h2>
+        <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 items-stretch">
+          {s.books.map((book) => (
+            <BookCard
+              book={book}
+              author={s.role === "author" ? person : ((book as any).authors ?? null)}
+              config={config}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+    {s.posts.length > 0 && (
+      <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-12 sm:pb-16 md:pb-20">
+        <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
+          {s.postsTitle}
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16">
+          {s.posts.map((p) => (
+            <PostCard
+              post={p}
+              author={p._firstAuthor}
+              category={p.category_id ? categoryMap.get(p.category_id) ?? null : null}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+  </>
+))}

@@ -1,9 +1,10 @@
 ---
 import Layout from "~/layouts/Layout.astro";
-import BookCard from "~/components/BookCard.astro";
+import PersonSections from "~/components/PersonSections.astro";
 import { supabase } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
 import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
+import { loadPersonSections } from "~/lib/person-sections";
 
 export async function getStaticPaths() {
   const { data } = await supabase.from("authors").select("slug");
@@ -23,46 +24,14 @@ if (!author) {
   return Astro.redirect("/autores");
 }
 
-// Find all books where this author appears in the junction (not only
-// where they're the primary). Order by publication_date desc.
-const { data: junctionBooks } = await supabase
-  .from("book_authors")
-  .select("book_id")
-  .eq("author_id", author.id);
-const linkedBookIds = (junctionBooks ?? []).map((r) => r.book_id);
-const { data: books } = linkedBookIds.length > 0
-  ? await supabase
-      .from("books")
-      .select("*")
-      .eq("status", "published")
-      .in("id", linkedBookIds)
-      .order("publication_date", { ascending: false })
-  : { data: [] };
-
-// Otros roles que esta misma persona puede cumplir: traducción,
-// prólogo, colaboración. Cargamos en paralelo solo si su role_tags
-// los incluye; así evitamos roundtrips innecesarios.
-const roles = (author.role_tags ?? []) as string[];
-const otherFetches: Record<string, Promise<any>> = {};
-if (roles.includes("translator")) {
-  otherFetches.translatedBooks = supabase.from("book_translators").select("book:books(*)").eq("author_id", author.id);
-}
-if (roles.includes("prologuist")) {
-  otherFetches.prologuedBooks = supabase.from("book_prologuists").select("book:books(*)").eq("author_id", author.id);
-}
-if (roles.includes("collaborator")) {
-  otherFetches.collaboratedBooks = supabase.from("book_collaborators").select("book:books(*)").eq("author_id", author.id);
-}
-const resolved = await Promise.all(Object.values(otherFetches));
-const otherKeys = Object.keys(otherFetches);
-type Book = NonNullable<typeof books>[number];
-const pickBooks = (idx: number): Book[] =>
-  ((resolved[idx]?.data ?? []) as { book: Book | null }[])
-    .map((r) => r.book)
-    .filter((b): b is Book => !!b && b.status === "published");
-const translatedBooks  = otherKeys.indexOf("translatedBooks")  >= 0 ? pickBooks(otherKeys.indexOf("translatedBooks"))  : [];
-const prologuedBooks   = otherKeys.indexOf("prologuedBooks")   >= 0 ? pickBooks(otherKeys.indexOf("prologuedBooks"))   : [];
-const collaboratedBooks = otherKeys.indexOf("collaboratedBooks") >= 0 ? pickBooks(otherKeys.indexOf("collaboratedBooks")) : [];
+// Secciones ordenadas según el rol primario de esta página (author).
+// El helper se encarga de cargar libros/posts en todos los roles y
+// filtrar los grupos vacíos.
+const { sections, categoryMap } = await loadPersonSections(
+  supabase as any,
+  author.id,
+  "author",
+);
 
 const bio = renderMarkdown(author.bio_md);
 const links = (author.links as Record<string, string> | null) ?? {};
@@ -106,55 +75,10 @@ const metaDescription =
     </div>
   </section>
 
-  {books && books.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-12 sm:pb-16 md:pb-20">
-      <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
-        Obras
-      </h2>
-      <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 items-stretch">
-        {books.map((book) => (
-          <BookCard book={book} author={author} config={config} />
-        ))}
-      </div>
-    </section>
-  )}
-
-  {translatedBooks.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-12 sm:pb-16 md:pb-20">
-      <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
-        Libros que ha traducido
-      </h2>
-      <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 items-stretch">
-        {translatedBooks.map((book) => (
-          <BookCard book={book} author={null} config={config} />
-        ))}
-      </div>
-    </section>
-  )}
-
-  {prologuedBooks.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-12 sm:pb-16 md:pb-20">
-      <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
-        Libros con su prólogo
-      </h2>
-      <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 items-stretch">
-        {prologuedBooks.map((book) => (
-          <BookCard book={book} author={null} config={config} />
-        ))}
-      </div>
-    </section>
-  )}
-
-  {collaboratedBooks.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
-      <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
-        Libros donde colabora
-      </h2>
-      <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 items-stretch">
-        {collaboratedBooks.map((book) => (
-          <BookCard book={book} author={null} config={config} />
-        ))}
-      </div>
-    </section>
-  )}
+  <PersonSections
+    sections={sections}
+    categoryMap={categoryMap}
+    person={author}
+    config={config}
+  />
 </Layout>

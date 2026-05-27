@@ -1,15 +1,14 @@
 ---
 import Layout from "~/layouts/Layout.astro";
-import BookCard from "~/components/BookCard.astro";
-import PostCard from "~/components/PostCard.astro";
-import { supabase, type Author, type Category } from "~/lib/supabase";
+import PersonSections from "~/components/PersonSections.astro";
+import { supabase } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
 import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
+import { loadPersonSections } from "~/lib/person-sections";
 
-// Ficha de un colaborador. La tabla subyacente es `authors`
-// (filtrada por role_tag 'collaborator' en /colaboradores). Las
-// junctions post_collaborators y book_collaborators ahora apuntan a
-// authors via author_id.
+// Ficha de un colaborador. La tabla subyacente es `authors` (filtrada
+// por role_tag 'collaborator'). Las junctions post_collaborators y
+// book_collaborators apuntan a authors via author_id.
 
 export async function getStaticPaths() {
   const { data } = await supabase
@@ -33,50 +32,11 @@ if (!collaborator) {
   return Astro.redirect("/colaboradores");
 }
 
-// Posts donde figura como colaborador.
-const { data: postRows } = await supabase
-  .from("post_collaborators")
-  .select("post_id")
-  .eq("author_id", collaborator.id);
-const linkedPostIds = (postRows ?? []).map((r: { post_id: string }) => r.post_id);
-const { data: posts } = linkedPostIds.length > 0
-  ? await supabase
-      .from("posts")
-      .select("*, post_authors(sort_order, author:authors(*))")
-      .eq("status", "published")
-      .in("id", linkedPostIds)
-      .order("published_at", { ascending: false })
-  : { data: [] };
-
-// Libros donde figura como colaborador.
-const { data: bookRows } = await supabase
-  .from("book_collaborators")
-  .select("book_id")
-  .eq("author_id", collaborator.id);
-const linkedBookIds = (bookRows ?? []).map((r: { book_id: string }) => r.book_id);
-const { data: books } = linkedBookIds.length > 0
-  ? await supabase
-      .from("books")
-      .select("*, authors!books_author_id_fkey(name, slug)")
-      .eq("status", "published")
-      .in("id", linkedBookIds)
-      .order("publication_date", { ascending: false })
-  : { data: [] };
-
-// Categorías para los posts.
-const categoryIds = Array.from(
-  new Set(((posts ?? []).map((p) => p.category_id).filter(Boolean) as string[])),
+const { sections, categoryMap } = await loadPersonSections(
+  supabase as any,
+  collaborator.id,
+  "collaborator",
 );
-const { data: categories } = categoryIds.length > 0
-  ? await supabase.from("categories").select("*").in("id", categoryIds)
-  : { data: [] as Category[] };
-const categoryMap = new Map((categories ?? []).map((c) => [c.id, c]));
-
-function firstAuthor(p: any): Author | null {
-  const rows = (p.post_authors ?? []) as { sort_order: number; author: Author | null }[];
-  const sorted = [...rows].sort((a, b) => a.sort_order - b.sort_order);
-  return sorted[0]?.author ?? null;
-}
 
 const bio = renderMarkdown(collaborator.bio_md);
 const links = (collaborator.links as Record<string, string> | null) ?? {};
@@ -123,33 +83,10 @@ const metaDescription =
     </div>
   </section>
 
-  {books && books.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-12 sm:pb-16 md:pb-20">
-      <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
-        Libros donde colabora
-      </h2>
-      <div class="grid gap-x-5 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16 grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 items-stretch">
-        {books.map((book: any) => (
-          <BookCard book={book} author={book.authors ?? null} config={config} />
-        ))}
-      </div>
-    </section>
-  )}
-
-  {posts && posts.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
-      <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
-        Publicaciones en las que ha colaborado
-      </h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16">
-        {posts.map((p) => (
-          <PostCard
-            post={p}
-            author={firstAuthor(p)}
-            category={p.category_id ? categoryMap.get(p.category_id) : null}
-          />
-        ))}
-      </div>
-    </section>
-  )}
+  <PersonSections
+    sections={sections}
+    categoryMap={categoryMap}
+    person={collaborator}
+    config={config}
+  />
 </Layout>
