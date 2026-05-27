@@ -17,7 +17,7 @@ const { book, author } = Astro.props;
     book.cover_image_url ? (
       <a
         href={`/catalogo/${book.slug}`}
-        class="block aspect-[3/4] overflow-hidden bg-[color:var(--bg-alt)] shadow-sm shadow-stone-900/10 ring-1 ring-stone-900/[0.04] transition-shadow duration-300 group-hover:shadow-md group-hover:shadow-stone-900/15"
+        class="block aspect-[4/5] overflow-hidden bg-[color:var(--bg-alt)] shadow-sm shadow-stone-900/10 ring-1 ring-stone-900/[0.04] transition-shadow duration-300 group-hover:shadow-md group-hover:shadow-stone-900/15"
       >
         <img
           src={book.cover_image_url}
@@ -30,16 +30,16 @@ const { book, author } = Astro.props;
     ) : (
       <a
         href={`/catalogo/${book.slug}`}
-        class="aspect-[3/4] bg-[color:var(--bg-alt)] flex items-center justify-center text-[color:var(--fg-muted)] text-xs sm:text-sm uppercase tracking-[0.16em]"
+        class="aspect-[4/5] bg-[color:var(--bg-alt)] flex items-center justify-center text-[color:var(--fg-muted)] text-xs sm:text-sm uppercase tracking-[0.16em]"
       >
         Sin portada
       </a>
     )
   }
 
-  <div class="pt-4 sm:pt-5 flex flex-col flex-1 min-w-0">
+  <div class="pt-3 sm:pt-4 flex flex-col flex-1 min-w-0">
     {author && (
-      <p class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)] line-clamp-1 mb-1.5 sm:mb-2">
+      <p class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)] line-clamp-1 mb-1 sm:mb-1.5">
         {author.name}
       </p>
     )}
@@ -49,25 +49,28 @@ const { book, author } = Astro.props;
     <h3 class="font-serif text-base sm:text-lg md:text-xl leading-snug line-clamp-2 min-h-[2.75em]">
       <a href={`/catalogo/${book.slug}`} class="hover:opacity-70 transition-opacity">{book.title}</a>
     </h3>
-    {/* Reserve a fixed price slot so cards with and without a price stay
-        aligned: same metadata height across the row. */}
-    <p class="mt-2 sm:mt-3 text-sm sm:text-[15px] tabular-nums min-h-[1.25rem]">
-      {book.price_amount != null
-        ? new Intl.NumberFormat("es-CO", {
-            style: "currency",
-            currency: book.price_currency,
-            maximumFractionDigits: 0,
-          }).format(Number(book.price_amount))
-        : ""}
-    </p>
-    <div class="mt-auto pt-4 sm:pt-5">
+    {/* Price + AddToCart agrupados: el precio queda pegado al botón
+        para que se lea como un par "$X · Comprar". El botón sólido
+        cierra cada tarjeta con peso visual claro y sirve de "piso"
+        al que se ancla la portada. mt-auto mantiene los pies de
+        botón alineados entre tarjetas aunque el título sea más corto. */}
+    <div class="mt-auto pt-2 sm:pt-3 space-y-2 sm:space-y-3">
+      <p class="text-sm sm:text-[15px] tabular-nums min-h-[1.25rem] font-medium">
+        {book.price_amount != null
+          ? new Intl.NumberFormat("es-CO", {
+              style: "currency",
+              currency: book.price_currency,
+              maximumFractionDigits: 0,
+            }).format(Number(book.price_amount))
+          : ""}
+      </p>
       <AddToCartButton
         slug={book.slug}
         title={book.title}
         coverImageUrl={book.cover_image_url}
         priceAmount={book.price_amount}
         priceCurrency={book.price_currency}
-        variant="ghost"
+        variant="primary"
       />
     </div>
   </div>
