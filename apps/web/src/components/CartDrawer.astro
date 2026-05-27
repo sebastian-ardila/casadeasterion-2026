@@ -91,7 +91,10 @@
     >
       <div class="flex items-baseline justify-between mb-4">
         <span class="text-xs uppercase tracking-[0.16em] text-stone-500">Total estimado</span>
-        <span id="cda-cart-total" class="font-serif text-2xl">—</span>
+        {/* Misma tipografía que los precios del catálogo: Inter sans
+            con tabular-nums para que los dígitos del total alineen y
+            la lectura del precio sea consistente entre páginas. */}
+        <span id="cda-cart-total" class="font-sans text-2xl tabular-nums tracking-tight">—</span>
       </div>
       <button
         type="button"
@@ -214,7 +217,7 @@
           <a href="/catalogo/${escape(item.slug)}" data-cda-close-on-click class="font-serif text-sm leading-tight hover:underline pr-2 break-words">
             ${escape(item.title)}
           </a>
-          <span class="text-xs text-stone-500 mt-0.5">${escape(price)}</span>
+          <span class="font-sans text-xs text-stone-500 mt-0.5 tabular-nums">${escape(price)}</span>
           <div class="mt-auto flex items-center justify-between gap-2 pt-2">
             <div class="inline-flex items-center border border-stone-300">
               <button type="button" class="w-7 h-7 flex items-center justify-center hover:bg-stone-100 disabled:opacity-30 cursor-pointer" data-cda-qty-down="${escape(item.slug)}" aria-label="Restar uno">−</button>

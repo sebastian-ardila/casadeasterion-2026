@@ -57,7 +57,7 @@ const priceLine = formattedPrice || NBSP;
 
   <div class="pt-3 sm:pt-4 flex flex-col flex-1 min-w-0">
     {/* Autor — siempre presente con   si no hay dato. */}
-    <p class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)] line-clamp-1 mb-1 sm:mb-1.5">
+    <p class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)] line-clamp-1 mb-1 sm:mb-1.5 min-h-[1.4em]">
       {authorLine}
     </p>
     {/* Título — reservamos espacio para 2 líneas con min-h-[2.75em]
@@ -75,7 +75,7 @@ const priceLine = formattedPrice || NBSP;
           Cormorant Garamond son elegantes pero su lectura rápida es
           menor; Inter con tabular-nums optimiza claridad y alineación
           vertical de los precios entre tarjetas. */}
-      <p class="font-sans text-xl sm:text-2xl font-bold text-stone-900 tabular-nums leading-tight tracking-tight">
+      <p class="font-sans text-xl sm:text-2xl text-stone-900 tabular-nums leading-tight tracking-tight min-h-[1.4em]">
         {priceLine}
       </p>
       <AddToCartButton
