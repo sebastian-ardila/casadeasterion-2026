@@ -32,20 +32,13 @@ const addClasses = variant === "primary"
   ? "bg-stone-900 text-white hover:bg-stone-800"
   : "bg-white border border-stone-900 text-stone-900 hover:bg-stone-900 hover:text-white";
 
-// En variant ghost (catálogo / home), el shell del contador cambia el
-// color del borde a naranja para que el lector identifique de un vistazo
-// qué libros ya están en el carrito mientras navega la grilla. Mantengo
-// border-1 (mismo grosor que el botón Comprar) para que la transición
-// entre estados no genere un shift de pixels — solo cambia el color.
-// En variant primary (detalle del libro) el shell ya es sólido negro:
-// agrego un ring naranja interior para conservar el contraste.
-const qtyShellClasses = variant === "primary"
-  ? "bg-stone-900 text-white ring-2 ring-orange-500 ring-inset"
-  : "bg-white border border-orange-500 text-stone-900";
-
-const qtyBtnHoverClasses = variant === "primary"
-  ? "hover:bg-stone-700"
-  : "hover:bg-stone-100";
+// El shell del contador siempre es blanco con borde naranja + texto
+// negro, sin importar el variant del botón inicial "Comprar" (negro
+// sólido en primary, blanco con borde negro en ghost). El estado
+// "agregado al carrito" tiene su propia identidad visual unificada
+// para que el lector lo reconozca en cualquier punto del sitio.
+const qtyShellClasses = "bg-white border border-orange-500 text-stone-900";
+const qtyBtnHoverClasses = "hover:bg-stone-100";
 ---
 
 <div
