@@ -19,6 +19,15 @@ const formattedPrice =
         maximumFractionDigits: 0,
       }).format(Number(book.price_amount))
     : null;
+
+// Líneas resueltas en el frontmatter — siempre tienen contenido. Si
+// no hay autor o precio, usamos un non-breaking space literal
+// (` `) en vez de cadena vacía. Esto garantiza que la línea
+// renderice su altura natural y la tarjeta mantenga su estructura
+// completa, independiente de si la fila tiene datos completos o no.
+const NBSP = " ";
+const authorLine = author?.name?.trim() || NBSP;
+const priceLine = formattedPrice || NBSP;
 ---
 
 <article class="group flex flex-col h-full">
@@ -47,33 +56,24 @@ const formattedPrice =
   }
 
   <div class="pt-3 sm:pt-4 flex flex-col flex-1 min-w-0">
-    {/* Slot reservado para el autor. Cuando no hay autor, inyectamos
-        un &nbsp; vía set:html para que la línea conserve su altura
-        natural (un <p> con string vacío puede colapsar a 0). */}
-    {author?.name ? (
-      <p class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)] line-clamp-1 mb-1 sm:mb-1.5">
-        {author.name}
-      </p>
-    ) : (
-      <p class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)] line-clamp-1 mb-1 sm:mb-1.5" set:html="&nbsp;"></p>
-    )}
-    {/* Reserve room for two lines of title so single-line titles
-        don't shorten the card. line-height-snug = 1.375, so 2.75em
-        is exactly two line-heights of the current font-size. */}
+    {/* Autor — siempre presente con   si no hay dato. */}
+    <p class="text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[color:var(--fg-muted)] line-clamp-1 mb-1 sm:mb-1.5">
+      {authorLine}
+    </p>
+    {/* Título — reservamos espacio para 2 líneas con min-h-[2.75em]
+        (2 * line-height-snug 1.375). */}
     <h3 class="font-serif text-base sm:text-lg md:text-xl leading-snug line-clamp-2 min-h-[2.75em]">
       <a href={`/catalogo/${book.slug}`} class="hover:opacity-70 transition-opacity">{book.title}</a>
     </h3>
-    {/* Price + AddToCart agrupados: el precio queda pegado al botón.
-        Cuando no hay precio inyectamos &nbsp; para garantizar la
-        línea — sin esto, una tarjeta sin precio era ~20px más baja
-        que las otras y rompía la alineación de la fila. mt-auto
-        empuja el bloque al fondo del article (h-full stretched). */}
+    {/* Precio + AddToCart agrupados. Precio en serif grande y bold
+        para que sea la información comercial más prominente de la
+        tarjeta — sin color cromático (el rojo cansa la lectura),
+        solo peso y tamaño. mt-auto empuja el bloque al fondo del
+        article (h-full) para alinear los botones de toda la fila. */}
     <div class="mt-auto pt-2 sm:pt-3 space-y-2 sm:space-y-3">
-      {formattedPrice ? (
-        <p class="text-sm sm:text-[15px] tabular-nums font-medium">{formattedPrice}</p>
-      ) : (
-        <p class="text-sm sm:text-[15px] tabular-nums font-medium" set:html="&nbsp;"></p>
-      )}
+      <p class="font-serif text-xl sm:text-2xl font-bold text-stone-900 tabular-nums leading-tight">
+        {priceLine}
+      </p>
       <AddToCartButton
         slug={book.slug}
         title={book.title}
