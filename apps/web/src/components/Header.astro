@@ -17,8 +17,15 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { href: "/catalogo",    label: "Catálogo",      icon: "lucide:book-open" },
-  { href: "/colecciones", label: "Colecciones",   icon: "lucide:library" },
+  {
+    href: "/catalogo",
+    label: "Libros",
+    icon: "lucide:book-open",
+    children: [
+      { href: "/catalogo",    label: "Catálogo",    icon: "lucide:book-open" },
+      { href: "/colecciones", label: "Colecciones", icon: "lucide:library" },
+    ],
+  },
   { href: "/articulos",   label: "Publicaciones", icon: "lucide:newspaper" },
   {
     href: "/autores",
