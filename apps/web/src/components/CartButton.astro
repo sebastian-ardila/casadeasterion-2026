@@ -9,6 +9,9 @@
   aria-label="Abrir carrito"
   class="relative inline-flex items-center justify-center w-10 h-10 hover:bg-[color:var(--bg-alt,rgba(0,0,0,0.04))] transition-colors rounded-sm cursor-pointer"
 >
+  {/* lucide:shopping-cart — el carro con ruedas es el affordance
+      universal de "área de compras". El shopping-bag de antes se
+      confundía con un menú lateral o una carpeta. */}
   <svg
     width="20"
     height="20"
@@ -20,9 +23,9 @@
     stroke-linejoin="round"
     aria-hidden="true"
   >
-    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
-    <path d="M3 6h18" />
-    <path d="M16 10a4 4 0 0 1-8 0" />
+    <circle cx="8" cy="21" r="1" />
+    <circle cx="19" cy="21" r="1" />
+    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
   </svg>
   <span
     id="cda-cart-badge"
