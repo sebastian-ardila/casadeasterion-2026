@@ -337,7 +337,7 @@ const formatted = post.published_at
       cualquiera de los autores actuales aparece en post_authors.
       Ordenado por fecha desc, limitado a 3. */}
   {primaryAuthor && relatedPosts.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-12 sm:pb-16 md:pb-20">
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-20 pb-12 sm:pb-16 md:pb-20">
       <div class="flex items-end justify-between gap-4 mb-8 sm:mb-10 md:mb-12 border-b border-[color:var(--border)] pb-6 sm:pb-7 md:pb-8">
         <div class="min-w-0">
           <p class="uppercase text-[10px] sm:text-xs tracking-[0.2em] text-[color:var(--fg-muted)] mb-1.5 sm:mb-2">
@@ -369,7 +369,7 @@ const formatted = post.published_at
       actuales aparece en book_authors. Excluye el libro padre actual
       para no repetir el banner del inicio. */}
   {primaryAuthor && relatedBooks.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-20 pb-16 sm:pb-20 md:pb-24">
       <div class="flex items-end justify-between gap-4 mb-8 sm:mb-10 md:mb-12 border-b border-[color:var(--border)] pb-6 sm:pb-7 md:pb-8">
         <div class="min-w-0">
           <p class="uppercase text-[10px] sm:text-xs tracking-[0.2em] text-[color:var(--fg-muted)] mb-1.5 sm:mb-2">
