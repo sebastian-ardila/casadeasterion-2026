@@ -39,6 +39,31 @@ const { data: books } = linkedBookIds.length > 0
       .order("publication_date", { ascending: false })
   : { data: [] };
 
+// Otros roles que esta misma persona puede cumplir: traducción,
+// prólogo, colaboración. Cargamos en paralelo solo si su role_tags
+// los incluye; así evitamos roundtrips innecesarios.
+const roles = (author.role_tags ?? []) as string[];
+const otherFetches: Record<string, Promise<any>> = {};
+if (roles.includes("translator")) {
+  otherFetches.translatedBooks = supabase.from("book_translators").select("book:books(*)").eq("author_id", author.id);
+}
+if (roles.includes("prologuist")) {
+  otherFetches.prologuedBooks = supabase.from("book_prologuists").select("book:books(*)").eq("author_id", author.id);
+}
+if (roles.includes("collaborator")) {
+  otherFetches.collaboratedBooks = supabase.from("book_collaborators").select("book:books(*)").eq("author_id", author.id);
+}
+const resolved = await Promise.all(Object.values(otherFetches));
+const otherKeys = Object.keys(otherFetches);
+type Book = NonNullable<typeof books>[number];
+const pickBooks = (idx: number): Book[] =>
+  ((resolved[idx]?.data ?? []) as { book: Book | null }[])
+    .map((r) => r.book)
+    .filter((b): b is Book => !!b && b.status === "published");
+const translatedBooks  = otherKeys.indexOf("translatedBooks")  >= 0 ? pickBooks(otherKeys.indexOf("translatedBooks"))  : [];
+const prologuedBooks   = otherKeys.indexOf("prologuedBooks")   >= 0 ? pickBooks(otherKeys.indexOf("prologuedBooks"))   : [];
+const collaboratedBooks = otherKeys.indexOf("collaboratedBooks") >= 0 ? pickBooks(otherKeys.indexOf("collaboratedBooks")) : [];
+
 const bio = renderMarkdown(author.bio_md);
 const links = (author.links as Record<string, string> | null) ?? {};
 const sameAs = [links.web, links.twitter, links.instagram].filter(Boolean) as string[];
@@ -82,13 +107,52 @@ const metaDescription =
   </section>
 
   {books && books.length > 0 && (
-    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-12 sm:pb-16 md:pb-20">
       <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
         Obras
       </h2>
       <div class="grid gap-8 sm:gap-10 sm:grid-cols-2 lg:grid-cols-4">
         {books.map((book) => (
           <BookCard book={book} author={author} config={config} />
+        ))}
+      </div>
+    </section>
+  )}
+
+  {translatedBooks.length > 0 && (
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-12 sm:pb-16 md:pb-20">
+      <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
+        Libros que ha traducido
+      </h2>
+      <div class="grid gap-8 sm:gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        {translatedBooks.map((book) => (
+          <BookCard book={book} author={null} config={config} />
+        ))}
+      </div>
+    </section>
+  )}
+
+  {prologuedBooks.length > 0 && (
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-12 sm:pb-16 md:pb-20">
+      <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
+        Libros con su prólogo
+      </h2>
+      <div class="grid gap-8 sm:gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        {prologuedBooks.map((book) => (
+          <BookCard book={book} author={null} config={config} />
+        ))}
+      </div>
+    </section>
+  )}
+
+  {collaboratedBooks.length > 0 && (
+    <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
+      <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
+        Libros donde colabora
+      </h2>
+      <div class="grid gap-8 sm:gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        {collaboratedBooks.map((book) => (
+          <BookCard book={book} author={null} config={config} />
         ))}
       </div>
     </section>

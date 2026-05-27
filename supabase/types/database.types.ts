@@ -84,6 +84,7 @@ export type Database = {
           links: Json
           name: string
           photo_url: string | null
+          role_tags: string[]
           slug: string
           updated_at: string
           updated_by: string | null
@@ -96,6 +97,7 @@ export type Database = {
           links?: Json
           name: string
           photo_url?: string | null
+          role_tags?: string[]
           slug: string
           updated_at?: string
           updated_by?: string | null
@@ -108,6 +110,7 @@ export type Database = {
           links?: Json
           name?: string
           photo_url?: string | null
+          role_tags?: string[]
           slug?: string
           updated_at?: string
           updated_by?: string | null
@@ -151,6 +154,114 @@ export type Database = {
           },
           {
             foreignKeyName: "book_authors_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_collaborators: {
+        Row: {
+          author_id: string
+          book_id: string
+          created_at: string
+          sort_order: number
+        }
+        Insert: {
+          author_id: string
+          book_id: string
+          created_at?: string
+          sort_order?: number
+        }
+        Update: {
+          author_id?: string
+          book_id?: string
+          created_at?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_collaborators_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "authors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "book_collaborators_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_prologuists: {
+        Row: {
+          author_id: string
+          book_id: string
+          created_at: string
+          sort_order: number
+        }
+        Insert: {
+          author_id: string
+          book_id: string
+          created_at?: string
+          sort_order?: number
+        }
+        Update: {
+          author_id?: string
+          book_id?: string
+          created_at?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_prologuists_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "authors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "book_prologuists_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_translators: {
+        Row: {
+          author_id: string
+          book_id: string
+          created_at: string
+          sort_order: number
+        }
+        Insert: {
+          author_id: string
+          book_id: string
+          created_at?: string
+          sort_order?: number
+        }
+        Update: {
+          author_id?: string
+          book_id?: string
+          created_at?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_translators_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "authors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "book_translators_book_id_fkey"
             columns: ["book_id"]
             isOneToOne: false
             referencedRelation: "books"
@@ -321,53 +432,6 @@ export type Database = {
           },
         ]
       }
-      collaborators: {
-        Row: {
-          bio_md: string | null
-          created_at: string
-          id: string
-          keywords: string[] | null
-          links: Json
-          name: string
-          photo_url: string | null
-          slug: string
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          bio_md?: string | null
-          created_at?: string
-          id?: string
-          keywords?: string[] | null
-          links?: Json
-          name: string
-          photo_url?: string | null
-          slug: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          bio_md?: string | null
-          created_at?: string
-          id?: string
-          keywords?: string[] | null
-          links?: Json
-          name?: string
-          photo_url?: string | null
-          slug?: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "collaborators_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       collections: {
         Row: {
           category_id: string | null
@@ -481,33 +545,105 @@ export type Database = {
       }
       post_collaborators: {
         Row: {
-          collaborator_id: string
+          author_id: string
           created_at: string
           post_id: string
           sort_order: number
         }
         Insert: {
-          collaborator_id: string
+          author_id: string
           created_at?: string
           post_id: string
           sort_order?: number
         }
         Update: {
-          collaborator_id?: string
+          author_id?: string
           created_at?: string
           post_id?: string
           sort_order?: number
         }
         Relationships: [
           {
-            foreignKeyName: "post_collaborators_collaborator_id_fkey"
-            columns: ["collaborator_id"]
+            foreignKeyName: "post_collaborators_author_id_fkey"
+            columns: ["author_id"]
             isOneToOne: false
-            referencedRelation: "collaborators"
+            referencedRelation: "authors"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "post_collaborators_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_prologuists: {
+        Row: {
+          author_id: string
+          created_at: string
+          post_id: string
+          sort_order: number
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          post_id: string
+          sort_order?: number
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          post_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_prologuists_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "authors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_prologuists_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_translators: {
+        Row: {
+          author_id: string
+          created_at: string
+          post_id: string
+          sort_order: number
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          post_id: string
+          sort_order?: number
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          post_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_translators_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "authors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_translators_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"

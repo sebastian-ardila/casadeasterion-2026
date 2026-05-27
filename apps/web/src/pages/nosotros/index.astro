@@ -33,9 +33,14 @@ const [{ data: staff }, { data: collaborators }] = await Promise.all([
     .eq("status", "published")
     .order("sort_order", { ascending: true })
     .order("name", { ascending: true }),
+  // Colaboradores son ahora rows de `authors` con 'collaborator' en
+  // role_tags — fuente unificada de personas. Una persona con varios
+  // roles (autor + colaborador) aparece aquí solo por su rol de
+  // colaborador.
   supabase
-    .from("collaborators")
+    .from("authors")
     .select("id, slug, name, photo_url, bio_md")
+    .contains("role_tags", ["collaborator"])
     .order("name", { ascending: true }),
 ]);
 

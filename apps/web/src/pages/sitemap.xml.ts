@@ -9,6 +9,8 @@ const STATIC_PATHS_BASE = [
   { path: "/colecciones", priority: 0.7, changefreq: "weekly" },
   { path: "/autores", priority: 0.7, changefreq: "weekly" },
   { path: "/colaboradores", priority: 0.6, changefreq: "weekly" },
+  { path: "/traductores", priority: 0.6, changefreq: "weekly" },
+  { path: "/prologistas", priority: 0.6, changefreq: "weekly" },
 ];
 const NOSOTROS_PATH = { path: "/nosotros", priority: 0.6, changefreq: "monthly" };
 
@@ -29,15 +31,25 @@ export const GET: APIRoute = async ({ site }) => {
   const cfg = await loadSiteConfig();
   const nosotrosEnabled = cfg.nosotros_enabled !== false;
 
-  const [postsRes, booksRes, authorsRes, staffRes, collectionsRes, collaboratorsRes] = await Promise.all([
+  const [
+    postsRes, booksRes,
+    authorsRes, collaboratorsRes, translatorsRes, prologuistsRes,
+    staffRes, collectionsRes,
+  ] = await Promise.all([
     supabase.from("posts").select("slug, updated_at, published_at").eq("status", "published"),
     supabase.from("books").select("slug, updated_at, publication_date").eq("status", "published"),
-    supabase.from("authors").select("slug, updated_at"),
+    // 4 vistas filtradas de la misma tabla `authors`, una por rol.
+    // El mismo slug puede aparecer en varias URLs (autor + traductor,
+    // etc.) cuando la persona cumple varios roles — es deseado: cada
+    // ficha pública es una vista distinta.
+    supabase.from("authors").select("slug, updated_at").contains("role_tags", ["author"]),
+    supabase.from("authors").select("slug, updated_at").contains("role_tags", ["collaborator"]),
+    supabase.from("authors").select("slug, updated_at").contains("role_tags", ["translator"]),
+    supabase.from("authors").select("slug, updated_at").contains("role_tags", ["prologuist"]),
     nosotrosEnabled
       ? supabase.from("staff").select("slug, updated_at").eq("status", "published")
       : Promise.resolve({ data: [] as Array<{ slug: string; updated_at: string | null }> }),
     (supabase.from as any)("collections").select("slug, updated_at").eq("status", "published"),
-    supabase.from("collaborators").select("slug, updated_at"),
   ]);
 
   type Entry = { url: string; lastmod?: string; priority: number; changefreq: string };
@@ -101,6 +113,24 @@ export const GET: APIRoute = async ({ site }) => {
     entries.push({
       url: new URL(`/colaboradores/${c.slug}`, site).href,
       lastmod: c.updated_at ?? undefined,
+      priority: 0.4,
+      changefreq: "monthly",
+    });
+  }
+
+  for (const t of translatorsRes.data ?? []) {
+    entries.push({
+      url: new URL(`/traductores/${t.slug}`, site).href,
+      lastmod: t.updated_at ?? undefined,
+      priority: 0.4,
+      changefreq: "monthly",
+    });
+  }
+
+  for (const p of prologuistsRes.data ?? []) {
+    entries.push({
+      url: new URL(`/prologistas/${p.slug}`, site).href,
+      lastmod: p.updated_at ?? undefined,
       priority: 0.4,
       changefreq: "monthly",
     });

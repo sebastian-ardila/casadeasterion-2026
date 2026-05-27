@@ -3,13 +3,14 @@ import Layout from "~/layouts/Layout.astro";
 import EmptyState from "~/components/EmptyState.astro";
 import { supabase } from "~/lib/supabase";
 
-// "Colaboradores" — mismo molde que /autores, pero leído de la tabla
-// `collaborators`. Datos buildeados en SSG via Supabase. Cuando la
-// tabla esté vacía mostramos un mensaje "Pronto…" con el mismo
-// componente EmptyState que usa /autores.
+// "Colaboradores" — vista filtrada de la tabla `authors`, donde
+// `role_tags` incluye 'collaborator'. Una misma persona puede ser
+// autora, traductora, prologuista o varias cosas a la vez; aquí
+// listamos a quienes tienen el rol de colaborador.
 const { data: collaborators } = await supabase
-  .from("collaborators")
+  .from("authors")
   .select("id, slug, name, photo_url, bio_md")
+  .contains("role_tags", ["collaborator"])
   .order("name", { ascending: true });
 
 const stripDiacritics = (s: string) =>

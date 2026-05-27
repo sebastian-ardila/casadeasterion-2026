@@ -6,53 +6,36 @@ import { supabase, type Author, type Category } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
 import { renderMarkdown, mdToPlainText, clampText } from "~/lib/markdown";
 
-// Ficha de un colaborador. La tabla subyacente es `authors`
-// (filtrada por role_tag 'collaborator' en /colaboradores). Las
-// junctions post_collaborators y book_collaborators ahora apuntan a
-// authors via author_id.
+// Ficha pública de un traductor. Lee de `authors` (filtrada por
+// role_tag='translator') y junta libros y publicaciones a través de
+// las junctions book_translators / post_translators.
 
 export async function getStaticPaths() {
   const { data } = await supabase
     .from("authors")
     .select("slug")
-    .contains("role_tags", ["collaborator"]);
-  return (data ?? []).map((c: { slug: string }) => ({ params: { slug: c.slug } }));
+    .contains("role_tags", ["translator"]);
+  return (data ?? []).map((t: { slug: string }) => ({ params: { slug: t.slug } }));
 }
 
 const { slug } = Astro.params;
 const config = await loadSiteConfig();
 
-const { data: collaborator } = await supabase
+const { data: translator } = await supabase
   .from("authors")
   .select("*")
   .eq("slug", slug!)
-  .contains("role_tags", ["collaborator"])
+  .contains("role_tags", ["translator"])
   .maybeSingle();
 
-if (!collaborator) {
-  return Astro.redirect("/colaboradores");
+if (!translator) {
+  return Astro.redirect("/traductores");
 }
 
-// Posts donde figura como colaborador.
-const { data: postRows } = await supabase
-  .from("post_collaborators")
-  .select("post_id")
-  .eq("author_id", collaborator.id);
-const linkedPostIds = (postRows ?? []).map((r: { post_id: string }) => r.post_id);
-const { data: posts } = linkedPostIds.length > 0
-  ? await supabase
-      .from("posts")
-      .select("*, post_authors(sort_order, author:authors(*))")
-      .eq("status", "published")
-      .in("id", linkedPostIds)
-      .order("published_at", { ascending: false })
-  : { data: [] };
-
-// Libros donde figura como colaborador.
 const { data: bookRows } = await supabase
-  .from("book_collaborators")
+  .from("book_translators")
   .select("book_id")
-  .eq("author_id", collaborator.id);
+  .eq("author_id", translator.id);
 const linkedBookIds = (bookRows ?? []).map((r: { book_id: string }) => r.book_id);
 const { data: books } = linkedBookIds.length > 0
   ? await supabase
@@ -63,7 +46,20 @@ const { data: books } = linkedBookIds.length > 0
       .order("publication_date", { ascending: false })
   : { data: [] };
 
-// Categorías para los posts.
+const { data: postRows } = await supabase
+  .from("post_translators")
+  .select("post_id")
+  .eq("author_id", translator.id);
+const linkedPostIds = (postRows ?? []).map((r: { post_id: string }) => r.post_id);
+const { data: posts } = linkedPostIds.length > 0
+  ? await supabase
+      .from("posts")
+      .select("*, post_authors(sort_order, author:authors(*))")
+      .eq("status", "published")
+      .in("id", linkedPostIds)
+      .order("published_at", { ascending: false })
+  : { data: [] };
+
 const categoryIds = Array.from(
   new Set(((posts ?? []).map((p) => p.category_id).filter(Boolean) as string[])),
 );
@@ -78,36 +74,36 @@ function firstAuthor(p: any): Author | null {
   return sorted[0]?.author ?? null;
 }
 
-const bio = renderMarkdown(collaborator.bio_md);
-const links = (collaborator.links as Record<string, string> | null) ?? {};
+const bio = renderMarkdown(translator.bio_md);
+const links = (translator.links as Record<string, string> | null) ?? {};
 const sameAs = [links.web, links.twitter, links.instagram].filter(Boolean) as string[];
-const bioPlain = clampText(mdToPlainText(collaborator.bio_md), 160);
+const bioPlain = clampText(mdToPlainText(translator.bio_md), 160);
 const metaDescription =
   bioPlain ||
-  `${collaborator.name} — colaborador de Casa de Asterión Ediciones.`;
+  `${translator.name} — traductor de Casa de Asterión Ediciones.`;
 ---
 
 <Layout
-  title={collaborator.name}
+  title={translator.name}
   description={metaDescription}
-  breadcrumbLabel={collaborator.name}
+  breadcrumbLabel={translator.name}
   seoType="person"
-  image={collaborator.photo_url}
-  imageAlt={`Foto de ${collaborator.name}`}
-  keywords={collaborator.keywords}
+  image={translator.photo_url}
+  imageAlt={`Foto de ${translator.name}`}
+  keywords={translator.keywords}
   sameAs={sameAs}
   breadcrumbItems={[
     { name: "Inicio", url: new URL("/", Astro.site).href },
-    { name: "Colaboradores", url: new URL("/colaboradores", Astro.site).href },
-    { name: collaborator.name, url: Astro.url.href },
+    { name: "Traductores", url: new URL("/traductores", Astro.site).href },
+    { name: translator.name, url: Astro.url.href },
   ]}
 >
   <section class="mx-auto max-w-[1100px] px-5 sm:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-20 pb-10 sm:pb-12 grid grid-cols-1 md:grid-cols-[220px_1fr] lg:grid-cols-[260px_1fr] gap-6 md:gap-10 lg:gap-12 items-start">
     <div class="max-w-[220px] sm:max-w-[280px] mx-auto md:mx-0 w-full">
-      {collaborator.photo_url ? (
+      {translator.photo_url ? (
         <img
-          src={collaborator.photo_url}
-          alt={collaborator.name}
+          src={translator.photo_url}
+          alt={translator.name}
           class="w-full aspect-square object-cover grayscale"
         />
       ) : (
@@ -116,9 +112,9 @@ const metaDescription =
     </div>
     <div>
       <p class="uppercase text-[11px] sm:text-xs tracking-[0.2em] text-[color:var(--fg-muted)] mb-3 sm:mb-4">
-        Colaborador
+        Traductor
       </p>
-      <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl mb-5 sm:mb-6">{collaborator.name}</h1>
+      <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl mb-5 sm:mb-6">{translator.name}</h1>
       <div class="cas-md max-w-none" set:html={bio}></div>
     </div>
   </section>
@@ -126,7 +122,7 @@ const metaDescription =
   {books && books.length > 0 && (
     <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-12 sm:pb-16 md:pb-20">
       <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
-        Libros donde colabora
+        Libros que ha traducido
       </h2>
       <div class="grid gap-8 sm:gap-10 sm:grid-cols-2 lg:grid-cols-4">
         {books.map((book: any) => (
@@ -139,7 +135,7 @@ const metaDescription =
   {posts && posts.length > 0 && (
     <section class="mx-auto max-w-[1400px] px-5 sm:px-6 lg:px-12 pb-16 sm:pb-20 md:pb-24">
       <h2 class="font-serif text-2xl md:text-3xl mb-8 sm:mb-10 border-b border-[color:var(--border)] pb-4">
-        Publicaciones en las que ha colaborado
+        Publicaciones que ha traducido
       </h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 sm:gap-x-8 sm:gap-y-14 md:gap-x-10 md:gap-y-16">
         {posts.map((p) => (
