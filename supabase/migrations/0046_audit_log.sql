@@ -182,7 +182,7 @@ create trigger admin_emails_audit after insert or update or delete on public.adm
   for each row execute function public.log_admin_email_change();
 
 -- # 6. Recurso 'activity' en admin_permissions (preservando los 13 existentes)
-alter table public.admin_permissions drop constraint admin_permissions_resource_check;
+alter table public.admin_permissions drop constraint if exists admin_permissions_resource_check;
 alter table public.admin_permissions add constraint admin_permissions_resource_check
   check (resource in (
     'posts','books','authors','collaborators','categories','site',
