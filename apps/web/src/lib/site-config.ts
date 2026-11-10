@@ -90,6 +90,9 @@ export type SiteConfigMap = {
   og_image_default: string;
   organization_logo_url: string;
   hero_image_url: string;
+  /** Ajuste por dispositivo (fit, posición, zoom, imagen propia) de la
+   *  imagen del hero. Ver lib/hero-image.ts. */
+  hero_image_config?: unknown;
   /** Page background visible behind the hero (mobile photo + the area
    *  around the right-half image). Empty means "use --bg-alt". */
   hero_bg_color: string;

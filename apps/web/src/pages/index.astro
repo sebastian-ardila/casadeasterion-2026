@@ -8,6 +8,7 @@ import Hero from "~/components/Hero.astro";
 import { Icon } from "astro-icon/components";
 import { supabase } from "~/lib/supabase";
 import { loadSiteConfig } from "~/lib/site-config";
+import { normalizeHeroImageConfig, resolveHeroImageUrl, heroImageStyle } from "~/lib/hero-image";
 
 const config = await loadSiteConfig();
 
@@ -39,10 +40,19 @@ const showRecent = recentPosts.length >= 3;
 
 const HERO_FALLBACK =
   "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=2400&q=80";
-const heroImage = config.hero_image_url?.trim() || HERO_FALLBACK;
-const heroImageMobile = config.hero_image_url?.trim()
-  ? config.hero_image_url
-  : "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=1600&q=80";
+const HERO_FALLBACK_MOBILE =
+  "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=1600&q=80";
+// Imagen + encuadre por dispositivo (CMS → /site → Hero → Imagen del hero).
+// Web ≥1024px, Tablet 768–1023px, Móvil <768px.
+const heroCfg = normalizeHeroImageConfig(config.hero_image_config);
+const heroWebUrl = config.hero_image_url?.trim() || "";
+const heroImageWeb = heroWebUrl || HERO_FALLBACK;
+const heroImageTablet = resolveHeroImageUrl(heroCfg, "tablet", heroWebUrl) || HERO_FALLBACK;
+const heroImageMobile = resolveHeroImageUrl(heroCfg, "mobile", heroWebUrl) || HERO_FALLBACK_MOBILE;
+const heroStyleWeb = heroImageStyle(heroCfg.web);
+const heroStyleTablet = heroImageStyle(heroCfg.tablet);
+const heroStyleMobile = heroImageStyle(heroCfg.mobile);
+const heroMobileRatio = heroCfg.mobile.ratio.replace("/", " / ");
 ---
 
 <Layout
@@ -75,10 +85,16 @@ const heroImageMobile = config.hero_image_url?.trim()
     {/* Right-half fixed image (desktop only). z-0 so it sits below the
         sticky header (z-30) but above the body bg. */}
     <div
-      id="hero-image"
-      class="hidden md:block fixed top-0 right-0 h-screen w-1/2 bg-cover bg-center pointer-events-none will-change-[opacity] transition-opacity duration-200 z-0"
-      style={`background-image: url('${heroImage}')`}
+      data-hero-image
+      class="hidden lg:block fixed top-0 right-0 h-screen w-1/2 overflow-hidden pointer-events-none will-change-[opacity] transition-opacity duration-200 z-0"
     >
+      <img src={heroImageWeb} alt="" loading="eager" decoding="async" class="absolute inset-0 h-full w-full" style={heroStyleWeb} />
+    </div>
+    <div
+      data-hero-image
+      class="hidden md:block lg:hidden fixed top-0 right-0 h-screen w-1/2 overflow-hidden pointer-events-none will-change-[opacity] transition-opacity duration-200 z-0"
+    >
+      <img src={heroImageTablet} alt="" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full" style={heroStyleTablet} />
     </div>
 
     <Hero
@@ -111,13 +127,19 @@ const heroImageMobile = config.hero_image_url?.trim()
 
     {/* Mobile photo — stacked below the hero content. Hidden on md+
         where the fixed right-half image takes over. */}
-    <img
-      src={heroImageMobile}
-      alt=""
-      loading="eager"
-      decoding="async"
-      class="md:hidden block w-full aspect-[4/3] object-cover mt-6 sm:mt-8"
-    />
+    <div
+      class="md:hidden relative block w-full overflow-hidden mt-6 sm:mt-8"
+      style={`aspect-ratio: ${heroMobileRatio}`}
+    >
+      <img
+        src={heroImageMobile}
+        alt=""
+        loading="eager"
+        decoding="async"
+        class="absolute inset-0 h-full w-full"
+        style={heroStyleMobile}
+      />
+    </div>
   </section>
 
   {/* Quote — even larger, sits above the (faded) hero image */}
@@ -151,8 +173,8 @@ const heroImageMobile = config.hero_image_url?.trim()
 
   <script is:inline>
     (() => {
-      const img = document.getElementById("hero-image");
-      if (!img) return;
+      const imgs = document.querySelectorAll("[data-hero-image]");
+      if (!imgs.length) return;
       // Image is position:fixed so it never moves with the scroll. JS just
       // ramps opacity from 1 → 0 between scrollY = 0.2vh and 0.7vh. After
       // that, the image is fully transparent (still in DOM, but invisible).
@@ -162,7 +184,7 @@ const heroImageMobile = config.hero_image_url?.trim()
         const startFade = vh * 0.2;
         const fadeOver = vh * 0.5;
         const t = Math.max(0, Math.min(1, (y - startFade) / fadeOver));
-        img.style.opacity = String(1 - t);
+        imgs.forEach((img) => { img.style.opacity = String(1 - t); });
       };
       window.addEventListener("scroll", onScroll, { passive: true });
       onScroll();
